@@ -18,8 +18,10 @@ public class JacksonSerializer implements JsonSerializer {
     }
 
     @Override
+    @SuppressWarnings("unchecked")
     public <T> T deserialize(String json, TypeRef<T> type) {
         if (json == null || json.isBlank()) return null;
+        if (type.getType() == String.class) return (T) json;
         return objectMapper.readValue(json, objectMapper.constructType(type.getType()));
     }
 }
