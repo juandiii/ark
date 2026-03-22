@@ -30,8 +30,8 @@ public class ArkClient extends AbstractArkClient<ClientRequest> implements Ark {
 
     // ---- Factory method ----
 
-    public static SyncBuilder sync() {
-        return new SyncBuilder();
+    public static Builder builder() {
+        return new Builder();
     }
 
     // ---- Abstract Builder ----
@@ -83,15 +83,15 @@ public class ArkClient extends AbstractArkClient<ClientRequest> implements Ark {
         }
     }
 
-    // ---- Sync Builder ----
+    // ---- Builder ----
 
-    public static final class SyncBuilder extends AbstractBuilder<SyncBuilder> {
+    public static final class Builder extends AbstractBuilder<Builder> {
 
         private HttpTransport transport;
 
-        private SyncBuilder() {}
+        private Builder() {}
 
-        public SyncBuilder transport(HttpTransport transport) {
+        public Builder transport(HttpTransport transport) {
             this.transport = transport;
             return this;
         }

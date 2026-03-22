@@ -20,11 +20,11 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 
-public final class VertxHttpTransport implements AsyncHttpTransport {
+public final class ArkVertxTransport implements AsyncHttpTransport {
 
     private final WebClient webClient;
 
-    public VertxHttpTransport(WebClient webClient) {
+    public ArkVertxTransport(WebClient webClient) {
         Objects.requireNonNull(webClient, "WebClient is required");
         this.webClient = webClient;
     }

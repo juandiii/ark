@@ -20,11 +20,19 @@ public final class ReactorResponseSpec {
         return mono.map(raw -> serializer.deserialize(raw.body(), type));
     }
 
+    public <T> Mono<T> body(Class<T> type) {
+        return body(TypeRef.of(type));
+    }
+
     public <T> Mono<ArkResponse<T>> toEntity(TypeRef<T> type) {
         return mono.map(raw -> {
             T body = serializer.deserialize(raw.body(), type);
             return new ArkResponse<>(raw.statusCode(), raw.headers(), body);
         });
+    }
+
+    public <T> Mono<ArkResponse<T>> toEntity(Class<T> type) {
+        return toEntity(TypeRef.of(type));
     }
 
     public Mono<ArkResponse<Void>> toBodilessEntity() {

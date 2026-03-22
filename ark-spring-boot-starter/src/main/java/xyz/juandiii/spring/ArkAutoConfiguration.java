@@ -22,8 +22,8 @@ public class ArkAutoConfiguration {
     @Bean
     @Scope("prototype")
     @ConditionalOnMissingBean
-    public ArkClient.SyncBuilder arkClientBuilder(JsonSerializer serializer) {
-        return ArkClient.sync()
+    public ArkClient.Builder arkClientBuilder(JsonSerializer serializer) {
+        return ArkClient.builder()
                 .serializer(serializer);
     }
 }

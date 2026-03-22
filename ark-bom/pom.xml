@@ -42,6 +42,11 @@
             </dependency>
             <dependency>
                 <groupId>xyz.juandiii</groupId>
+                <artifactId>ark-vertx</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>xyz.juandiii</groupId>
                 <artifactId>ark-mutiny</artifactId>
                 <version>${project.version}</version>
             </dependency>
@@ -53,6 +58,11 @@
             <dependency>
                 <groupId>xyz.juandiii</groupId>
                 <artifactId>ark-transport-vertx-mutiny</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>xyz.juandiii</groupId>
+                <artifactId>ark-proxy-spring</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>

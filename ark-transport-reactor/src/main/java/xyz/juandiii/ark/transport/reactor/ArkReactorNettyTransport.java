@@ -16,11 +16,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
-public final class ReactorNettyTransport implements ReactorHttpTransport {
+public final class ArkReactorNettyTransport implements ReactorHttpTransport {
 
     private final HttpClient httpClient;
 
-    public ReactorNettyTransport(HttpClient httpClient) {
+    public ArkReactorNettyTransport(HttpClient httpClient) {
         Objects.requireNonNull(httpClient, "HttpClient is required");
         this.httpClient = httpClient;
     }

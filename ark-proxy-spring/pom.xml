@@ -7,8 +7,8 @@
     <artifactId>ark</artifactId>
     <version>1.0-SNAPSHOT</version>
   </parent>
-  <artifactId>ark-spring-boot-starter</artifactId>
-  <name>ark-spring-boot-starter</name>
+  <artifactId>ark-proxy-spring</artifactId>
+  <name>ark-proxy-spring</name>
 
   <dependencies>
     <dependency>
@@ -18,25 +18,8 @@
     </dependency>
 
     <dependency>
-      <groupId>xyz.juandiii</groupId>
-      <artifactId>ark-jackson</artifactId>
-      <version>${project.version}</version>
-    </dependency>
-
-    <dependency>
-      <groupId>org.springframework.boot</groupId>
-      <artifactId>spring-boot-autoconfigure</artifactId>
-    </dependency>
-
-    <dependency>
-      <groupId>org.springframework.boot</groupId>
-      <artifactId>spring-boot-starter</artifactId>
-      <optional>true</optional>
-    </dependency>
-
-    <dependency>
-      <groupId>org.springframework.boot</groupId>
-      <artifactId>spring-boot-jackson</artifactId>
+      <groupId>org.springframework</groupId>
+      <artifactId>spring-web</artifactId>
     </dependency>
 
     <dependency>

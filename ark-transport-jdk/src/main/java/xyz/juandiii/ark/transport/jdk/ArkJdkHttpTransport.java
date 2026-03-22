@@ -18,16 +18,16 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.Executor;
 
-public final class NativeHttpTransport implements HttpTransport, AsyncHttpTransport {
+public final class ArkJdkHttpTransport implements HttpTransport, AsyncHttpTransport {
 
     private final HttpClient httpClient;
     private final Executor executor;
 
-    public NativeHttpTransport(HttpClient httpClient) {
+    public ArkJdkHttpTransport(HttpClient httpClient) {
         this(httpClient, httpClient.executor().orElse(Runnable::run));
     }
 
-    public NativeHttpTransport(HttpClient httpClient, Executor executor) {
+    public ArkJdkHttpTransport(HttpClient httpClient, Executor executor) {
         Objects.requireNonNull(httpClient, "HttpClient is required");
         Objects.requireNonNull(executor, "Executor must not be null");
         this.httpClient = httpClient;

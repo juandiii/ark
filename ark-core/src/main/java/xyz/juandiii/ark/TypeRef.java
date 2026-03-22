@@ -12,7 +12,16 @@ public abstract class TypeRef<T> {
         this.type = ((ParameterizedType) superclass).getActualTypeArguments()[0];
     }
 
+    TypeRef(Type type) {
+        this.type = type;
+    }
+
     public Type getType() {
         return type;
+    }
+
+    @SuppressWarnings("unchecked")
+    public static <T> TypeRef<T> of(Type type) {
+        return new TypeRef<>(type) {};
     }
 }

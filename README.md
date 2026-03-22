@@ -6,9 +6,9 @@ A lightweight, fluent HTTP client library for Java 25+ with pluggable transport 
 
 ```java
 // Sync
-Ark client = ArkClient.sync()
+Ark client = ArkClient.builder()
     .serializer(new JacksonSerializer(new ObjectMapper()))
-    .transport(new NativeHttpTransport(HttpClient.newBuilder().build()))
+    .transport(new ArkJdkHttpTransport(HttpClient.newBuilder().build()))
     .baseUrl("https://api.example.com")
     .build();
 
@@ -25,11 +25,12 @@ ark-core                       Core interfaces and fluent API — zero external 
 ark-async                      Async support with CompletableFuture
 ark-reactor                    Reactive support with Mono/Flux
 ark-mutiny                     Mutiny support with Uni
+ark-vertx                      Vert.x Future support
 ark-jackson                    Jackson-based JsonSerializer implementation
-ark-transport-jdk              NativeHttpTransport — java.net.http.HttpClient (sync + async)
-ark-transport-reactor          ReactorNettyTransport — Reactor Netty
-ark-transport-vertx            VertxHttpTransport — Vert.x WebClient (CompletableFuture)
-ark-transport-vertx-mutiny     VertxMutinyTransport — Vert.x Mutiny WebClient (Uni)
+ark-transport-jdk              ArkJdkHttpTransport — java.net.http.HttpClient (sync + async)
+ark-transport-reactor          ArkReactorNettyTransport — Reactor Netty
+ark-transport-vertx            ArkVertxTransport (CompletableFuture) + ArkVertxFutureTransport (Future)
+ark-transport-vertx-mutiny     ArkVertxMutinyTransport — Vert.x Mutiny WebClient (Uni)
 ark-spring-boot-starter        Spring Boot auto-configuration
 ark-bom                        Bill of Materials for version management
 ```
@@ -112,9 +113,9 @@ Ark provides separate entry points for each execution model. Each uses the same 
 ### Sync
 
 ```java
-Ark client = ArkClient.sync()
+Ark client = ArkClient.builder()
     .serializer(new JacksonSerializer(new ObjectMapper()))
-    .transport(new NativeHttpTransport(HttpClient.newBuilder().build()))
+    .transport(new ArkJdkHttpTransport(HttpClient.newBuilder().build()))
     .baseUrl("https://api.example.com")
     .build();
 ```
@@ -124,7 +125,7 @@ Ark client = ArkClient.sync()
 ```java
 AsyncArk asyncClient = AsyncArkClient.builder()
     .serializer(serializer)
-    .transport(new NativeHttpTransport(HttpClient.newBuilder().build()))
+    .transport(new ArkJdkHttpTransport(HttpClient.newBuilder().build()))
     .baseUrl("https://api.example.com")
     .build();
 ```
@@ -134,7 +135,7 @@ AsyncArk asyncClient = AsyncArkClient.builder()
 ```java
 ReactorArk reactorClient = ReactorArkClient.builder()
     .serializer(serializer)
-    .transport(new ReactorNettyTransport(HttpClient.create()))
+    .transport(new ArkReactorNettyTransport(HttpClient.create()))
     .baseUrl("https://api.example.com")
     .build();
 ```
@@ -144,7 +145,17 @@ ReactorArk reactorClient = ReactorArkClient.builder()
 ```java
 MutinyArk mutinyClient = MutinyArkClient.builder()
     .serializer(serializer)
-    .transport(new VertxMutinyTransport(WebClient.create(vertx)))
+    .transport(new ArkVertxMutinyTransport(WebClient.create(vertx)))
+    .baseUrl("https://api.example.com")
+    .build();
+```
+
+### Vert.x Future
+
+```java
+VertxArk vertxClient = VertxArkClient.builder()
+    .serializer(serializer)
+    .transport(new ArkVertxFutureTransport(WebClient.create(vertx)))
     .baseUrl("https://api.example.com")
     .build();
 ```
@@ -162,9 +173,9 @@ HttpClient httpClient = HttpClient.newBuilder()
     .executor(Executors.newVirtualThreadPerTaskExecutor())
     .build();
 
-Ark client = ArkClient.sync()
+Ark client = ArkClient.builder()
     .serializer(serializer)
-    .transport(new NativeHttpTransport(httpClient))
+    .transport(new ArkJdkHttpTransport(httpClient))
     .baseUrl("https://api.example.com")
     .userAgent("MyApp", "2.0")
     .requestInterceptor(request ->
@@ -262,7 +273,7 @@ User user = client.get("/slow-endpoint")
 
 Ark uses a **bridge pattern** — the transport is a thin adapter that wraps an already-configured HTTP client. All settings (timeouts, SSL, connection pools, HTTP version) are configured on the client itself.
 
-Four transport interfaces, one per execution model:
+Five transport interfaces, one per execution model:
 
 | Interface | Returns | Module |
 |-----------|---------|--------|
@@ -270,10 +281,11 @@ Four transport interfaces, one per execution model:
 | `AsyncHttpTransport` | `CompletableFuture<RawResponse>` | ark-async |
 | `ReactorHttpTransport` | `Mono<RawResponse>` | ark-reactor |
 | `MutinyHttpTransport` | `Uni<RawResponse>` | ark-mutiny |
+| `VertxHttpTransport` | `Future<RawResponse>` | ark-vertx |
 
-A transport can implement multiple interfaces. `NativeHttpTransport` implements both `HttpTransport` and `AsyncHttpTransport`.
+A transport can implement multiple interfaces. `ArkJdkHttpTransport` implements both `HttpTransport` and `AsyncHttpTransport`.
 
-### Java Native (NativeHttpTransport)
+### Java Native (ArkJdkHttpTransport)
 
 ```java
 HttpClient httpClient = HttpClient.newBuilder()
@@ -284,11 +296,11 @@ HttpClient httpClient = HttpClient.newBuilder()
     .build();
 
 // Implements HttpTransport + AsyncHttpTransport
-NativeHttpTransport transport = new NativeHttpTransport(httpClient);
-NativeHttpTransport transport = new NativeHttpTransport(httpClient, customExecutor);
+ArkJdkHttpTransport transport = new ArkJdkHttpTransport(httpClient);
+ArkJdkHttpTransport transport = new ArkJdkHttpTransport(httpClient, customExecutor);
 ```
 
-### Reactor Netty (ReactorNettyTransport)
+### Reactor Netty (ArkReactorNettyTransport)
 
 ```java
 reactor.netty.http.client.HttpClient httpClient = HttpClient.create()
@@ -297,10 +309,10 @@ reactor.netty.http.client.HttpClient httpClient = HttpClient.create()
     .secure(ssl -> ssl.sslContext(sslContext));
 
 // Implements ReactorHttpTransport
-ReactorNettyTransport transport = new ReactorNettyTransport(httpClient);
+ArkReactorNettyTransport transport = new ArkReactorNettyTransport(httpClient);
 ```
 
-### Vert.x (VertxHttpTransport)
+### Vert.x (ArkVertxTransport — CompletableFuture)
 
 ```java
 WebClient webClient = WebClient.create(vertx, new WebClientOptions()
@@ -309,16 +321,23 @@ WebClient webClient = WebClient.create(vertx, new WebClientOptions()
     .setMaxPoolSize(50));
 
 // CompletableFuture — implements AsyncHttpTransport
-VertxHttpTransport transport = new VertxHttpTransport(webClient);
+ArkVertxTransport transport = new ArkVertxTransport(webClient);
 ```
 
-### Vert.x Mutiny (VertxMutinyTransport)
+### Vert.x (ArkVertxFutureTransport — io.vertx.core.Future)
+
+```java
+// Vert.x Future nativo — implements VertxHttpTransport
+ArkVertxFutureTransport transport = new ArkVertxFutureTransport(webClient);
+```
+
+### Vert.x Mutiny (ArkVertxMutinyTransport)
 
 ```java
 io.vertx.mutiny.ext.web.client.WebClient webClient = WebClient.create(vertx);
 
 // Uni nativo — implements MutinyHttpTransport
-VertxMutinyTransport transport = new VertxMutinyTransport(webClient);
+ArkVertxMutinyTransport transport = new ArkVertxMutinyTransport(webClient);
 ```
 
 ### Custom Transport
@@ -398,24 +417,24 @@ try {
 
 The `ark-spring-boot-starter` auto-configures:
 1. A `JsonSerializer` bean (JacksonSerializer)
-2. A prototype-scoped `ArkClient.SyncBuilder` pre-configured with the serializer
+2. A prototype-scoped `ArkClient.Builder` pre-configured with the serializer
 
 ```java
 @Configuration
 public class HttpClientsConfig {
 
     @Bean
-    public Ark oauthClient(ArkClient.SyncBuilder arkBuilder) {
+    public Ark oauthClient(ArkClient.Builder arkBuilder) {
         return arkBuilder
-            .transport(new NativeHttpTransport(HttpClient.newBuilder().build()))
+            .transport(new ArkJdkHttpTransport(HttpClient.newBuilder().build()))
             .baseUrl("https://oauth.provider.com")
             .build();
     }
 
     @Bean
-    public Ark apiClient(ArkClient.SyncBuilder arkBuilder) {
+    public Ark apiClient(ArkClient.Builder arkBuilder) {
         return arkBuilder
-            .transport(new NativeHttpTransport(
+            .transport(new ArkJdkHttpTransport(
                 HttpClient.newBuilder()
                     .version(HttpClient.Version.HTTP_2)
                     .connectTimeout(Duration.ofSeconds(10))
@@ -457,7 +476,7 @@ public class HttpConfig {
     public MutinyArk apiClient(Vertx vertx, JsonSerializer serializer) {
         return MutinyArkClient.builder()
             .serializer(serializer)
-            .transport(new VertxMutinyTransport(WebClient.create(vertx)))
+            .transport(new ArkVertxMutinyTransport(WebClient.create(vertx)))
             .baseUrl("https://api.example.com")
             .build();
     }
@@ -516,7 +535,8 @@ AbstractArkClient<R>
 ├── ArkClient          → ClientRequest          → ResponseSpec          (T)
 ├── AsyncArkClient     → AsyncClientRequest     → AsyncResponseSpec     (CompletableFuture<T>)
 ├── ReactorArkClient   → ReactorClientRequest   → ReactorResponseSpec   (Mono<T>)
-└── MutinyArkClient    → MutinyClientRequest    → MutinyResponseSpec    (Uni<T>)
+├── MutinyArkClient    → MutinyClientRequest    → MutinyResponseSpec    (Uni<T>)
+└── VertxArkClient     → VertxClientRequest     → VertxResponseSpec     (Future<T>)
 ```
 
 ---
@@ -544,20 +564,24 @@ ark-mutiny:
   xyz.juandiii.ark.mutiny       → MutinyArk, MutinyArkClient
   xyz.juandiii.ark.mutiny.http  → MutinyHttpTransport, MutinyClientRequest, MutinyResponseSpec
 
+ark-vertx:
+  xyz.juandiii.ark.vertx        → VertxArk, VertxArkClient
+  xyz.juandiii.ark.vertx.http   → VertxHttpTransport, VertxClientRequest, VertxResponseSpec
+
 ark-jackson:
   xyz.juandiii.ark              → JacksonSerializer
 
 ark-transport-jdk:
-  xyz.juandiii.ark.transport.jdk            → NativeHttpTransport
+  xyz.juandiii.ark.transport.jdk            → ArkJdkHttpTransport
 
 ark-transport-reactor:
-  xyz.juandiii.ark.transport.reactor        → ReactorNettyTransport
+  xyz.juandiii.ark.transport.reactor        → ArkReactorNettyTransport
 
 ark-transport-vertx:
-  xyz.juandiii.ark.transport.vertx          → VertxHttpTransport
+  xyz.juandiii.ark.transport.vertx          → ArkVertxTransport, ArkVertxFutureTransport
 
 ark-transport-vertx-mutiny:
-  xyz.juandiii.ark.transport.vertx.mutiny   → VertxMutinyTransport
+  xyz.juandiii.ark.transport.vertx.mutiny   → ArkVertxMutinyTransport
 
 ark-spring-boot-starter:
   xyz.juandiii.spring                       → ArkAutoConfiguration
@@ -572,6 +596,7 @@ ark-spring-boot-starter:
 - Spring Boot 4.0+ (for `ark-spring-boot-starter`)
 - Reactor Core (for `ark-reactor`)
 - Reactor Netty (for `ark-transport-reactor`)
+- Vert.x Core (for `ark-vertx`)
 - Vert.x Web Client (for `ark-transport-vertx`)
 - SmallRye Mutiny + Vert.x Mutiny (for `ark-mutiny` + `ark-transport-vertx-mutiny`)
 

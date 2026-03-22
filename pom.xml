@@ -53,9 +53,11 @@
     <module>ark-reactor</module>
     <module>ark-transport-jdk</module>
     <module>ark-transport-reactor</module>
+    <module>ark-vertx</module>
     <module>ark-mutiny</module>
     <module>ark-transport-vertx</module>
     <module>ark-transport-vertx-mutiny</module>
+    <module>ark-proxy-spring</module>
     <module>ark-spring-boot-starter</module>
   </modules>
   <build>

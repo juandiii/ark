@@ -13,11 +13,11 @@ import java.net.URI;
 import java.time.Duration;
 import java.util.*;
 
-public final class VertxMutinyTransport implements MutinyHttpTransport {
+public final class ArkVertxMutinyTransport implements MutinyHttpTransport {
 
     private final WebClient webClient;
 
-    public VertxMutinyTransport(WebClient webClient) {
+    public ArkVertxMutinyTransport(WebClient webClient) {
         Objects.requireNonNull(webClient, "WebClient is required");
         this.webClient = webClient;
     }
