@@ -15,24 +15,7 @@ Ark client = ArkClient.builder()
 User user = client.get("/users/1")
     .accept(MediaType.APPLICATION_JSON)
     .retrieve()
-    .body(new TypeRef<User>() {});
-```
-
-## Modules
-
-```
-ark-core                       Core interfaces and fluent API — zero external dependencies
-ark-async                      Async support with CompletableFuture
-ark-reactor                    Reactive support with Mono/Flux
-ark-mutiny                     Mutiny support with Uni
-ark-vertx                      Vert.x Future support
-ark-jackson                    Jackson-based JsonSerializer implementation
-ark-transport-jdk              ArkJdkHttpTransport — java.net.http.HttpClient (sync + async)
-ark-transport-reactor          ArkReactorNettyTransport — Reactor Netty
-ark-transport-vertx            ArkVertxTransport (CompletableFuture) + ArkVertxFutureTransport (Future)
-ark-transport-vertx-mutiny     ArkVertxMutinyTransport — Vert.x Mutiny WebClient (Uni)
-ark-spring-boot-starter        Spring Boot auto-configuration
-ark-bom                        Bill of Materials for version management
+    .body(User.class);
 ```
 
 ### Maven
@@ -110,59 +93,15 @@ For Spring Boot projects:
 
 Ark provides separate entry points for each execution model. Each uses the same fluent configuration via `AbstractBuilder`.
 
-### Sync
-
 ```java
-Ark client = ArkClient.builder()
-    .serializer(new JacksonSerializer(new ObjectMapper()))
-    .transport(new ArkJdkHttpTransport(HttpClient.newBuilder().build()))
-    .baseUrl("https://api.example.com")
-    .build();
-```
-
-### Async (CompletableFuture)
-
-```java
-AsyncArk asyncClient = AsyncArkClient.builder()
-    .serializer(serializer)
-    .transport(new ArkJdkHttpTransport(HttpClient.newBuilder().build()))
-    .baseUrl("https://api.example.com")
-    .build();
-```
-
-### Reactor (Mono/Flux)
-
-```java
-ReactorArk reactorClient = ReactorArkClient.builder()
-    .serializer(serializer)
-    .transport(new ArkReactorNettyTransport(HttpClient.create()))
-    .baseUrl("https://api.example.com")
-    .build();
-```
-
-### Mutiny (Uni)
-
-```java
-MutinyArk mutinyClient = MutinyArkClient.builder()
-    .serializer(serializer)
-    .transport(new ArkVertxMutinyTransport(WebClient.create(vertx)))
-    .baseUrl("https://api.example.com")
-    .build();
-```
-
-### Vert.x Future
-
-```java
-VertxArk vertxClient = VertxArkClient.builder()
-    .serializer(serializer)
-    .transport(new ArkVertxFutureTransport(WebClient.create(vertx)))
-    .baseUrl("https://api.example.com")
-    .build();
+Ark client          = ArkClient.builder()        .serializer(s).transport(new ArkJdkHttpTransport(httpClient)).baseUrl(url).build();
+AsyncArk async      = AsyncArkClient.builder()   .serializer(s).transport(new ArkJdkHttpTransport(httpClient)).baseUrl(url).build();
+ReactorArk reactor  = ReactorArkClient.builder()  .serializer(s).transport(new ArkReactorNettyTransport(netty)).baseUrl(url).build();
+MutinyArk mutiny    = MutinyArkClient.builder()   .serializer(s).transport(new ArkVertxMutinyTransport(wc)).baseUrl(url).build();
+VertxArk vertx      = VertxArkClient.builder()    .serializer(s).transport(new ArkVertxFutureTransport(wc)).baseUrl(url).build();
 ```
 
 ### Full Configuration
-
-All builders share the same configuration methods:
 
 ```java
 HttpClient httpClient = HttpClient.newBuilder()
@@ -193,78 +132,52 @@ Ark client = ArkClient.builder()
 
 All execution models use the same fluent API. Only the return types differ.
 
-### Sync
+Response extraction supports both `Class<T>` (simple types) and `TypeRef<T>` (generics):
 
 ```java
-User user = client.get("/users/1")
-    .accept(MediaType.APPLICATION_JSON)
-    .retrieve()
-    .body(new TypeRef<User>() {});
+// Class<T> — simple, for non-generic types
+User user = client.get("/users/1").retrieve().body(User.class);
+String html = client.get("/health").retrieve().body(String.class);
 
+// TypeRef<T> — required for generic types
+List<User> users = client.get("/users").retrieve().body(new TypeRef<List<User>>() {});
+```
+
+```java
+// GET
+User user = client.get("/users/1").retrieve().body(User.class);
+
+// GET with query params and generics
 List<User> users = client.get("/users")
-    .queryParam("page", "1")
-    .queryParam("size", "20")
+    .queryParam("page", "1").queryParam("size", "20")
     .retrieve()
     .body(new TypeRef<List<User>>() {});
 
+// POST
 User created = client.post("/users")
     .contentType(MediaType.APPLICATION_JSON)
     .body(new User("Juan", "juan@example.com"))
     .retrieve()
-    .body(new TypeRef<User>() {});
+    .body(User.class);
 
-client.delete("/users/1")
-    .retrieve()
-    .toBodilessEntity();
+// DELETE
+client.delete("/users/1").retrieve().toBodilessEntity();
+
+// Full response (status + headers + body)
+ArkResponse<User> response = client.get("/users/1").retrieve().toEntity(User.class);
+
+// Per-request timeout
+User slow = client.get("/slow-endpoint").timeout(Duration.ofSeconds(120)).retrieve().body(User.class);
 ```
 
-### Async
+Same API across all execution models — only the return type changes:
 
 ```java
-CompletableFuture<User> future = asyncClient.get("/users/1")
-    .accept(MediaType.APPLICATION_JSON)
-    .retrieve()
-    .body(new TypeRef<User>() {});
-```
-
-### Reactor
-
-```java
-Mono<User> mono = reactorClient.get("/users/1")
-    .accept(MediaType.APPLICATION_JSON)
-    .retrieve()
-    .body(new TypeRef<User>() {});
-```
-
-### Mutiny
-
-```java
-Uni<User> uni = mutinyClient.get("/users/1")
-    .accept(MediaType.APPLICATION_JSON)
-    .retrieve()
-    .body(new TypeRef<User>() {});
-```
-
-### Full Response (status + headers + body)
-
-```java
-ArkResponse<User> response = client.get("/users/1")
-    .retrieve()
-    .toEntity(new TypeRef<User>() {});
-
-int status = response.statusCode();
-Map<String, List<String>> headers = response.headers();
-User body = response.body();
-boolean ok = response.isSuccessful(); // 2xx
-```
-
-### Per-Request Timeout
-
-```java
-User user = client.get("/slow-endpoint")
-    .timeout(Duration.ofSeconds(120))
-    .retrieve()
-    .body(new TypeRef<User>() {});
+User user                    = client.get("/users/1").retrieve().body(User.class);         // sync
+CompletableFuture<User> cf   = asyncClient.get("/users/1").retrieve().body(User.class);    // async
+Mono<User> mono              = reactorClient.get("/users/1").retrieve().body(User.class);  // reactor
+Uni<User> uni                = mutinyClient.get("/users/1").retrieve().body(User.class);   // mutiny
+Future<User> future          = vertxClient.get("/users/1").retrieve().body(User.class);    // vertx
 ```
 
 ---
@@ -434,34 +347,14 @@ public class HttpClientsConfig {
     @Bean
     public Ark apiClient(ArkClient.Builder arkBuilder) {
         return arkBuilder
-            .transport(new ArkJdkHttpTransport(
-                HttpClient.newBuilder()
+            .transport(new ArkJdkHttpTransport(HttpClient.newBuilder()
                     .version(HttpClient.Version.HTTP_2)
                     .connectTimeout(Duration.ofSeconds(10))
                     .build()))
             .baseUrl("https://api.myservice.com")
-            .requestInterceptor(request ->
-                request.header("Authorization", "Bearer " + tokenService.getToken()))
+            .requestInterceptor(req ->
+                req.header("Authorization", "Bearer " + tokenService.getToken()))
             .build();
-    }
-}
-```
-
-```java
-@Service
-public class UserService {
-
-    private final Ark apiClient;
-
-    public UserService(@Qualifier("apiClient") Ark apiClient) {
-        this.apiClient = apiClient;
-    }
-
-    public User findById(String id) {
-        return apiClient.get("/users/" + id)
-            .accept(MediaType.APPLICATION_JSON)
-            .retrieve()
-            .body(new TypeRef<User>() {});
     }
 }
 ```
@@ -479,21 +372,6 @@ public class HttpConfig {
             .transport(new ArkVertxMutinyTransport(WebClient.create(vertx)))
             .baseUrl("https://api.example.com")
             .build();
-    }
-}
-
-@Path("/users")
-public class UserResource {
-
-    @Inject MutinyArk client;
-
-    @GET
-    @Path("/{id}")
-    public Uni<User> getUser(@PathParam("id") String id) {
-        return client.get("/users/" + id)
-            .accept(MediaType.APPLICATION_JSON)
-            .retrieve()
-            .body(new TypeRef<User>() {});
     }
 }
 ```
@@ -523,75 +401,9 @@ public class GsonSerializer implements JsonSerializer {
 
 ---
 
-## Architecture
-
-Zero code duplication across execution models via two abstract base classes:
-
-- **`AbstractClientRequest<T>`** — all fluent methods (`accept`, `contentType`, `header`, `queryParam`, `body`, `timeout`, URI building). Each subclass only adds `retrieve()`.
-- **`AbstractArkClient<R>`** — all HTTP methods (`get`, `post`, `put`, `patch`, `delete`). Each subclass only implements `createRequest()`.
-
-```
-AbstractArkClient<R>
-├── ArkClient          → ClientRequest          → ResponseSpec          (T)
-├── AsyncArkClient     → AsyncClientRequest     → AsyncResponseSpec     (CompletableFuture<T>)
-├── ReactorArkClient   → ReactorClientRequest   → ReactorResponseSpec   (Mono<T>)
-├── MutinyArkClient    → MutinyClientRequest    → MutinyResponseSpec    (Uni<T>)
-└── VertxArkClient     → VertxClientRequest     → VertxResponseSpec     (Future<T>)
-```
-
----
-
-## Package Structure
-
-```
-ark-core:
-  xyz.juandiii.ark              → Ark, ArkClient, AbstractArkClient, JsonSerializer, TypeRef
-  xyz.juandiii.ark.http         → AbstractClientRequest, ClientRequest, ResponseSpec,
-                                  HttpTransport, ArkResponse, RawResponse
-  xyz.juandiii.ark.interceptor  → RequestContext, RequestInterceptor, ResponseInterceptor
-  xyz.juandiii.ark.exceptions   → ApiException, ArkException
-  xyz.juandiii.ark.type         → MediaType
-
-ark-async:
-  xyz.juandiii.ark.async        → AsyncArk, AsyncArkClient
-  xyz.juandiii.ark.async.http   → AsyncHttpTransport, AsyncClientRequest, AsyncResponseSpec
-
-ark-reactor:
-  xyz.juandiii.ark.reactor      → ReactorArk, ReactorArkClient
-  xyz.juandiii.ark.reactor.http → ReactorHttpTransport, ReactorClientRequest, ReactorResponseSpec
-
-ark-mutiny:
-  xyz.juandiii.ark.mutiny       → MutinyArk, MutinyArkClient
-  xyz.juandiii.ark.mutiny.http  → MutinyHttpTransport, MutinyClientRequest, MutinyResponseSpec
-
-ark-vertx:
-  xyz.juandiii.ark.vertx        → VertxArk, VertxArkClient
-  xyz.juandiii.ark.vertx.http   → VertxHttpTransport, VertxClientRequest, VertxResponseSpec
-
-ark-jackson:
-  xyz.juandiii.ark              → JacksonSerializer
-
-ark-transport-jdk:
-  xyz.juandiii.ark.transport.jdk            → ArkJdkHttpTransport
-
-ark-transport-reactor:
-  xyz.juandiii.ark.transport.reactor        → ArkReactorNettyTransport
-
-ark-transport-vertx:
-  xyz.juandiii.ark.transport.vertx          → ArkVertxTransport, ArkVertxFutureTransport
-
-ark-transport-vertx-mutiny:
-  xyz.juandiii.ark.transport.vertx.mutiny   → ArkVertxMutinyTransport
-
-ark-spring-boot-starter:
-  xyz.juandiii.spring                       → ArkAutoConfiguration
-```
-
----
-
 ## Requirements
 
-- Java 25+
+- Java 11+
 - Jackson (for `ark-jackson`)
 - Spring Boot 4.0+ (for `ark-spring-boot-starter`)
 - Reactor Core (for `ark-reactor`)
