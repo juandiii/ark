@@ -2,7 +2,7 @@ package xyz.juandiii.ark.transport.jdk;
 
 import xyz.juandiii.ark.exceptions.ApiException;
 import xyz.juandiii.ark.exceptions.ArkException;
-import xyz.juandiii.ark.http.AsyncHttpTransport;
+import xyz.juandiii.ark.async.http.AsyncHttpTransport;
 import xyz.juandiii.ark.http.HttpTransport;
 import xyz.juandiii.ark.http.RawResponse;
 

@@ -1,6 +1,5 @@
 package xyz.juandiii.ark;
 
-import xyz.juandiii.ark.http.AsyncHttpTransport;
 import xyz.juandiii.ark.http.HttpTransport;
 import xyz.juandiii.ark.http.ClientRequest;
 import xyz.juandiii.ark.interceptor.RequestInterceptor;
@@ -10,68 +9,29 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
-public class ArkClient implements Ark {
+public class ArkClient extends AbstractArkClient<ClientRequest> implements Ark {
 
     private final HttpTransport transport;
-    private final JsonSerializer serializer;
-    private final String userAgent;
-    private final String baseUrl;
-    private final List<RequestInterceptor> requestInterceptors;
-    private final List<ResponseInterceptor> responseInterceptors;
 
     private ArkClient(HttpTransport transport, JsonSerializer serializer, String userAgent,
                       String baseUrl,
                       List<RequestInterceptor> requestInterceptors,
                       List<ResponseInterceptor> responseInterceptors) {
+        super(serializer, userAgent, baseUrl, requestInterceptors, responseInterceptors);
         this.transport = transport;
-        this.serializer = serializer;
-        this.userAgent = userAgent;
-        this.baseUrl = baseUrl;
-        this.requestInterceptors = List.copyOf(requestInterceptors);
-        this.responseInterceptors = List.copyOf(responseInterceptors);
-    }
-
-    // ---- Ark interface ----
-
-    @Override
-    public ClientRequest get(String path) {
-        return spec("GET", path);
     }
 
     @Override
-    public ClientRequest post(String path) {
-        return spec("POST", path);
-    }
-
-    @Override
-    public ClientRequest put(String path) {
-        return spec("PUT", path);
-    }
-
-    @Override
-    public ClientRequest patch(String path) {
-        return spec("PATCH", path);
-    }
-
-    @Override
-    public ClientRequest delete(String path) {
-        return spec("DELETE", path);
-    }
-
-    private ClientRequest spec(String method, String path) {
+    protected ClientRequest createRequest(String method, String path) {
         return new ClientRequest(method, baseUrl, path, transport, serializer,
                 requestInterceptors, responseInterceptors)
                 .header("User-Agent", userAgent);
     }
 
-    // ---- Factory methods ----
+    // ---- Factory method ----
 
     public static SyncBuilder sync() {
         return new SyncBuilder();
-    }
-
-    public static AsyncBuilder async() {
-        return new AsyncBuilder();
     }
 
     // ---- Abstract Builder ----
@@ -140,27 +100,6 @@ public class ArkClient implements Ark {
             Objects.requireNonNull(serializer, "serializer must not be null");
             Objects.requireNonNull(transport, "transport must not be null");
             return new ArkClient(transport, serializer, buildUserAgent(),
-                    baseUrl, requestInterceptors, responseInterceptors);
-        }
-    }
-
-    // ---- Async Builder ----
-
-    public static final class AsyncBuilder extends AbstractBuilder<AsyncBuilder> {
-
-        private AsyncHttpTransport transport;
-
-        private AsyncBuilder() {}
-
-        public AsyncBuilder transport(AsyncHttpTransport transport) {
-            this.transport = transport;
-            return this;
-        }
-
-        public AsyncArk build() {
-            Objects.requireNonNull(serializer, "serializer must not be null");
-            Objects.requireNonNull(transport, "transport must not be null");
-            return new AsyncArkClient(transport, serializer, buildUserAgent(),
                     baseUrl, requestInterceptors, responseInterceptors);
         }
     }

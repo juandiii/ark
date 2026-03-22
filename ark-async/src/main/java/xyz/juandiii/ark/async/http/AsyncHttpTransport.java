@@ -1,4 +1,6 @@
-package xyz.juandiii.ark.http;
+package xyz.juandiii.ark.async.http;
+
+import xyz.juandiii.ark.http.RawResponse;
 
 import java.net.URI;
 import java.time.Duration;

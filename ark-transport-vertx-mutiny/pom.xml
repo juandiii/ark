@@ -7,20 +7,19 @@
     <artifactId>ark</artifactId>
     <version>1.0-SNAPSHOT</version>
   </parent>
-  <artifactId>ark-transport-jdk</artifactId>
-  <name>ark-transport-jdk</name>
+  <artifactId>ark-transport-vertx-mutiny</artifactId>
+  <name>ark-transport-vertx-mutiny</name>
 
   <dependencies>
     <dependency>
       <groupId>xyz.juandiii</groupId>
-      <artifactId>ark-core</artifactId>
+      <artifactId>ark-mutiny</artifactId>
       <version>${project.version}</version>
     </dependency>
 
     <dependency>
-      <groupId>xyz.juandiii</groupId>
-      <artifactId>ark-async</artifactId>
-      <version>${project.version}</version>
+      <groupId>io.smallrye.reactive</groupId>
+      <artifactId>smallrye-mutiny-vertx-web-client</artifactId>
     </dependency>
 
     <dependency>

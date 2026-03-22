@@ -17,12 +17,42 @@
             </dependency>
             <dependency>
                 <groupId>xyz.juandiii</groupId>
+                <artifactId>ark-async</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>xyz.juandiii</groupId>
                 <artifactId>ark-jackson</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
                 <groupId>xyz.juandiii</groupId>
+                <artifactId>ark-reactor</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>xyz.juandiii</groupId>
                 <artifactId>ark-transport-jdk</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>xyz.juandiii</groupId>
+                <artifactId>ark-transport-reactor</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>xyz.juandiii</groupId>
+                <artifactId>ark-mutiny</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>xyz.juandiii</groupId>
+                <artifactId>ark-transport-vertx</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>xyz.juandiii</groupId>
+                <artifactId>ark-transport-vertx-mutiny</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>

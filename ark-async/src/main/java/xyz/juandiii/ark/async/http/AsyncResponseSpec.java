@@ -1,7 +1,9 @@
-package xyz.juandiii.ark.http;
+package xyz.juandiii.ark.async.http;
 
 import xyz.juandiii.ark.JsonSerializer;
 import xyz.juandiii.ark.TypeRef;
+import xyz.juandiii.ark.http.ArkResponse;
+import xyz.juandiii.ark.http.RawResponse;
 
 import java.util.concurrent.CompletableFuture;
 
@@ -10,7 +12,7 @@ public final class AsyncResponseSpec {
     private final CompletableFuture<RawResponse> future;
     private final JsonSerializer serializer;
 
-    AsyncResponseSpec(CompletableFuture<RawResponse> future, JsonSerializer serializer) {
+    public AsyncResponseSpec(CompletableFuture<RawResponse> future, JsonSerializer serializer) {
         this.future = future;
         this.serializer = serializer;
     }

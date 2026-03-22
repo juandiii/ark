@@ -7,20 +7,19 @@
     <artifactId>ark</artifactId>
     <version>1.0-SNAPSHOT</version>
   </parent>
-  <artifactId>ark-transport-jdk</artifactId>
-  <name>ark-transport-jdk</name>
+  <artifactId>ark-transport-reactor</artifactId>
+  <name>ark-transport-reactor</name>
 
   <dependencies>
     <dependency>
       <groupId>xyz.juandiii</groupId>
-      <artifactId>ark-core</artifactId>
+      <artifactId>ark-reactor</artifactId>
       <version>${project.version}</version>
     </dependency>
 
     <dependency>
-      <groupId>xyz.juandiii</groupId>
-      <artifactId>ark-async</artifactId>
-      <version>${project.version}</version>
+      <groupId>io.projectreactor.netty</groupId>
+      <artifactId>reactor-netty-http</artifactId>
     </dependency>
 
     <dependency>

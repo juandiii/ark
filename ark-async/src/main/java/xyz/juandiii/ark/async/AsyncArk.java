@@ -1,6 +1,6 @@
-package xyz.juandiii.ark;
+package xyz.juandiii.ark.async;
 
-import xyz.juandiii.ark.http.AsyncClientRequest;
+import xyz.juandiii.ark.async.http.AsyncClientRequest;
 
 public interface AsyncArk {
 
