@@ -1,6 +1,8 @@
-# Ark
+# Ark 🛳️
 
-A lightweight, fluent HTTP client library for Java 25+ with pluggable transport and serialization. Ark provides a clean three-phase API: **method → configure → retrieve → extract**, with fully separated sync, async, reactive, and Mutiny interfaces.
+A lightweight, fluent HTTP client library for Java 11+ with pluggable transport and serialization. 
+
+Ark provides a clean three-phase API: **method → configure → retrieve → extract**, with fully separated sync, async, and reactive.
 
 ## Quick Start
 
@@ -94,11 +96,30 @@ For Spring Boot projects:
 Ark provides separate entry points for each execution model. Each uses the same fluent configuration via `AbstractBuilder`.
 
 ```java
-Ark client          = ArkClient.builder()        .serializer(s).transport(new ArkJdkHttpTransport(httpClient)).baseUrl(url).build();
-AsyncArk async      = AsyncArkClient.builder()   .serializer(s).transport(new ArkJdkHttpTransport(httpClient)).baseUrl(url).build();
-ReactorArk reactor  = ReactorArkClient.builder()  .serializer(s).transport(new ArkReactorNettyTransport(netty)).baseUrl(url).build();
-MutinyArk mutiny    = MutinyArkClient.builder()   .serializer(s).transport(new ArkVertxMutinyTransport(wc)).baseUrl(url).build();
-VertxArk vertx      = VertxArkClient.builder()    .serializer(s).transport(new ArkVertxFutureTransport(wc)).baseUrl(url).build();
+Ark client          = ArkClient.builder()
+                        .serializer(s)
+                        .transport(new ArkJdkHttpTransport(httpClient))
+                        .baseUrl(url)
+                        .build();
+AsyncArk async      = AsyncArkClient.builder()
+                        .serializer(s)
+                        .transport(new ArkJdkHttpTransport(httpClient))
+                        .baseUrl(url)
+                        .build();
+ReactorArk reactor  = ReactorArkClient.builder()
+                        .serializer(s)
+                        .transport(new ArkReactorNettyTransport(netty))
+                        .baseUrl(url)
+                        .build();
+MutinyArk mutiny    = MutinyArkClient.builder()   .serializer(s)
+                        .transport(new ArkVertxMutinyTransport(wc))
+                        .baseUrl(url)
+                        .build();
+VertxArk vertx      = VertxArkClient.builder()
+                        .serializer(s)
+                        .transport(new ArkVertxFutureTransport(wc))
+                        .baseUrl(url)
+                        .build();
 ```
 
 ### Full Configuration
@@ -242,6 +263,23 @@ ArkVertxTransport transport = new ArkVertxTransport(webClient);
 ```java
 // Vert.x Future nativo — implements VertxHttpTransport
 ArkVertxFutureTransport transport = new ArkVertxFutureTransport(webClient);
+```
+
+### Apache HttpClient 5 (ArkApacheTransport)
+
+```java
+CloseableHttpClient httpClient = HttpClients.custom()
+    .setConnectionManager(PoolingHttpClientConnectionManagerBuilder.create()
+        .setMaxConnTotal(100)
+        .setMaxConnPerRoute(20)
+        .build())
+    .setDefaultRequestConfig(RequestConfig.custom()
+        .setResponseTimeout(Timeout.ofSeconds(30))
+        .build())
+    .build();
+
+// Implements HttpTransport (sync only)
+ArkApacheTransport transport = new ArkApacheTransport(httpClient);
 ```
 
 ### Vert.x Mutiny (ArkVertxMutinyTransport)
@@ -409,6 +447,7 @@ public class GsonSerializer implements JsonSerializer {
 - Reactor Core (for `ark-reactor`)
 - Reactor Netty (for `ark-transport-reactor`)
 - Vert.x Core (for `ark-vertx`)
+- Apache HttpClient 5 (for `ark-transport-apache`)
 - Vert.x Web Client (for `ark-transport-vertx`)
 - SmallRye Mutiny + Vert.x Mutiny (for `ark-mutiny` + `ark-transport-vertx-mutiny`)
 
