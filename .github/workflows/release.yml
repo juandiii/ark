@@ -59,6 +59,16 @@ jobs:
           NEXUS_USERNAME: ${{ secrets.NEXUS_USERNAME }}
           NEXUS_PASSWORD: ${{ secrets.NEXUS_PASSWORD }}
 
+      - name: Update README version on main
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git checkout main
+          sed -i "s|<version>.*</version> <!-- ark-bom -->|<version>${{ steps.version.outputs.RELEASE }}</version> <!-- ark-bom -->|g" README.md docs/design.md
+          git add README.md docs/design.md
+          git diff --cached --quiet || git commit -m "docs: update version to ${{ steps.version.outputs.RELEASE }}"
+          git push origin main
+
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
