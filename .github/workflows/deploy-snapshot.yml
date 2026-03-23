@@ -43,6 +43,7 @@ jobs:
         run: ./mvnw clean deploy -DskipTests
         env:
           NEXUS_MIRROR_URL: ${{ secrets.NEXUS_MIRROR_URL }}
+          NEXUS_MIRROR_SNAPSHOT_URL: ${{ secrets.NEXUS_MIRROR_SNAPSHOT_URL }}
           NEXUS_RELEASES_URL: ${{ secrets.NEXUS_RELEASES_URL }}
           NEXUS_SNAPSHOTS_URL: ${{ secrets.NEXUS_SNAPSHOTS_URL }}
           NEXUS_USERNAME: ${{ secrets.NEXUS_USERNAME }}

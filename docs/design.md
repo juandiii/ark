@@ -1,0 +1,148 @@
+# Design
+
+## Design Principles
+
+- **Do not own the HTTP stack**
+- **Keep transport explicit**
+- **Keep serialization replaceable**
+- **Keep execution models separate**
+- **Keep the fluent API consistent**
+- **Prefer composition over framework lock-in**
+
+---
+
+## Architecture Overview
+
+Ark is built around a simple flow:
+
+**method -> configure -> retrieve -> extract**
+
+```java
+Ark client = ArkClient.builder()
+    .serializer(new JacksonSerializer(new ObjectMapper()))
+    .transport(new ArkJdkHttpTransport(HttpClient.newBuilder().build()))
+    .baseUrl("https://api.example.com")
+    .build();
+
+User user = client.get("/users/1")
+    .accept(MediaType.APPLICATION_JSON)
+    .retrieve()
+    .body(User.class);
+```
+
+---
+
+## Supported Execution Models
+
+Ark provides separate entry points for each execution model while preserving the same fluent style.
+
+| Execution Model | Client Type | Return Style |
+|---|---|---|
+| Sync | `ArkClient` | direct value |
+| Async | `AsyncArkClient` | `CompletableFuture<T>` |
+| Reactor | `ReactorArkClient` | `Mono<T>` |
+| Mutiny | `MutinyArkClient` | `Uni<T>` |
+| Vert.x | `VertxArkClient` | `Future<T>` |
+
+This means the request-building experience stays familiar, while the result type matches your application model.
+
+---
+
+## Modules
+
+Import the BOM first:
+
+```xml
+<dependencyManagement>
+    <dependencies>
+        <dependency>
+            <groupId>xyz.juandiii</groupId>
+            <artifactId>ark-bom</artifactId>
+            <version>1.0-SNAPSHOT</version>
+            <type>pom</type>
+            <scope>import</scope>
+        </dependency>
+    </dependencies>
+</dependencyManagement>
+```
+
+Then choose only the modules you need.
+
+### Core + Jackson + JDK transport
+
+```xml
+<dependency>
+    <groupId>xyz.juandiii</groupId>
+    <artifactId>ark-core</artifactId>
+</dependency>
+
+<dependency>
+    <groupId>xyz.juandiii</groupId>
+    <artifactId>ark-jackson</artifactId>
+</dependency>
+
+<dependency>
+    <groupId>xyz.juandiii</groupId>
+    <artifactId>ark-transport-jdk</artifactId>
+</dependency>
+```
+
+### Async support
+
+```xml
+<dependency>
+    <groupId>xyz.juandiii</groupId>
+    <artifactId>ark-async</artifactId>
+</dependency>
+```
+
+### Reactor support
+
+```xml
+<dependency>
+    <groupId>xyz.juandiii</groupId>
+    <artifactId>ark-reactor</artifactId>
+</dependency>
+
+<dependency>
+    <groupId>xyz.juandiii</groupId>
+    <artifactId>ark-transport-reactor</artifactId>
+</dependency>
+```
+
+### Mutiny support
+
+```xml
+<dependency>
+    <groupId>xyz.juandiii</groupId>
+    <artifactId>ark-mutiny</artifactId>
+</dependency>
+
+<dependency>
+    <groupId>xyz.juandiii</groupId>
+    <artifactId>ark-transport-vertx-mutiny</artifactId>
+</dependency>
+```
+
+### Spring Boot starter
+
+```xml
+<dependency>
+    <groupId>xyz.juandiii</groupId>
+    <artifactId>ark-spring-boot-starter</artifactId>
+</dependency>
+```
+
+---
+
+## Requirements
+
+- Java 17+
+- Jackson for `ark-jackson`
+- Spring Boot 4.0+ for `ark-spring-boot-starter`
+- Reactor Core for `ark-reactor`
+- Reactor Netty for `ark-transport-reactor`
+- Vert.x Core for `ark-vertx`
+- Vert.x Web Client for Vert.x transports
+- SmallRye Mutiny + Vert.x Mutiny for `ark-mutiny`
+- Apache HttpClient 5 for `ark-transport-apache`
