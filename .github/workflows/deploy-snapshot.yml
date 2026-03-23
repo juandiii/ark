@@ -1,0 +1,26 @@
+name: Deploy Snapshot
+
+on:
+  push:
+    branches: [develop]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 25
+          cache: maven
+
+      - name: Deploy SNAPSHOT to Nexus
+        run: ./mvnw clean deploy -DskipTests
+        env:
+          NEXUS_MIRROR_URL: ${{ secrets.NEXUS_MIRROR_URL }}
+          NEXUS_RELEASES_URL: ${{ secrets.NEXUS_RELEASES_URL }}
+          NEXUS_SNAPSHOTS_URL: ${{ secrets.NEXUS_SNAPSHOTS_URL }}
+          NEXUS_USERNAME: ${{ secrets.NEXUS_USERNAME }}
+          NEXUS_PASSWORD: ${{ secrets.NEXUS_PASSWORD }}
