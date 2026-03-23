@@ -16,7 +16,7 @@ jobs:
         with:
           ref: main
           fetch-depth: 0
-          token: ${{ secrets.GH_TOKEN }}
+          token: ${{ secrets.GITHUB_TOKEN }}
 
       - uses: actions/setup-java@v4
         with:
@@ -78,6 +78,8 @@ jobs:
         with:
           tag_name: v${{ steps.version.outputs.RELEASE }}
           generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Bump develop to next SNAPSHOT
         run: |
