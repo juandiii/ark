@@ -1,0 +1,86 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GH_TOKEN }}
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 25
+          cache: maven
+
+      - name: Extract version and calculate next SNAPSHOT
+        id: version
+        run: |
+          RELEASE_VERSION=${GITHUB_REF_NAME#v}
+          echo "RELEASE=$RELEASE_VERSION" >> $GITHUB_OUTPUT
+
+          IFS='.' read -r MAJOR MINOR PATCH <<< "$RELEASE_VERSION"
+
+          # Analyze commits since last tag to determine bump type
+          PREV_TAG=$(git tag --sort=-v:refname | grep '^v' | sed -n '2p')
+          if [ -z "$PREV_TAG" ]; then
+            COMMITS=$(git log --oneline)
+          else
+            COMMITS=$(git log --oneline "$PREV_TAG"..HEAD)
+          fi
+
+          if echo "$COMMITS" | grep -qiE '(BREAKING CHANGE|^[a-z]+!:)'; then
+            NEXT_VERSION="$((MAJOR + 1)).0.0-SNAPSHOT"
+          elif echo "$COMMITS" | grep -qiE '^[a-f0-9]+ feat'; then
+            NEXT_VERSION="$MAJOR.$((MINOR + 1)).0-SNAPSHOT"
+          else
+            NEXT_VERSION="$MAJOR.$MINOR.$((PATCH + 1))-SNAPSHOT"
+          fi
+
+          echo "NEXT=$NEXT_VERSION" >> $GITHUB_OUTPUT
+
+      - name: Set release version
+        run: ./mvnw versions:set -DnewVersion=${{ steps.version.outputs.RELEASE }} -DgenerateBackupPoms=false
+
+      - name: Deploy release to Nexus
+        run: ./mvnw clean deploy -DskipTests
+        env:
+          NEXUS_MIRROR_URL: ${{ secrets.NEXUS_MIRROR_URL }}
+          NEXUS_MIRROR_SNAPSHOT_URL: ${{ secrets.NEXUS_MIRROR_SNAPSHOT_URL }}
+          NEXUS_RELEASES_URL: ${{ secrets.NEXUS_RELEASES_URL }}
+          NEXUS_SNAPSHOTS_URL: ${{ secrets.NEXUS_SNAPSHOTS_URL }}
+          NEXUS_USERNAME: ${{ secrets.NEXUS_USERNAME }}
+          NEXUS_PASSWORD: ${{ secrets.NEXUS_PASSWORD }}
+
+      - name: Update README version on main
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git checkout main
+          sed -i "s|<version>.*</version> <!-- ark-bom -->|<version>${{ steps.version.outputs.RELEASE }}</version> <!-- ark-bom -->|g" README.md docs/design.md
+          git add README.md docs/design.md
+          git diff --cached --quiet || git commit -m "docs: update version to ${{ steps.version.outputs.RELEASE }}"
+          git push origin main
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          generate_release_notes: true
+
+      - name: Bump develop to next SNAPSHOT
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git checkout develop
+          git pull origin develop
+          ./mvnw versions:set -DnewVersion=${{ steps.version.outputs.NEXT }} -DgenerateBackupPoms=false
+          git add -A
+          git commit -m "chore: bump version to ${{ steps.version.outputs.NEXT }}"
+          git push origin develop
