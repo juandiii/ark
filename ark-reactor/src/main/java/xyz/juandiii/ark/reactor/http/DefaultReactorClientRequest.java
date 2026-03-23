@@ -9,6 +9,11 @@ import xyz.juandiii.ark.interceptor.ResponseInterceptor;
 
 import java.util.List;
 
+/**
+ * Default implementation of {@link ReactorClientRequest}.
+ *
+ * @author Juan Diego Lopez V.
+ */
 public final class DefaultReactorClientRequest extends AbstractClientRequest<DefaultReactorClientRequest>
         implements ReactorClientRequest {
 

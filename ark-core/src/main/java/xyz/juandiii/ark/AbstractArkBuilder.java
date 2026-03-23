@@ -6,6 +6,11 @@ import xyz.juandiii.ark.interceptor.ResponseInterceptor;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * CRTP base builder shared across all execution models.
+ *
+ * @author Juan Diego Lopez V.
+ */
 @SuppressWarnings("unchecked")
 public abstract class AbstractArkBuilder<B extends AbstractArkBuilder<B>> {
 

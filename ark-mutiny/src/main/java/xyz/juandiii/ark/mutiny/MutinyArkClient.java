@@ -11,6 +11,11 @@ import xyz.juandiii.ark.interceptor.ResponseInterceptor;
 import java.util.List;
 import java.util.Objects;
 
+/**
+ * Default Mutiny implementation of {@link MutinyArk}.
+ *
+ * @author Juan Diego Lopez V.
+ */
 public class MutinyArkClient extends AbstractArkClient<DefaultMutinyClientRequest> implements MutinyArk {
 
     private final MutinyHttpTransport transport;

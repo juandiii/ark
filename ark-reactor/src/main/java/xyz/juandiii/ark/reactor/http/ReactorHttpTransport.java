@@ -7,6 +7,11 @@ import java.net.URI;
 import java.time.Duration;
 import java.util.Map;
 
+/**
+ * Functional interface for Reactor-based HTTP transport.
+ *
+ * @author Juan Diego Lopez V.
+ */
 @FunctionalInterface
 public interface ReactorHttpTransport {
 

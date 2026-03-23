@@ -9,6 +9,11 @@ import xyz.juandiii.ark.interceptor.ResponseInterceptor;
 
 import java.util.List;
 
+/**
+ * Default implementation of {@link VertxClientRequest}.
+ *
+ * @author Juan Diego Lopez V.
+ */
 public final class DefaultVertxClientRequest extends AbstractClientRequest<DefaultVertxClientRequest>
         implements VertxClientRequest {
 

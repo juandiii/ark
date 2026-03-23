@@ -3,6 +3,11 @@ package xyz.juandiii.ark.http;
 import xyz.juandiii.ark.JsonSerializer;
 import xyz.juandiii.ark.TypeRef;
 
+/**
+ * Default implementation of {@link ClientResponse}.
+ *
+ * @author Juan Diego Lopez V.
+ */
 public final class DefaultClientResponse implements ClientResponse {
 
     private final RawResponse raw;

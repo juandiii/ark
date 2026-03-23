@@ -7,6 +7,11 @@ import xyz.juandiii.ark.http.RawResponse;
 
 import java.util.concurrent.CompletableFuture;
 
+/**
+ * Default implementation of {@link AsyncClientResponse}.
+ *
+ * @author Juan Diego Lopez V.
+ */
 public final class DefaultAsyncClientResponse implements AsyncClientResponse {
 
     private final CompletableFuture<RawResponse> future;

@@ -4,6 +4,11 @@ import reactor.core.publisher.Mono;
 import xyz.juandiii.ark.TypeRef;
 import xyz.juandiii.ark.http.ArkResponse;
 
+/**
+ * Interface for reactive response extraction.
+ *
+ * @author Juan Diego Lopez V.
+ */
 public interface ReactorClientResponse {
 
     <T> Mono<T> body(TypeRef<T> type);

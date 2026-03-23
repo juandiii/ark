@@ -4,6 +4,11 @@ import io.vertx.core.Future;
 import xyz.juandiii.ark.TypeRef;
 import xyz.juandiii.ark.http.ArkResponse;
 
+/**
+ * Interface for Vert.x response extraction.
+ *
+ * @author Juan Diego Lopez V.
+ */
 public interface VertxClientResponse {
 
     <T> Future<T> body(TypeRef<T> type);

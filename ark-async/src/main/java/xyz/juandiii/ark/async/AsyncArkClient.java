@@ -11,6 +11,11 @@ import xyz.juandiii.ark.interceptor.ResponseInterceptor;
 import java.util.List;
 import java.util.Objects;
 
+/**
+ * Default async implementation of {@link AsyncArk}.
+ *
+ * @author Juan Diego Lopez V.
+ */
 public class AsyncArkClient extends AbstractArkClient<DefaultAsyncClientRequest> implements AsyncArk {
 
     private final AsyncHttpTransport transport;

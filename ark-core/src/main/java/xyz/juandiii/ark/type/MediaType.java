@@ -1,5 +1,10 @@
 package xyz.juandiii.ark.type;
 
+/**
+ * Constants for common HTTP media types.
+ *
+ * @author Juan Diego Lopez V.
+ */
 public final class MediaType {
 
     public static final String APPLICATION_JSON = "application/json";

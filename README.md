@@ -1,6 +1,6 @@
 # Ark 🛳️
 
-A lightweight, fluent HTTP client library for Java 11+ with pluggable transport and serialization. 
+A lightweight, fluent HTTP client library for Java 17+ with pluggable transport and serialization. 
 
 Ark provides a clean three-phase API: **method → configure → retrieve → extract**, with fully separated sync, async, and reactive.
 
@@ -441,7 +441,7 @@ public class GsonSerializer implements JsonSerializer {
 
 ## Requirements
 
-- Java 11+
+- Java 17+
 - Jackson (for `ark-jackson`)
 - Spring Boot 4.0+ (for `ark-spring-boot-starter`)
 - Reactor Core (for `ark-reactor`)

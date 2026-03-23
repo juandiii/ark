@@ -7,6 +7,11 @@ import xyz.juandiii.ark.http.ClientRequest;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 
+/**
+ * Dispatches request execution based on method return type.
+ *
+ * @author Juan Diego Lopez V.
+ */
 final class ReturnTypeHandler {
 
     Object handle(ClientRequest request, Type returnType) {

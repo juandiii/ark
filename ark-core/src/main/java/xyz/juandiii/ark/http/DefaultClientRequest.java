@@ -6,6 +6,11 @@ import xyz.juandiii.ark.interceptor.ResponseInterceptor;
 
 import java.util.List;
 
+/**
+ * Default implementation of {@link ClientRequest}.
+ *
+ * @author Juan Diego Lopez V.
+ */
 public final class DefaultClientRequest extends AbstractClientRequest<DefaultClientRequest> implements ClientRequest {
 
     private final HttpTransport transport;

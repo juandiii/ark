@@ -1,5 +1,10 @@
 package xyz.juandiii.ark.exceptions;
 
+/**
+ * Exception thrown for HTTP error responses (status >= 400).
+ *
+ * @author Juan Diego Lopez V.
+ */
 public class ApiException extends RuntimeException {
 
     private final int statusCode;

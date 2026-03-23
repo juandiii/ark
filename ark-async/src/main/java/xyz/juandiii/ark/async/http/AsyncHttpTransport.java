@@ -7,6 +7,11 @@ import java.time.Duration;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
+/**
+ * Functional interface for asynchronous HTTP transport.
+ *
+ * @author Juan Diego Lopez V.
+ */
 @FunctionalInterface
 public interface AsyncHttpTransport {
 

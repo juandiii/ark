@@ -2,6 +2,11 @@ package xyz.juandiii.ark.http;
 
 import xyz.juandiii.ark.TypeRef;
 
+/**
+ * Interface for sync response extraction.
+ *
+ * @author Juan Diego Lopez V.
+ */
 public interface ClientResponse {
 
     <T> T body(TypeRef<T> type);

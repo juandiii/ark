@@ -4,6 +4,11 @@ import xyz.juandiii.ark.interceptor.RequestContext;
 
 import java.time.Duration;
 
+/**
+ * Interface for reactive request configuration and execution.
+ *
+ * @author Juan Diego Lopez V.
+ */
 public interface ReactorClientRequest extends RequestContext {
 
     ReactorClientRequest accept(String mediaType);

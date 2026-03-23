@@ -11,6 +11,11 @@ import xyz.juandiii.ark.interceptor.ResponseInterceptor;
 import java.util.List;
 import java.util.Objects;
 
+/**
+ * Default Vert.x implementation of {@link VertxArk}.
+ *
+ * @author Juan Diego Lopez V.
+ */
 public class VertxArkClient extends AbstractArkClient<DefaultVertxClientRequest> implements VertxArk {
 
     private final VertxHttpTransport transport;
@@ -48,7 +53,9 @@ public class VertxArkClient extends AbstractArkClient<DefaultVertxClientRequest>
         }
 
         public VertxArk build() {
-            Objects.requireNonNull(serializer, "serializer must not be null");
+            if (serializer == null) {
+                serializer = new VertxJsonSerializer();
+            }
             Objects.requireNonNull(transport, "transport must not be null");
             return new VertxArkClient(transport, serializer, buildUserAgent(),
                     baseUrl, requestInterceptors, responseInterceptors);

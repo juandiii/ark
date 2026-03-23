@@ -9,6 +9,11 @@ import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 
+/**
+ * Dynamic proxy factory for creating HTTP clients from @HttpExchange annotated interfaces.
+ *
+ * @author Juan Diego Lopez V.
+ */
 public final class ArkProxy {
 
     private ArkProxy() {}

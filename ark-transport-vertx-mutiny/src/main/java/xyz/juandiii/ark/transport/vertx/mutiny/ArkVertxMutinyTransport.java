@@ -13,6 +13,11 @@ import java.net.URI;
 import java.time.Duration;
 import java.util.*;
 
+/**
+ * HTTP transport bridge using Vert.x Mutiny WebClient.
+ *
+ * @author Juan Diego Lopez V.
+ */
 public final class ArkVertxMutinyTransport implements MutinyHttpTransport {
 
     private final WebClient webClient;

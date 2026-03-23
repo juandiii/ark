@@ -23,6 +23,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
+/**
+ * HTTP transport bridge using Apache HttpClient 5.
+ *
+ * @author Juan Diego Lopez V.
+ */
 public final class ArkApacheTransport implements HttpTransport {
 
     private final CloseableHttpClient httpClient;

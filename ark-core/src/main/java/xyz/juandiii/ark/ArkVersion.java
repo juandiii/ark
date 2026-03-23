@@ -5,6 +5,11 @@ import java.io.InputStream;
 import java.util.Properties;
 import java.util.logging.Logger;
 
+/**
+ * Provides version information resolved from build properties.
+ *
+ * @author Juan Diego Lopez V.
+ */
 public final class ArkVersion {
 
     private static final Logger LOG = Logger.getLogger(ArkVersion.class.getName());

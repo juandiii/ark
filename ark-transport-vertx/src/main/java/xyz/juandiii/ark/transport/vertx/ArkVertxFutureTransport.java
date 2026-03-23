@@ -17,6 +17,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
+/**
+ * HTTP transport bridge using Vert.x WebClient with Future.
+ *
+ * @author Juan Diego Lopez V.
+ */
 public final class ArkVertxFutureTransport implements VertxHttpTransport {
 
     private final WebClient webClient;

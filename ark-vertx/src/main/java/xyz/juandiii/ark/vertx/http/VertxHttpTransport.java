@@ -7,6 +7,11 @@ import java.net.URI;
 import java.time.Duration;
 import java.util.Map;
 
+/**
+ * Functional interface for Vert.x Future-based HTTP transport.
+ *
+ * @author Juan Diego Lopez V.
+ */
 @FunctionalInterface
 public interface VertxHttpTransport {
 

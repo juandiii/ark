@@ -6,6 +6,11 @@ import xyz.juandiii.ark.TypeRef;
 import xyz.juandiii.ark.http.ArkResponse;
 import xyz.juandiii.ark.http.RawResponse;
 
+/**
+ * Default implementation of {@link ReactorClientResponse}.
+ *
+ * @author Juan Diego Lopez V.
+ */
 public final class DefaultReactorClientResponse implements ReactorClientResponse {
 
     private final Mono<RawResponse> mono;

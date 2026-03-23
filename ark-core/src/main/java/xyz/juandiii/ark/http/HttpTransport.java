@@ -4,6 +4,11 @@ import java.net.URI;
 import java.time.Duration;
 import java.util.Map;
 
+/**
+ * Functional interface for synchronous HTTP transport.
+ *
+ * @author Juan Diego Lopez V.
+ */
 @FunctionalInterface
 public interface HttpTransport {
 

@@ -13,6 +13,11 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
 import java.util.regex.Pattern;
 
+/**
+ * Resolves HTTP method and path from Spring @HttpExchange annotations.
+ *
+ * @author Juan Diego Lopez V.
+ */
 final class AnnotationResolver {
 
     private static final Pattern UNRESOLVED_PLACEHOLDER = Pattern.compile("\\{[^}]+}");

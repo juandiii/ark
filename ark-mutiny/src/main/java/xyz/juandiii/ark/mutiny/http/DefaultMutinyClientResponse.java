@@ -6,6 +6,11 @@ import xyz.juandiii.ark.TypeRef;
 import xyz.juandiii.ark.http.ArkResponse;
 import xyz.juandiii.ark.http.RawResponse;
 
+/**
+ * Default implementation of {@link MutinyClientResponse}.
+ *
+ * @author Juan Diego Lopez V.
+ */
 public final class DefaultMutinyClientResponse implements MutinyClientResponse {
 
     private final Uni<RawResponse> uni;

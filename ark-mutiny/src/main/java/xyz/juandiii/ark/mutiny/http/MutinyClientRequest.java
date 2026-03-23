@@ -4,6 +4,11 @@ import xyz.juandiii.ark.interceptor.RequestContext;
 
 import java.time.Duration;
 
+/**
+ * Interface for Mutiny request configuration and execution.
+ *
+ * @author Juan Diego Lopez V.
+ */
 public interface MutinyClientRequest extends RequestContext {
 
     MutinyClientRequest accept(String mediaType);

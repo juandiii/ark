@@ -8,6 +8,11 @@ import xyz.juandiii.ark.interceptor.ResponseInterceptor;
 import java.util.List;
 import java.util.Objects;
 
+/**
+ * Default sync implementation of {@link Ark} with builder pattern.
+ *
+ * @author Juan Diego Lopez V.
+ */
 public class ArkClient extends AbstractArkClient<DefaultClientRequest> implements Ark {
 
     private final HttpTransport transport;

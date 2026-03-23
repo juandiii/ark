@@ -3,6 +3,11 @@ package xyz.juandiii.ark;
 import tools.jackson.databind.ObjectMapper;
 import xyz.juandiii.ark.exceptions.ArkException;
 
+/**
+ * JSON serializer implementation using Jackson ObjectMapper.
+ *
+ * @author Juan Diego Lopez V.
+ */
 public class JacksonSerializer implements JsonSerializer {
 
     private final ObjectMapper objectMapper;

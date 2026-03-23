@@ -6,6 +6,11 @@ import xyz.juandiii.ark.TypeRef;
 import xyz.juandiii.ark.http.ArkResponse;
 import xyz.juandiii.ark.http.RawResponse;
 
+/**
+ * Default implementation of {@link VertxClientResponse}.
+ *
+ * @author Juan Diego Lopez V.
+ */
 public final class DefaultVertxClientResponse implements VertxClientResponse {
 
     private final Future<RawResponse> future;

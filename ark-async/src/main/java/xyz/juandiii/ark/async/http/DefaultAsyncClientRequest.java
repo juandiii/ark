@@ -9,6 +9,11 @@ import xyz.juandiii.ark.interceptor.ResponseInterceptor;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
+/**
+ * Default implementation of {@link AsyncClientRequest}.
+ *
+ * @author Juan Diego Lopez V.
+ */
 public final class DefaultAsyncClientRequest extends AbstractClientRequest<DefaultAsyncClientRequest> implements AsyncClientRequest {
 
     private final AsyncHttpTransport transport;

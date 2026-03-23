@@ -18,6 +18,11 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.Executor;
 
+/**
+ * HTTP transport bridge using Java's native HttpClient (sync + async).
+ *
+ * @author Juan Diego Lopez V.
+ */
 public final class ArkJdkHttpTransport implements HttpTransport, AsyncHttpTransport {
 
     private final HttpClient httpClient;

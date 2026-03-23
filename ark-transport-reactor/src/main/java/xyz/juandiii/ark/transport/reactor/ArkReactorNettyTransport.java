@@ -16,6 +16,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
+/**
+ * HTTP transport bridge using Reactor Netty HttpClient.
+ *
+ * @author Juan Diego Lopez V.
+ */
 public final class ArkReactorNettyTransport implements ReactorHttpTransport {
 
     private final HttpClient httpClient;

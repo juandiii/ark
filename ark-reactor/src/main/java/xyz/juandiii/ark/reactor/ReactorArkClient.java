@@ -11,6 +11,11 @@ import xyz.juandiii.ark.interceptor.ResponseInterceptor;
 import java.util.List;
 import java.util.Objects;
 
+/**
+ * Default reactive implementation of {@link ReactorArk}.
+ *
+ * @author Juan Diego Lopez V.
+ */
 public class ReactorArkClient extends AbstractArkClient<DefaultReactorClientRequest> implements ReactorArk {
 
     private final ReactorHttpTransport transport;

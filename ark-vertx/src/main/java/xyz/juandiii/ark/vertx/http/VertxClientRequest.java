@@ -4,6 +4,11 @@ import xyz.juandiii.ark.interceptor.RequestContext;
 
 import java.time.Duration;
 
+/**
+ * Interface for Vert.x request configuration and execution.
+ *
+ * @author Juan Diego Lopez V.
+ */
 public interface VertxClientRequest extends RequestContext {
 
     VertxClientRequest accept(String mediaType);

@@ -12,6 +12,11 @@ import xyz.juandiii.ark.reactor.ReactorArkClient;
 import xyz.juandiii.ark.reactor.http.ReactorHttpTransport;
 import xyz.juandiii.ark.transport.reactor.ArkReactorNettyTransport;
 
+/**
+ * Spring Boot auto-configuration for reactive Ark HTTP client.
+ *
+ * @author Juan Diego Lopez V.
+ */
 @AutoConfiguration
 public class ArkWebFluxAutoConfiguration {
 

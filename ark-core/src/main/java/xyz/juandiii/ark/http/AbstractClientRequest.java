@@ -11,12 +11,18 @@ import java.net.URI;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.StringJoiner;
 
+/**
+ * CRTP base for fluent request configuration across all execution models.
+ *
+ * @author Juan Diego Lopez V.
+ */
 public abstract class AbstractClientRequest<T extends AbstractClientRequest<T>>
         implements RequestContext {
 
@@ -42,6 +48,40 @@ public abstract class AbstractClientRequest<T extends AbstractClientRequest<T>>
         this.requestInterceptors = requestInterceptors;
         this.responseInterceptors = responseInterceptors;
     }
+
+    // ---- getters ----
+
+    @Override
+    public String method() {
+        return method;
+    }
+
+    @Override
+    public String path() {
+        return baseUrl + path;
+    }
+
+    @Override
+    public Map<String, String> headers() {
+        return Collections.unmodifiableMap(headers);
+    }
+
+    @Override
+    public Map<String, String> queryParams() {
+        return Collections.unmodifiableMap(queryParams);
+    }
+
+    @Override
+    public Object body() {
+        return body;
+    }
+
+    @Override
+    public Duration timeout() {
+        return timeout;
+    }
+
+    // ---- setters (fluent) ----
 
     @Override
     public T accept(String mediaType) {

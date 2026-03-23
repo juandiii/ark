@@ -4,6 +4,11 @@ import xyz.juandiii.ark.interceptor.RequestContext;
 
 import java.time.Duration;
 
+/**
+ * Interface for async request configuration and execution.
+ *
+ * @author Juan Diego Lopez V.
+ */
 public interface AsyncClientRequest extends RequestContext {
 
     AsyncClientRequest accept(String mediaType);

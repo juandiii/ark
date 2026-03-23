@@ -18,6 +18,11 @@ import java.nio.charset.StandardCharsets;
 import java.util.Map;
 import java.util.StringJoiner;
 
+/**
+ * Binds method parameters to HTTP request components.
+ *
+ * @author Juan Diego Lopez V.
+ */
 final class ParameterBinder {
 
     void apply(ClientRequest request, Method method, Object[] args) {

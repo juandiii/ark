@@ -64,6 +64,16 @@
     <module>ark-spring-boot-starter</module>
     <module>ark-spring-boot-starter-webflux</module>
   </modules>
+  <distributionManagement>
+    <repository>
+      <id>nexus-releases</id>
+      <url>${env.NEXUS_RELEASES_URL}</url>
+    </repository>
+    <snapshotRepository>
+      <id>nexus-snapshots</id>
+      <url>${env.NEXUS_SNAPSHOTS_URL}</url>
+    </snapshotRepository>
+  </distributionManagement>
   <build>
     <plugins>
       <plugin>

@@ -9,6 +9,11 @@ import xyz.juandiii.ark.interceptor.ResponseInterceptor;
 
 import java.util.List;
 
+/**
+ * Default implementation of {@link MutinyClientRequest}.
+ *
+ * @author Juan Diego Lopez V.
+ */
 public final class DefaultMutinyClientRequest extends AbstractClientRequest<DefaultMutinyClientRequest>
         implements MutinyClientRequest {
 

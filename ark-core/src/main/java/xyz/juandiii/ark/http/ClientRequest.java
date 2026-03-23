@@ -4,6 +4,11 @@ import xyz.juandiii.ark.interceptor.RequestContext;
 
 import java.time.Duration;
 
+/**
+ * Interface for sync request configuration and execution.
+ *
+ * @author Juan Diego Lopez V.
+ */
 public interface ClientRequest extends RequestContext {
 
     ClientRequest accept(String mediaType);

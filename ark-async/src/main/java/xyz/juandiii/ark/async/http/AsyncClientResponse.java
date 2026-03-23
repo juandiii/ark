@@ -5,6 +5,11 @@ import xyz.juandiii.ark.http.ArkResponse;
 
 import java.util.concurrent.CompletableFuture;
 
+/**
+ * Interface for async response extraction.
+ *
+ * @author Juan Diego Lopez V.
+ */
 public interface AsyncClientResponse {
 
     <T> CompletableFuture<T> body(TypeRef<T> type);

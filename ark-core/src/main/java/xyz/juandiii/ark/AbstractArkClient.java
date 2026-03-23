@@ -6,6 +6,11 @@ import xyz.juandiii.ark.interceptor.ResponseInterceptor;
 
 import java.util.List;
 
+/**
+ * Template Method base for all Ark client implementations.
+ *
+ * @author Juan Diego Lopez V.
+ */
 public abstract class AbstractArkClient<R extends AbstractClientRequest<R>> {
 
     protected final JsonSerializer serializer;
