@@ -1,9 +1,9 @@
 package xyz.juandiii.ark.async;
 
 import xyz.juandiii.ark.AbstractArkClient;
-import xyz.juandiii.ark.ArkClient;
+import xyz.juandiii.ark.AbstractArkBuilder;
 import xyz.juandiii.ark.JsonSerializer;
-import xyz.juandiii.ark.async.http.AsyncClientRequest;
+import xyz.juandiii.ark.async.http.DefaultAsyncClientRequest;
 import xyz.juandiii.ark.async.http.AsyncHttpTransport;
 import xyz.juandiii.ark.interceptor.RequestInterceptor;
 import xyz.juandiii.ark.interceptor.ResponseInterceptor;
@@ -11,7 +11,7 @@ import xyz.juandiii.ark.interceptor.ResponseInterceptor;
 import java.util.List;
 import java.util.Objects;
 
-public class AsyncArkClient extends AbstractArkClient<AsyncClientRequest> implements AsyncArk {
+public class AsyncArkClient extends AbstractArkClient<DefaultAsyncClientRequest> implements AsyncArk {
 
     private final AsyncHttpTransport transport;
 
@@ -24,8 +24,8 @@ public class AsyncArkClient extends AbstractArkClient<AsyncClientRequest> implem
     }
 
     @Override
-    protected AsyncClientRequest createRequest(String method, String path) {
-        return new AsyncClientRequest(method, baseUrl, path, transport, serializer,
+    protected DefaultAsyncClientRequest createRequest(String method, String path) {
+        return new DefaultAsyncClientRequest(method, baseUrl, path, transport, serializer,
                 requestInterceptors, responseInterceptors)
                 .header("User-Agent", userAgent);
     }
@@ -36,7 +36,7 @@ public class AsyncArkClient extends AbstractArkClient<AsyncClientRequest> implem
         return new Builder();
     }
 
-    public static final class Builder extends ArkClient.AbstractBuilder<Builder> {
+    public static final class Builder extends AbstractArkBuilder<Builder> {
 
         private AsyncHttpTransport transport;
 

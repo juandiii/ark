@@ -7,24 +7,27 @@ import xyz.juandiii.ark.http.RawResponse;
 
 import java.util.concurrent.CompletableFuture;
 
-public final class AsyncResponseSpec {
+public final class DefaultAsyncClientResponse implements AsyncClientResponse {
 
     private final CompletableFuture<RawResponse> future;
     private final JsonSerializer serializer;
 
-    public AsyncResponseSpec(CompletableFuture<RawResponse> future, JsonSerializer serializer) {
+    public DefaultAsyncClientResponse(CompletableFuture<RawResponse> future, JsonSerializer serializer) {
         this.future = future;
         this.serializer = serializer;
     }
 
+    @Override
     public <T> CompletableFuture<T> body(TypeRef<T> type) {
         return future.thenApply(raw -> serializer.deserialize(raw.body(), type));
     }
 
+    @Override
     public <T> CompletableFuture<T> body(Class<T> type) {
         return body(TypeRef.of(type));
     }
 
+    @Override
     public <T> CompletableFuture<ArkResponse<T>> toEntity(TypeRef<T> type) {
         return future.thenApply(raw -> {
             T body = serializer.deserialize(raw.body(), type);
@@ -32,10 +35,12 @@ public final class AsyncResponseSpec {
         });
     }
 
+    @Override
     public <T> CompletableFuture<ArkResponse<T>> toEntity(Class<T> type) {
         return toEntity(TypeRef.of(type));
     }
 
+    @Override
     public CompletableFuture<ArkResponse<Void>> toBodilessEntity() {
         return future.thenApply(raw ->
                 new ArkResponse<>(raw.statusCode(), raw.headers(), null));

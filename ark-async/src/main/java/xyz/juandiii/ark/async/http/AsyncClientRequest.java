@@ -1,33 +1,22 @@
 package xyz.juandiii.ark.async.http;
 
-import xyz.juandiii.ark.JsonSerializer;
-import xyz.juandiii.ark.http.AbstractClientRequest;
-import xyz.juandiii.ark.http.RawResponse;
-import xyz.juandiii.ark.interceptor.RequestInterceptor;
-import xyz.juandiii.ark.interceptor.ResponseInterceptor;
+import xyz.juandiii.ark.interceptor.RequestContext;
 
-import java.util.List;
-import java.util.concurrent.CompletableFuture;
+import java.time.Duration;
 
-public final class AsyncClientRequest extends AbstractClientRequest<AsyncClientRequest> {
+public interface AsyncClientRequest extends RequestContext {
 
-    private final AsyncHttpTransport transport;
+    AsyncClientRequest accept(String mediaType);
 
-    public AsyncClientRequest(String method, String baseUrl, String path,
-                              AsyncHttpTransport transport, JsonSerializer serializer,
-                              List<RequestInterceptor> requestInterceptors,
-                              List<ResponseInterceptor> responseInterceptors) {
-        super(method, baseUrl, path, serializer, requestInterceptors, responseInterceptors);
-        this.transport = transport;
-    }
+    AsyncClientRequest contentType(String mediaType);
 
-    public AsyncResponseSpec retrieve() {
-        String serializedBody = prepareBody();
-        CompletableFuture<RawResponse> future = transport.sendAsync(
-                method, buildUri(), headers, serializedBody, timeout);
-        for (ResponseInterceptor interceptor : responseInterceptors) {
-            future = future.thenApply(interceptor::intercept);
-        }
-        return new AsyncResponseSpec(future, serializer);
-    }
+    AsyncClientRequest header(String key, String value);
+
+    AsyncClientRequest queryParam(String key, String value);
+
+    AsyncClientRequest body(Object body);
+
+    AsyncClientRequest timeout(Duration timeout);
+
+    AsyncClientResponse retrieve();
 }

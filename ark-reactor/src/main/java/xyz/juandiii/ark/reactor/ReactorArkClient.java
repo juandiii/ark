@@ -1,9 +1,9 @@
 package xyz.juandiii.ark.reactor;
 
 import xyz.juandiii.ark.AbstractArkClient;
-import xyz.juandiii.ark.ArkClient;
+import xyz.juandiii.ark.AbstractArkBuilder;
 import xyz.juandiii.ark.JsonSerializer;
-import xyz.juandiii.ark.reactor.http.ReactorClientRequest;
+import xyz.juandiii.ark.reactor.http.DefaultReactorClientRequest;
 import xyz.juandiii.ark.reactor.http.ReactorHttpTransport;
 import xyz.juandiii.ark.interceptor.RequestInterceptor;
 import xyz.juandiii.ark.interceptor.ResponseInterceptor;
@@ -11,7 +11,7 @@ import xyz.juandiii.ark.interceptor.ResponseInterceptor;
 import java.util.List;
 import java.util.Objects;
 
-public class ReactorArkClient extends AbstractArkClient<ReactorClientRequest> implements ReactorArk {
+public class ReactorArkClient extends AbstractArkClient<DefaultReactorClientRequest> implements ReactorArk {
 
     private final ReactorHttpTransport transport;
 
@@ -24,8 +24,8 @@ public class ReactorArkClient extends AbstractArkClient<ReactorClientRequest> im
     }
 
     @Override
-    protected ReactorClientRequest createRequest(String method, String path) {
-        return new ReactorClientRequest(method, baseUrl, path, transport, serializer,
+    protected DefaultReactorClientRequest createRequest(String method, String path) {
+        return new DefaultReactorClientRequest(method, baseUrl, path, transport, serializer,
                 requestInterceptors, responseInterceptors)
                 .header("User-Agent", userAgent);
     }
@@ -36,7 +36,7 @@ public class ReactorArkClient extends AbstractArkClient<ReactorClientRequest> im
         return new Builder();
     }
 
-    public static final class Builder extends ArkClient.AbstractBuilder<Builder> {
+    public static final class Builder extends AbstractArkBuilder<Builder> {
 
         private ReactorHttpTransport transport;
 

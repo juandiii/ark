@@ -4,4 +4,12 @@ import java.util.List;
 import java.util.Map;
 
 public record RawResponse(int statusCode, Map<String, List<String>> headers, String body) {
+
+    public static boolean isErrorStatus(int statusCode) {
+        return statusCode >= 400;
+    }
+
+    public boolean isError() {
+        return isErrorStatus(statusCode);
+    }
 }

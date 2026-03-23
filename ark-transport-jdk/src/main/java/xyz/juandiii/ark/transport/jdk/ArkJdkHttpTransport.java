@@ -41,7 +41,7 @@ public final class ArkJdkHttpTransport implements HttpTransport, AsyncHttpTransp
 
         try {
             HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
-            return handleResponse(response);
+            return toRawResponse(response);
         } catch (IOException e) {
             throw new ArkException("API request failed: " + e.getMessage(), e);
         } catch (InterruptedException e) {
@@ -57,7 +57,13 @@ public final class ArkJdkHttpTransport implements HttpTransport, AsyncHttpTransp
         HttpRequest request = buildRequest(method, uri, headers, body, timeout);
 
         return httpClient.sendAsync(request, HttpResponse.BodyHandlers.ofString())
-                .thenApplyAsync(this::handleResponse, executor);
+                .thenApplyAsync(response -> {
+                    if (RawResponse.isErrorStatus(response.statusCode())) {
+                        throw new CompletionException(
+                                new ApiException(response.statusCode(), response.body()));
+                    }
+                    return new RawResponse(response.statusCode(), response.headers().map(), response.body());
+                }, executor);
     }
 
     private HttpRequest buildRequest(String method, URI uri, Map<String, String> headers,
@@ -78,10 +84,9 @@ public final class ArkJdkHttpTransport implements HttpTransport, AsyncHttpTransp
         return builder.method(method, bodyPublisher).build();
     }
 
-    private RawResponse handleResponse(HttpResponse<String> response) {
-        if (response.statusCode() >= 400) {
-            throw new CompletionException(
-                    new ApiException(response.statusCode(), response.body()));
+    private RawResponse toRawResponse(HttpResponse<String> response) {
+        if (RawResponse.isErrorStatus(response.statusCode())) {
+            throw new ApiException(response.statusCode(), response.body());
         }
         return new RawResponse(response.statusCode(), response.headers().map(), response.body());
     }

@@ -1,29 +1,22 @@
 package xyz.juandiii.ark.http;
 
-import xyz.juandiii.ark.JsonSerializer;
-import xyz.juandiii.ark.interceptor.RequestInterceptor;
-import xyz.juandiii.ark.interceptor.ResponseInterceptor;
+import xyz.juandiii.ark.interceptor.RequestContext;
 
-import java.util.List;
+import java.time.Duration;
 
-public final class ClientRequest extends AbstractClientRequest<ClientRequest> {
+public interface ClientRequest extends RequestContext {
 
-    private final HttpTransport transport;
+    ClientRequest accept(String mediaType);
 
-    public ClientRequest(String method, String baseUrl, String path,
-                         HttpTransport transport, JsonSerializer serializer,
-                         List<RequestInterceptor> requestInterceptors,
-                         List<ResponseInterceptor> responseInterceptors) {
-        super(method, baseUrl, path, serializer, requestInterceptors, responseInterceptors);
-        this.transport = transport;
-    }
+    ClientRequest contentType(String mediaType);
 
-    public ResponseSpec retrieve() {
-        String serializedBody = prepareBody();
-        RawResponse raw = transport.send(method, buildUri(), headers, serializedBody, timeout);
-        for (ResponseInterceptor interceptor : responseInterceptors) {
-            raw = interceptor.intercept(raw);
-        }
-        return new ResponseSpec(raw, serializer);
-    }
+    ClientRequest header(String key, String value);
+
+    ClientRequest queryParam(String key, String value);
+
+    ClientRequest body(Object body);
+
+    ClientRequest timeout(Duration timeout);
+
+    ClientResponse retrieve();
 }

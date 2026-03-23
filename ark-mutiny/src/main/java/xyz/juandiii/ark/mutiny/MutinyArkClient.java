@@ -1,9 +1,9 @@
 package xyz.juandiii.ark.mutiny;
 
 import xyz.juandiii.ark.AbstractArkClient;
-import xyz.juandiii.ark.ArkClient;
+import xyz.juandiii.ark.AbstractArkBuilder;
 import xyz.juandiii.ark.JsonSerializer;
-import xyz.juandiii.ark.mutiny.http.MutinyClientRequest;
+import xyz.juandiii.ark.mutiny.http.DefaultMutinyClientRequest;
 import xyz.juandiii.ark.mutiny.http.MutinyHttpTransport;
 import xyz.juandiii.ark.interceptor.RequestInterceptor;
 import xyz.juandiii.ark.interceptor.ResponseInterceptor;
@@ -11,7 +11,7 @@ import xyz.juandiii.ark.interceptor.ResponseInterceptor;
 import java.util.List;
 import java.util.Objects;
 
-public class MutinyArkClient extends AbstractArkClient<MutinyClientRequest> implements MutinyArk {
+public class MutinyArkClient extends AbstractArkClient<DefaultMutinyClientRequest> implements MutinyArk {
 
     private final MutinyHttpTransport transport;
 
@@ -24,8 +24,8 @@ public class MutinyArkClient extends AbstractArkClient<MutinyClientRequest> impl
     }
 
     @Override
-    protected MutinyClientRequest createRequest(String method, String path) {
-        return new MutinyClientRequest(method, baseUrl, path, transport, serializer,
+    protected DefaultMutinyClientRequest createRequest(String method, String path) {
+        return new DefaultMutinyClientRequest(method, baseUrl, path, transport, serializer,
                 requestInterceptors, responseInterceptors)
                 .header("User-Agent", userAgent);
     }
@@ -36,7 +36,7 @@ public class MutinyArkClient extends AbstractArkClient<MutinyClientRequest> impl
         return new Builder();
     }
 
-    public static final class Builder extends ArkClient.AbstractBuilder<Builder> {
+    public static final class Builder extends AbstractArkBuilder<Builder> {
 
         private MutinyHttpTransport transport;
 

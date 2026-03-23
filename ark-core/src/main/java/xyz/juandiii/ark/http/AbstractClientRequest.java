@@ -1,6 +1,8 @@
 package xyz.juandiii.ark.http;
 
 import xyz.juandiii.ark.JsonSerializer;
+import xyz.juandiii.ark.exceptions.ApiException;
+import xyz.juandiii.ark.exceptions.ArkException;
 import xyz.juandiii.ark.interceptor.RequestContext;
 import xyz.juandiii.ark.interceptor.RequestInterceptor;
 import xyz.juandiii.ark.interceptor.ResponseInterceptor;
@@ -12,9 +14,9 @@ import java.time.Duration;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.StringJoiner;
 
-@SuppressWarnings("unchecked")
 public abstract class AbstractClientRequest<T extends AbstractClientRequest<T>>
         implements RequestContext {
 
@@ -55,7 +57,8 @@ public abstract class AbstractClientRequest<T extends AbstractClientRequest<T>>
 
     @Override
     public T header(String key, String value) {
-        headers.put(key, value);
+        Objects.requireNonNull(key, "header key must not be null");
+        if (value != null) headers.put(key, value);
         return self();
     }
 
@@ -79,9 +82,18 @@ public abstract class AbstractClientRequest<T extends AbstractClientRequest<T>>
         return self();
     }
 
-    protected String prepareBody() {
+    protected void applyInterceptors() {
         requestInterceptors.forEach(interceptor -> interceptor.intercept(this));
+    }
+
+    protected String serializeBody() {
         return needsBody() ? serializer.serialize(body) : null;
+    }
+
+    protected void validateResponse(RawResponse raw) {
+        if (raw.isError()) {
+            throw new ApiException(raw.statusCode(), raw.body());
+        }
     }
 
     protected URI buildUri() {
@@ -91,7 +103,11 @@ public abstract class AbstractClientRequest<T extends AbstractClientRequest<T>>
             queryParams.forEach((k, v) -> joiner.add(encode(k) + "=" + encode(v)));
             url += "?" + joiner;
         }
-        return URI.create(url);
+        try {
+            return URI.create(url);
+        } catch (IllegalArgumentException e) {
+            throw new ArkException("Invalid URI: " + url, e);
+        }
     }
 
     protected boolean needsBody() {
@@ -102,6 +118,7 @@ public abstract class AbstractClientRequest<T extends AbstractClientRequest<T>>
         return URLEncoder.encode(value, StandardCharsets.UTF_8);
     }
 
+    @SuppressWarnings("unchecked")
     private T self() {
         return (T) this;
     }

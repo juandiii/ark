@@ -47,7 +47,7 @@ public final class ArkVertxFutureTransport implements VertxHttpTransport {
     private RawResponse handleResponse(HttpResponse<Buffer> r) {
         int statusCode = r.statusCode();
         String responseBody = r.bodyAsString();
-        if (statusCode >= 400) {
+        if (RawResponse.isErrorStatus(statusCode)) {
             throw new ApiException(statusCode, responseBody);
         }
         return new RawResponse(statusCode, toHeaderMap(r.headers()), responseBody);

@@ -75,6 +75,11 @@
                 <artifactId>ark-spring-boot-starter</artifactId>
                 <version>${project.version}</version>
             </dependency>
+            <dependency>
+                <groupId>xyz.juandiii</groupId>
+                <artifactId>ark-spring-boot-starter-webflux</artifactId>
+                <version>${project.version}</version>
+            </dependency>
         </dependencies>
     </dependencyManagement>
 </project>

@@ -1,32 +1,22 @@
 package xyz.juandiii.ark.reactor.http;
 
-import reactor.core.publisher.Mono;
-import xyz.juandiii.ark.JsonSerializer;
-import xyz.juandiii.ark.http.AbstractClientRequest;
-import xyz.juandiii.ark.http.RawResponse;
-import xyz.juandiii.ark.interceptor.RequestInterceptor;
-import xyz.juandiii.ark.interceptor.ResponseInterceptor;
+import xyz.juandiii.ark.interceptor.RequestContext;
 
-import java.util.List;
+import java.time.Duration;
 
-public final class ReactorClientRequest extends AbstractClientRequest<ReactorClientRequest> {
+public interface ReactorClientRequest extends RequestContext {
 
-    private final ReactorHttpTransport transport;
+    ReactorClientRequest accept(String mediaType);
 
-    public ReactorClientRequest(String method, String baseUrl, String path,
-                                ReactorHttpTransport transport, JsonSerializer serializer,
-                                List<RequestInterceptor> requestInterceptors,
-                                List<ResponseInterceptor> responseInterceptors) {
-        super(method, baseUrl, path, serializer, requestInterceptors, responseInterceptors);
-        this.transport = transport;
-    }
+    ReactorClientRequest contentType(String mediaType);
 
-    public ReactorResponseSpec retrieve() {
-        String serializedBody = prepareBody();
-        Mono<RawResponse> mono = transport.send(method, buildUri(), headers, serializedBody, timeout);
-        for (ResponseInterceptor interceptor : responseInterceptors) {
-            mono = mono.map(interceptor::intercept);
-        }
-        return new ReactorResponseSpec(mono, serializer);
-    }
+    ReactorClientRequest header(String key, String value);
+
+    ReactorClientRequest queryParam(String key, String value);
+
+    ReactorClientRequest body(Object body);
+
+    ReactorClientRequest timeout(Duration timeout);
+
+    ReactorClientResponse retrieve();
 }

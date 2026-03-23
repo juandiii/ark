@@ -11,6 +11,8 @@
     <maven.compiler.target>${java.version}</maven.compiler.target>
     <spring-boot.version>4.0.0</spring-boot.version>
     <spring-framework.version>7.0.3</spring-framework.version>
+    <quarkus.version>3.32.3</quarkus.version>
+    <httpclient5.version>5.6</httpclient5.version>
   </properties>
   <dependencyManagement>
     <dependencies>
@@ -31,7 +33,7 @@
       <dependency>
         <groupId>io.quarkus</groupId>
         <artifactId>quarkus-bom</artifactId>
-        <version>3.32.3</version>
+        <version>${quarkus.version}</version>
         <type>pom</type>
         <scope>import</scope>
       </dependency>
@@ -60,6 +62,7 @@
     <module>ark-transport-vertx-mutiny</module>
     <module>ark-proxy-spring</module>
     <module>ark-spring-boot-starter</module>
+    <module>ark-spring-boot-starter-webflux</module>
   </modules>
   <build>
     <plugins>

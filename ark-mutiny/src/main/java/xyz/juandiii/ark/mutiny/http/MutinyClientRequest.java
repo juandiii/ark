@@ -1,32 +1,22 @@
 package xyz.juandiii.ark.mutiny.http;
 
-import io.smallrye.mutiny.Uni;
-import xyz.juandiii.ark.JsonSerializer;
-import xyz.juandiii.ark.http.AbstractClientRequest;
-import xyz.juandiii.ark.http.RawResponse;
-import xyz.juandiii.ark.interceptor.RequestInterceptor;
-import xyz.juandiii.ark.interceptor.ResponseInterceptor;
+import xyz.juandiii.ark.interceptor.RequestContext;
 
-import java.util.List;
+import java.time.Duration;
 
-public final class MutinyClientRequest extends AbstractClientRequest<MutinyClientRequest> {
+public interface MutinyClientRequest extends RequestContext {
 
-    private final MutinyHttpTransport transport;
+    MutinyClientRequest accept(String mediaType);
 
-    public MutinyClientRequest(String method, String baseUrl, String path,
-                               MutinyHttpTransport transport, JsonSerializer serializer,
-                               List<RequestInterceptor> requestInterceptors,
-                               List<ResponseInterceptor> responseInterceptors) {
-        super(method, baseUrl, path, serializer, requestInterceptors, responseInterceptors);
-        this.transport = transport;
-    }
+    MutinyClientRequest contentType(String mediaType);
 
-    public MutinyResponseSpec retrieve() {
-        String serializedBody = prepareBody();
-        Uni<RawResponse> uni = transport.send(method, buildUri(), headers, serializedBody, timeout);
-        for (ResponseInterceptor interceptor : responseInterceptors) {
-            uni = uni.onItem().transform(interceptor::intercept);
-        }
-        return new MutinyResponseSpec(uni, serializer);
-    }
+    MutinyClientRequest header(String key, String value);
+
+    MutinyClientRequest queryParam(String key, String value);
+
+    MutinyClientRequest body(Object body);
+
+    MutinyClientRequest timeout(Duration timeout);
+
+    MutinyClientResponse retrieve();
 }

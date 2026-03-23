@@ -10,6 +10,14 @@
   <artifactId>ark-core</artifactId>
   <name>ark-core</name>
   <url>http://maven.apache.org</url>
+  <build>
+    <resources>
+      <resource>
+        <directory>src/main/resources</directory>
+        <filtering>true</filtering>
+      </resource>
+    </resources>
+  </build>
   <dependencies>
     <dependency>
       <groupId>junit</groupId>

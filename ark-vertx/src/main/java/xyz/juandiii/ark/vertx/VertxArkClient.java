@@ -1,9 +1,9 @@
 package xyz.juandiii.ark.vertx;
 
 import xyz.juandiii.ark.AbstractArkClient;
-import xyz.juandiii.ark.ArkClient;
+import xyz.juandiii.ark.AbstractArkBuilder;
 import xyz.juandiii.ark.JsonSerializer;
-import xyz.juandiii.ark.vertx.http.VertxClientRequest;
+import xyz.juandiii.ark.vertx.http.DefaultVertxClientRequest;
 import xyz.juandiii.ark.vertx.http.VertxHttpTransport;
 import xyz.juandiii.ark.interceptor.RequestInterceptor;
 import xyz.juandiii.ark.interceptor.ResponseInterceptor;
@@ -11,7 +11,7 @@ import xyz.juandiii.ark.interceptor.ResponseInterceptor;
 import java.util.List;
 import java.util.Objects;
 
-public class VertxArkClient extends AbstractArkClient<VertxClientRequest> implements VertxArk {
+public class VertxArkClient extends AbstractArkClient<DefaultVertxClientRequest> implements VertxArk {
 
     private final VertxHttpTransport transport;
 
@@ -24,8 +24,8 @@ public class VertxArkClient extends AbstractArkClient<VertxClientRequest> implem
     }
 
     @Override
-    protected VertxClientRequest createRequest(String method, String path) {
-        return new VertxClientRequest(method, baseUrl, path, transport, serializer,
+    protected DefaultVertxClientRequest createRequest(String method, String path) {
+        return new DefaultVertxClientRequest(method, baseUrl, path, transport, serializer,
                 requestInterceptors, responseInterceptors)
                 .header("User-Agent", userAgent);
     }
@@ -36,7 +36,7 @@ public class VertxArkClient extends AbstractArkClient<VertxClientRequest> implem
         return new Builder();
     }
 
-    public static final class Builder extends ArkClient.AbstractBuilder<Builder> {
+    public static final class Builder extends AbstractArkBuilder<Builder> {
 
         private VertxHttpTransport transport;
 

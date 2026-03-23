@@ -1,0 +1,36 @@
+package xyz.juandiii.ark.mutiny.http;
+
+import io.smallrye.mutiny.Uni;
+import xyz.juandiii.ark.JsonSerializer;
+import xyz.juandiii.ark.http.AbstractClientRequest;
+import xyz.juandiii.ark.http.RawResponse;
+import xyz.juandiii.ark.interceptor.RequestInterceptor;
+import xyz.juandiii.ark.interceptor.ResponseInterceptor;
+
+import java.util.List;
+
+public final class DefaultMutinyClientRequest extends AbstractClientRequest<DefaultMutinyClientRequest>
+        implements MutinyClientRequest {
+
+    private final MutinyHttpTransport transport;
+
+    public DefaultMutinyClientRequest(String method, String baseUrl, String path,
+                               MutinyHttpTransport transport, JsonSerializer serializer,
+                               List<RequestInterceptor> requestInterceptors,
+                               List<ResponseInterceptor> responseInterceptors) {
+        super(method, baseUrl, path, serializer, requestInterceptors, responseInterceptors);
+        this.transport = transport;
+    }
+
+    @Override
+    public MutinyClientResponse retrieve() {
+        applyInterceptors();
+        String serializedBody = serializeBody();
+        Uni<RawResponse> uni = transport.send(method, buildUri(), headers, serializedBody, timeout);
+        for (ResponseInterceptor interceptor : responseInterceptors) {
+            uni = uni.onItem().transform(interceptor::intercept);
+        }
+        uni = uni.onItem().invoke(this::validateResponse);
+        return new DefaultMutinyClientResponse(uni, serializer);
+    }
+}

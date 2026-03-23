@@ -1,15 +1,14 @@
 package xyz.juandiii.ark;
 
 import xyz.juandiii.ark.http.HttpTransport;
-import xyz.juandiii.ark.http.ClientRequest;
+import xyz.juandiii.ark.http.DefaultClientRequest;
 import xyz.juandiii.ark.interceptor.RequestInterceptor;
 import xyz.juandiii.ark.interceptor.ResponseInterceptor;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
-public class ArkClient extends AbstractArkClient<ClientRequest> implements Ark {
+public class ArkClient extends AbstractArkClient<DefaultClientRequest> implements Ark {
 
     private final HttpTransport transport;
 
@@ -22,70 +21,17 @@ public class ArkClient extends AbstractArkClient<ClientRequest> implements Ark {
     }
 
     @Override
-    protected ClientRequest createRequest(String method, String path) {
-        return new ClientRequest(method, baseUrl, path, transport, serializer,
+    protected DefaultClientRequest createRequest(String method, String path) {
+        return new DefaultClientRequest(method, baseUrl, path, transport, serializer,
                 requestInterceptors, responseInterceptors)
                 .header("User-Agent", userAgent);
     }
-
-    // ---- Factory method ----
 
     public static Builder builder() {
         return new Builder();
     }
 
-    // ---- Abstract Builder ----
-
-    @SuppressWarnings("unchecked")
-    public abstract static class AbstractBuilder<B extends AbstractBuilder<B>> {
-
-        protected JsonSerializer serializer;
-        protected String baseUrl = "";
-        protected String name = "ArkClient";
-        protected String version = "1.0.0";
-        protected final List<RequestInterceptor> requestInterceptors = new ArrayList<>();
-        protected final List<ResponseInterceptor> responseInterceptors = new ArrayList<>();
-
-        protected AbstractBuilder() {}
-
-        public B serializer(JsonSerializer serializer) {
-            this.serializer = serializer;
-            return self();
-        }
-
-        public B baseUrl(String baseUrl) {
-            this.baseUrl = baseUrl;
-            return self();
-        }
-
-        public B userAgent(String name, String version) {
-            this.name = name;
-            this.version = version;
-            return self();
-        }
-
-        public B requestInterceptor(RequestInterceptor interceptor) {
-            this.requestInterceptors.add(interceptor);
-            return self();
-        }
-
-        public B responseInterceptor(ResponseInterceptor interceptor) {
-            this.responseInterceptors.add(interceptor);
-            return self();
-        }
-
-        protected B self() {
-            return (B) this;
-        }
-
-        protected String buildUserAgent() {
-            return name + "/" + version;
-        }
-    }
-
-    // ---- Builder ----
-
-    public static final class Builder extends AbstractBuilder<Builder> {
+    public static final class Builder extends AbstractArkBuilder<Builder> {
 
         private HttpTransport transport;
 

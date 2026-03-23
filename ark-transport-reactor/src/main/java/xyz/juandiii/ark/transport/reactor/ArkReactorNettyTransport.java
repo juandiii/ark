@@ -36,7 +36,7 @@ public final class ArkReactorNettyTransport implements ReactorHttpTransport {
                 .responseSingle((response, content) ->
                         content.asString().defaultIfEmpty("").map(responseBody -> {
                             int statusCode = response.status().code();
-                            if (statusCode >= 400) {
+                            if (RawResponse.isErrorStatus(statusCode)) {
                                 throw new ApiException(statusCode, responseBody);
                             }
                             return new RawResponse(statusCode, toHeaderMap(response.responseHeaders()), responseBody);

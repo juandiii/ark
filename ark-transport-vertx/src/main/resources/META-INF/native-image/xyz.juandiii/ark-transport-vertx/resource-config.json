@@ -1,0 +1,8 @@
+{
+  "resources": {
+    "includes": [
+      { "pattern": "META-INF/vertx/vertx-version.txt" },
+      { "pattern": "vertx-version.txt" }
+    ]
+  }
+}

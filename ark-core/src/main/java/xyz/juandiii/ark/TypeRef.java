@@ -2,6 +2,7 @@ package xyz.juandiii.ark;
 
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
+import java.util.Objects;
 
 public abstract class TypeRef<T> {
 
@@ -13,7 +14,7 @@ public abstract class TypeRef<T> {
     }
 
     TypeRef(Type type) {
-        this.type = type;
+        this.type = Objects.requireNonNull(type, "type must not be null");
     }
 
     public Type getType() {

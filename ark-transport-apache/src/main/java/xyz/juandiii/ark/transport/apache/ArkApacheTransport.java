@@ -18,12 +18,10 @@ import java.io.IOException;
 import java.net.URI;
 import java.time.Duration;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.stream.Collectors;
 
 public final class ArkApacheTransport implements HttpTransport {
 
@@ -42,7 +40,8 @@ public final class ArkApacheTransport implements HttpTransport {
         headers.forEach(builder::addHeader);
 
         if (body != null) {
-            builder.setEntity(new StringEntity(body, ContentType.APPLICATION_JSON));
+            String ct = headers.getOrDefault("Content-Type", "application/json");
+            builder.setEntity(new StringEntity(body, ContentType.create(ct)));
         }
 
         HttpClientContext context = HttpClientContext.create();
@@ -57,7 +56,7 @@ public final class ArkApacheTransport implements HttpTransport {
                 int statusCode = response.getCode();
                 String responseBody = EntityUtils.toString(response.getEntity());
 
-                if (statusCode >= 400) {
+                if (RawResponse.isErrorStatus(statusCode)) {
                     throw new ApiException(statusCode, responseBody);
                 }
 
