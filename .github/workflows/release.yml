@@ -1,9 +1,12 @@
 name: Release
 
 on:
-  push:
-    tags:
-      - 'v*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Release version (e.g. 1.0.0)'
+        required: true
+        type: string
 
 jobs:
   release:
@@ -11,6 +14,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
+          ref: main
           fetch-depth: 0
           token: ${{ secrets.GH_TOKEN }}
 
@@ -20,16 +24,16 @@ jobs:
           java-version: 25
           cache: maven
 
-      - name: Extract version and calculate next SNAPSHOT
+      - name: Calculate next SNAPSHOT
         id: version
         run: |
-          RELEASE_VERSION=${GITHUB_REF_NAME#v}
+          RELEASE_VERSION=${{ inputs.version }}
           echo "RELEASE=$RELEASE_VERSION" >> $GITHUB_OUTPUT
 
           IFS='.' read -r MAJOR MINOR PATCH <<< "$RELEASE_VERSION"
 
           # Analyze commits since last tag to determine bump type
-          PREV_TAG=$(git tag --sort=-v:refname | grep '^v' | sed -n '2p')
+          PREV_TAG=$(git tag --sort=-v:refname | grep '^v' | head -1)
           if [ -z "$PREV_TAG" ]; then
             COMMITS=$(git log --oneline)
           else
@@ -59,25 +63,24 @@ jobs:
           NEXUS_USERNAME: ${{ secrets.NEXUS_USERNAME }}
           NEXUS_PASSWORD: ${{ secrets.NEXUS_PASSWORD }}
 
-      - name: Update README version on main
+      - name: Create tag and update docs
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git checkout main
           sed -i "s|<version>.*</version> <!-- ark-bom -->|<version>${{ steps.version.outputs.RELEASE }}</version> <!-- ark-bom -->|g" README.md docs/design.md
           git add README.md docs/design.md
           git diff --cached --quiet || git commit -m "docs: update version to ${{ steps.version.outputs.RELEASE }}"
-          git push origin main
+          git tag v${{ steps.version.outputs.RELEASE }}
+          git push origin main --tags
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
+          tag_name: v${{ steps.version.outputs.RELEASE }}
           generate_release_notes: true
 
       - name: Bump develop to next SNAPSHOT
         run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
           git checkout develop
           git pull origin develop
           ./mvnw versions:set -DnewVersion=${{ steps.version.outputs.NEXT }} -DgenerateBackupPoms=false
