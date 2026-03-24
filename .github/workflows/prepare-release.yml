@@ -1,0 +1,113 @@
+name: Prepare Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      milestone:
+        description: 'Milestone name (e.g. v1.1.0)'
+        required: true
+        type: string
+      bump:
+        description: 'Version bump (auto = from milestone PR labels)'
+        required: false
+        type: choice
+        default: 'auto'
+        options:
+          - auto
+          - patch
+          - minor
+          - major
+
+jobs:
+  prepare:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 25
+          cache: maven
+
+      - name: Check no existing release PR
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          EXISTING=$(gh pr list --label release --state open --json number --jq '.[0].number' || echo "")
+          if [ -n "$EXISTING" ]; then
+            echo "❌ Release PR #$EXISTING already exists. Merge or close it first."
+            exit 1
+          fi
+
+      - name: Determine release version
+        id: version
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          BUMP_OVERRIDE: ${{ inputs.bump }}
+          MILESTONE: ${{ inputs.milestone }}
+        run: .github/scripts/determine-version.sh
+
+      - name: Create release branch and prepare
+        if: steps.version.outputs.SKIP != 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NEXUS_MIRROR_URL: ${{ secrets.NEXUS_MIRROR_URL }}
+          NEXUS_MIRROR_SNAPSHOT_URL: ${{ secrets.NEXUS_MIRROR_SNAPSHOT_URL }}
+        run: |
+          VERSION="${{ steps.version.outputs.RELEASE }}"
+          MILESTONE="${{ inputs.milestone }}"
+          BRANCH="release/v${VERSION}"
+
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          # Create release branch
+          git checkout -b "$BRANCH"
+
+          # Set release version in POMs
+          ./mvnw versions:set -DnewVersion="$VERSION" -DgenerateBackupPoms=false
+
+          # Generate CHANGELOG from milestone PRs
+          .github/scripts/generate-changelog.sh "$VERSION" "${{ github.repository }}" "$MILESTONE"
+
+          # Update version in docs
+          sed -i "s|<version>.*</version> <!-- ark-bom -->|<version>${VERSION}</version> <!-- ark-bom -->|g" README.md docs/design.md
+
+          # Commit and push
+          git add -A
+          git commit -m "chore(release): prepare v${VERSION}"
+          git push origin "$BRANCH"
+
+          # Get PR list for the body
+          PR_LIST=$(gh pr list --state merged --base main --search "milestone:\"$MILESTONE\"" \
+            --json number,title,labels,author \
+            --template '{{range .}}• {{.title}} (#{{.number}}) @{{.author.login}}{{"\n"}}{{end}}')
+
+          # Create PR
+          gh pr create \
+            --base main \
+            --head "$BRANCH" \
+            --title "Release v${VERSION}" \
+            --body "## Release v${VERSION}
+
+          **Milestone:** $MILESTONE
+
+          ### PRs included
+          ${PR_LIST}
+
+          ### Checklist
+          - [ ] CHANGELOG looks correct
+          - [ ] Tests pass
+          - [ ] Ready to publish
+
+          > **Merge** this PR to deploy and tag the release.
+          > **Close** without merging to abort." \
+            --label "release" \
+            --milestone "$MILESTONE"

@@ -1,10 +1,13 @@
-name: Release
+name: Publish Release
 
 on:
-  workflow_dispatch:
+  pull_request:
+    types: [closed]
+    branches: [main]
 
 jobs:
-  release:
+  publish:
+    if: github.event.pull_request.merged == true && contains(github.event.pull_request.labels.*.name, 'release')
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -20,14 +23,15 @@ jobs:
           java-version: 25
           cache: maven
 
-      - name: Determine release version
+      - name: Extract version from branch name
         id: version
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: .github/scripts/determine-version.sh
+        run: |
+          BRANCH="${{ github.event.pull_request.head.ref }}"
+          VERSION=${BRANCH#release/v}
+          echo "RELEASE=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "Release version: $VERSION"
 
       - name: Set version and deploy
-        if: steps.version.outputs.SKIP != 'true'
         run: |
           ./mvnw versions:set -DnewVersion=${{ steps.version.outputs.RELEASE }} -DgenerateBackupPoms=false
           ./mvnw clean deploy -DskipTests
@@ -39,32 +43,40 @@ jobs:
           NEXUS_USERNAME: ${{ secrets.NEXUS_USERNAME }}
           NEXUS_PASSWORD: ${{ secrets.NEXUS_PASSWORD }}
 
-      - name: Generate changelog, tag, and update docs
-        if: steps.version.outputs.SKIP != 'true'
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Create tag
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          .github/scripts/generate-changelog.sh "${{ steps.version.outputs.RELEASE }}" "${{ github.repository }}"
-          sed -i "s|<version>.*</version> <!-- ark-bom -->|<version>${{ steps.version.outputs.RELEASE }}</version> <!-- ark-bom -->|g" README.md docs/design.md
-          git add CHANGELOG.md README.md docs/design.md
-          git commit -m "chore(release): v${{ steps.version.outputs.RELEASE }} [no deploy]"
           git tag "v${{ steps.version.outputs.RELEASE }}"
-          git push origin main --tags
+          git push origin "v${{ steps.version.outputs.RELEASE }}"
 
       - name: Bump back to SNAPSHOT
-        if: steps.version.outputs.SKIP != 'true'
         env:
           NEXUS_MIRROR_URL: ${{ secrets.NEXUS_MIRROR_URL }}
           NEXUS_MIRROR_SNAPSHOT_URL: ${{ secrets.NEXUS_MIRROR_SNAPSHOT_URL }}
         run: .github/scripts/bump-snapshot.sh "${{ steps.version.outputs.RELEASE }}"
 
       - name: Create GitHub Release
-        if: steps.version.outputs.SKIP != 'true'
         uses: softprops/action-gh-release@v2
         with:
           tag_name: v${{ steps.version.outputs.RELEASE }}
           generate_release_notes: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Close milestone and cleanup
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # Close milestone if assigned to PR
+          MILESTONE="${{ github.event.pull_request.milestone.title }}"
+          if [ -n "$MILESTONE" ]; then
+            MILESTONE_NUMBER=$(gh api repos/${{ github.repository }}/milestones --jq ".[] | select(.title == \"$MILESTONE\") | .number")
+            if [ -n "$MILESTONE_NUMBER" ]; then
+              gh api repos/${{ github.repository }}/milestones/$MILESTONE_NUMBER -f state=closed
+              echo "✅ Milestone '$MILESTONE' closed"
+            fi
+          fi
+
+          # Delete release branch
+          git push origin --delete "release/v${{ steps.version.outputs.RELEASE }}" || true
