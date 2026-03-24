@@ -16,7 +16,7 @@ jobs:
 
       - name: Validate PR commits follow Conventional Commits
         run: |
-          COMMITS=$(git log --format=%s origin/${{ github.base_ref }}..${{ github.event.pull_request.head.sha }})
+          COMMITS=$(git log --no-merges --format=%s origin/${{ github.base_ref }}..${{ github.event.pull_request.head.sha }})
 
           echo "Checking commits:"
           echo "$COMMITS"
