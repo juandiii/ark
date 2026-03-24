@@ -175,7 +175,7 @@ mvn test
 
 ## Contributing
 
-Contributions are welcome — new transports, documentation, framework integrations, bug fixes, and test coverage.
+Contributions are welcome! Please read [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines on commit conventions, PR labels, and the release process.
 
 ---
 
