@@ -1,28 +1,34 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Generates a CHANGELOG.md entry from merged PRs since the last tag.
-# Usage: ./generate-changelog.sh <version> <repo>
+# Generates a CHANGELOG.md entry from merged PRs in a milestone.
+# Usage: ./generate-changelog.sh <version> <repo> <milestone>
 
 VERSION=$1
 REPO=$2
+MILESTONE=${3:-}
 DATE=$(date +%Y-%m-%d)
-PREV_TAG=$(git tag --sort=-v:refname | grep '^v' | head -1)
 
-if [ -z "$PREV_TAG" ]; then
-  SINCE_DATE="2000-01-01"
+# Get merged PRs — filtered by milestone if provided
+if [ -n "$MILESTONE" ]; then
+  PRS_JSON=$(gh pr list --state merged --base main --search "milestone:\"$MILESTONE\"" \
+    --json number,title,labels,author --limit 200)
+  echo "Generating changelog for milestone: $MILESTONE"
 else
-  SINCE_DATE=$(git log -1 --format=%cI "$PREV_TAG")
+  PREV_TAG=$(git tag --sort=-v:refname | grep '^v' | head -1 || echo "")
+  if [ -z "$PREV_TAG" ]; then
+    SINCE_DATE="2000-01-01"
+  else
+    SINCE_DATE=$(git log -1 --format=%cI "$PREV_TAG")
+  fi
+  PRS_JSON=$(gh pr list --state merged --base main --json number,title,labels,mergedAt,author --limit 200 | \
+    jq --arg since "$SINCE_DATE" '[.[] | select(.mergedAt > $since)]')
+  echo "Generating changelog since last tag: $PREV_TAG"
 fi
-
-# Get merged PRs grouped by label
-PRS_JSON=$(gh pr list --state merged --base main --json number,title,labels,mergedAt,author --limit 200 | \
-  jq --arg since "$SINCE_DATE" '[.[] | select(.mergedAt > $since)]')
 
 ENTRY="## [v${VERSION}](https://github.com/${REPO}/releases/tag/v${VERSION}) — ${DATE}"$'\n\n'
 
 # Categorize PRs by highest priority label (no duplicates)
-# Each PR appears in only one category based on priority: breaking > feat > fix > perf > other
 BREAKING=$(echo "$PRS_JSON" | jq -r '[.[] | select([.labels[].name] | any(. == "breaking change"))] | unique_by(.number)[] | "- \(.title) (#\(.number)) @\(.author.login)"' 2>/dev/null || echo "")
 if [ -n "$BREAKING" ]; then
   ENTRY+=$'### ⚠️ Breaking Changes\n\n'"$BREAKING"$'\n\n'
