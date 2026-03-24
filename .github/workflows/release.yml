@@ -1,12 +1,10 @@
 name: Release
 
 on:
-  push:
-    branches: [main]
+  workflow_dispatch:
 
 jobs:
   release:
-    if: "!contains(github.event.head_commit.message, 'chore:') && !contains(github.event.head_commit.message, 'docs:')"
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -22,63 +20,17 @@ jobs:
           java-version: 25
           cache: maven
 
-      - name: Calculate release version from commits
+      - name: Determine release version
         id: version
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: .github/scripts/determine-version.sh
+
+      - name: Set version and deploy
+        if: steps.version.outputs.SKIP != 'true'
         run: |
-          # Get last release tag
-          PREV_TAG=$(git tag --sort=-v:refname | grep '^v' | head -1)
-
-          if [ -z "$PREV_TAG" ]; then
-            # First release ever
-            RELEASE_VERSION="1.0.0"
-            COMMITS=$(git log --oneline)
-          else
-            # Parse last released version
-            LAST_VERSION=${PREV_TAG#v}
-            IFS='.' read -r MAJOR MINOR PATCH <<< "$LAST_VERSION"
-
-            # Analyze commits since last tag
-            COMMITS=$(git log --oneline "$PREV_TAG"..HEAD)
-
-            if [ -z "$COMMITS" ]; then
-              echo "No new commits since $PREV_TAG. Skipping release."
-              echo "SKIP=true" >> $GITHUB_OUTPUT
-              exit 0
-            fi
-
-            # Determine bump type from commit messages
-            if echo "$COMMITS" | grep -qiE '(BREAKING CHANGE|!:)'; then
-              RELEASE_VERSION="$((MAJOR + 1)).0.0"
-            elif echo "$COMMITS" | grep -qiE '^[a-f0-9]+ feat'; then
-              RELEASE_VERSION="$MAJOR.$((MINOR + 1)).0"
-            else
-              RELEASE_VERSION="$MAJOR.$MINOR.$((PATCH + 1))"
-            fi
-          fi
-
-          echo "RELEASE=$RELEASE_VERSION" >> $GITHUB_OUTPUT
-          echo "SKIP=false" >> $GITHUB_OUTPUT
-
-          # Calculate next SNAPSHOT
-          IFS='.' read -r MAJOR MINOR PATCH <<< "$RELEASE_VERSION"
-          NEXT_VERSION="$MAJOR.$MINOR.$((PATCH + 1))-SNAPSHOT"
-          echo "NEXT=$NEXT_VERSION" >> $GITHUB_OUTPUT
-
-          echo "Release: $RELEASE_VERSION → Next: $NEXT_VERSION"
-        env:
-          NEXUS_MIRROR_URL: ${{ secrets.NEXUS_MIRROR_URL }}
-          NEXUS_MIRROR_SNAPSHOT_URL: ${{ secrets.NEXUS_MIRROR_SNAPSHOT_URL }}
-
-      - name: Set release version
-        if: steps.version.outputs.SKIP != 'true'
-        run: ./mvnw versions:set -DnewVersion=${{ steps.version.outputs.RELEASE }} -DgenerateBackupPoms=false
-        env:
-          NEXUS_MIRROR_URL: ${{ secrets.NEXUS_MIRROR_URL }}
-          NEXUS_MIRROR_SNAPSHOT_URL: ${{ secrets.NEXUS_MIRROR_SNAPSHOT_URL }}
-
-      - name: Deploy release to Nexus
-        if: steps.version.outputs.SKIP != 'true'
-        run: ./mvnw clean deploy -DskipTests
+          ./mvnw versions:set -DnewVersion=${{ steps.version.outputs.RELEASE }} -DgenerateBackupPoms=false
+          ./mvnw clean deploy -DskipTests
         env:
           NEXUS_MIRROR_URL: ${{ secrets.NEXUS_MIRROR_URL }}
           NEXUS_MIRROR_SNAPSHOT_URL: ${{ secrets.NEXUS_MIRROR_SNAPSHOT_URL }}
@@ -87,16 +39,26 @@ jobs:
           NEXUS_USERNAME: ${{ secrets.NEXUS_USERNAME }}
           NEXUS_PASSWORD: ${{ secrets.NEXUS_PASSWORD }}
 
-      - name: Create tag and update docs
+      - name: Generate changelog, tag, and update docs
         if: steps.version.outputs.SKIP != 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
+          .github/scripts/generate-changelog.sh "${{ steps.version.outputs.RELEASE }}" "${{ github.repository }}"
           sed -i "s|<version>.*</version> <!-- ark-bom -->|<version>${{ steps.version.outputs.RELEASE }}</version> <!-- ark-bom -->|g" README.md docs/design.md
-          git add README.md docs/design.md
-          git diff --cached --quiet || git commit -m "docs: update version to ${{ steps.version.outputs.RELEASE }}"
-          git tag v${{ steps.version.outputs.RELEASE }}
+          git add CHANGELOG.md README.md docs/design.md
+          git commit -m "chore(release): v${{ steps.version.outputs.RELEASE }} [no deploy]"
+          git tag "v${{ steps.version.outputs.RELEASE }}"
           git push origin main --tags
+
+      - name: Bump back to SNAPSHOT
+        if: steps.version.outputs.SKIP != 'true'
+        env:
+          NEXUS_MIRROR_URL: ${{ secrets.NEXUS_MIRROR_URL }}
+          NEXUS_MIRROR_SNAPSHOT_URL: ${{ secrets.NEXUS_MIRROR_SNAPSHOT_URL }}
+        run: .github/scripts/bump-snapshot.sh "${{ steps.version.outputs.RELEASE }}"
 
       - name: Create GitHub Release
         if: steps.version.outputs.SKIP != 'true'
@@ -106,16 +68,3 @@ jobs:
           generate_release_notes: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Bump develop to next SNAPSHOT
-        if: steps.version.outputs.SKIP != 'true'
-        run: |
-          git checkout develop
-          git pull origin develop
-          ./mvnw versions:set -DnewVersion=${{ steps.version.outputs.NEXT }} -DgenerateBackupPoms=false
-          git add -A
-          git commit -m "chore: bump version to ${{ steps.version.outputs.NEXT }}"
-          git push origin develop
-        env:
-          NEXUS_MIRROR_URL: ${{ secrets.NEXUS_MIRROR_URL }}
-          NEXUS_MIRROR_SNAPSHOT_URL: ${{ secrets.NEXUS_MIRROR_SNAPSHOT_URL }}
