@@ -26,26 +26,33 @@ final class AnnotationResolver {
 
     String resolveBasePath(Class<?> declaringClass) {
         HttpExchange exchange = declaringClass.getAnnotation(HttpExchange.class);
-        return exchange != null ? exchange.url() : "";
+        if (exchange == null) return "";
+        return resolve(exchange.url(), exchange.value());
     }
 
     MethodInfo resolveMethod(Method method) {
         GetExchange get = method.getAnnotation(GetExchange.class);
-        if (get != null) return new MethodInfo("GET", get.url());
+        if (get != null) return new MethodInfo("GET", resolve(get.url(), get.value()));
 
         PostExchange post = method.getAnnotation(PostExchange.class);
-        if (post != null) return new MethodInfo("POST", post.url());
+        if (post != null) return new MethodInfo("POST", resolve(post.url(), post.value()));
 
         PutExchange put = method.getAnnotation(PutExchange.class);
-        if (put != null) return new MethodInfo("PUT", put.url());
+        if (put != null) return new MethodInfo("PUT", resolve(put.url(), put.value()));
 
         PatchExchange patch = method.getAnnotation(PatchExchange.class);
-        if (patch != null) return new MethodInfo("PATCH", patch.url());
+        if (patch != null) return new MethodInfo("PATCH", resolve(patch.url(), patch.value()));
 
         DeleteExchange delete = method.getAnnotation(DeleteExchange.class);
-        if (delete != null) return new MethodInfo("DELETE", delete.url());
+        if (delete != null) return new MethodInfo("DELETE", resolve(delete.url(), delete.value()));
 
         throw new ArkException("No @HttpExchange annotation found on method: " + method.getName());
+    }
+
+    private String resolve(String url, String value) {
+        if (!url.isEmpty()) return url;
+        if (!value.isEmpty()) return value;
+        return "";
     }
 
     String resolvePath(String path, Method method, Object[] args) {
