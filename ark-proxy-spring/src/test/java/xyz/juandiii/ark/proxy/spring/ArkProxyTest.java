@@ -5,12 +5,18 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.service.annotation.DeleteExchange;
 import org.springframework.web.service.annotation.GetExchange;
 import org.springframework.web.service.annotation.HttpExchange;
+import org.springframework.web.service.annotation.PatchExchange;
 import org.springframework.web.service.annotation.PostExchange;
+import org.springframework.web.service.annotation.PutExchange;
 import xyz.juandiii.ark.Ark;
 import xyz.juandiii.ark.exceptions.ArkException;
 import xyz.juandiii.ark.http.ArkResponse;
@@ -70,6 +76,36 @@ class ArkProxyTest {
 
         @PostExchange("/create")
         void create(@RequestBody Object body);
+    }
+
+    // ---- Test interface with all HTTP methods + extras ----
+
+    @HttpExchange("/api")
+    interface FullApi {
+
+        @PutExchange("/{id}")
+        String update(@PathVariable("id") Long id, @RequestBody Object body);
+
+        @PatchExchange("/{id}")
+        String patch(@PathVariable("id") Long id, @RequestBody Object body);
+
+        @DeleteExchange("/{id}")
+        void delete(@PathVariable("id") Long id);
+
+        @GetExchange("/{id}")
+        ArkResponse<String> findByIdFull(@PathVariable("id") Long id);
+
+        @PostExchange
+        void createWithHeader(@RequestHeader("X-Token") String token, @RequestBody Object body);
+
+        @PostExchange(contentType = "application/x-www-form-urlencoded")
+        void submitForm(@RequestBody Map<String, String> form);
+
+        @PostExchange
+        void submitMultiValueForm(@RequestBody MultiValueMap<String, String> form);
+
+        @PostExchange
+        void implicitBody(Object body);
     }
 
     static class NotAnInterface {}
@@ -197,6 +233,143 @@ class ArkProxyTest {
             proxy.create(Map.of("item", "laptop"));
 
             verify(ark).post("/orders/create");
+        }
+    }
+
+    @Nested
+    class AllHttpMethods {
+
+        @Test
+        void givenPutExchange_whenInvoked_thenCallsArkPut() {
+            when(ark.put("/api/1")).thenReturn(clientRequest);
+            when(clientRequest.body(any())).thenReturn(clientRequest);
+            when(clientRequest.retrieve()).thenReturn(clientResponse);
+            when(clientResponse.body(any(xyz.juandiii.ark.TypeRef.class))).thenReturn("updated");
+
+            FullApi proxy = ArkProxy.create(FullApi.class, ark);
+            assertEquals("updated", proxy.update(1L, "payload"));
+            verify(ark).put("/api/1");
+        }
+
+        @Test
+        void givenPatchExchange_whenInvoked_thenCallsArkPatch() {
+            when(ark.patch("/api/1")).thenReturn(clientRequest);
+            when(clientRequest.body(any())).thenReturn(clientRequest);
+            when(clientRequest.retrieve()).thenReturn(clientResponse);
+            when(clientResponse.body(any(xyz.juandiii.ark.TypeRef.class))).thenReturn("patched");
+
+            FullApi proxy = ArkProxy.create(FullApi.class, ark);
+            assertEquals("patched", proxy.patch(1L, "payload"));
+            verify(ark).patch("/api/1");
+        }
+
+        @Test
+        void givenDeleteExchange_whenInvoked_thenCallsArkDelete() {
+            when(ark.delete("/api/1")).thenReturn(clientRequest);
+            when(clientRequest.retrieve()).thenReturn(clientResponse);
+            when(clientResponse.toBodilessEntity())
+                    .thenReturn(new ArkResponse<>(204, Map.of(), null));
+
+            FullApi proxy = ArkProxy.create(FullApi.class, ark);
+            proxy.delete(1L);
+            verify(ark).delete("/api/1");
+        }
+    }
+
+    @Nested
+    class ArkResponseReturn {
+
+        @Test
+        void givenArkResponseReturnType_whenInvoked_thenCallsToEntity() {
+            when(ark.get("/api/1")).thenReturn(clientRequest);
+            when(clientRequest.retrieve()).thenReturn(clientResponse);
+            when(clientResponse.toEntity(any(xyz.juandiii.ark.TypeRef.class)))
+                    .thenReturn(new ArkResponse<>(200, Map.of(), "Juan"));
+
+            FullApi proxy = ArkProxy.create(FullApi.class, ark);
+            ArkResponse<String> result = proxy.findByIdFull(1L);
+
+            assertEquals(200, result.statusCode());
+            assertEquals("Juan", result.body());
+            verify(clientResponse).toEntity(any(xyz.juandiii.ark.TypeRef.class));
+        }
+    }
+
+    @Nested
+    class RequestHeaderBinding {
+
+        @Test
+        void givenRequestHeader_whenInvoked_thenSetsHeader() {
+            when(ark.post("/api")).thenReturn(clientRequest);
+            when(clientRequest.header(eq("X-Token"), eq("secret"))).thenReturn(clientRequest);
+            when(clientRequest.body(any())).thenReturn(clientRequest);
+            when(clientRequest.retrieve()).thenReturn(clientResponse);
+            when(clientResponse.toBodilessEntity())
+                    .thenReturn(new ArkResponse<>(201, Map.of(), null));
+
+            FullApi proxy = ArkProxy.create(FullApi.class, ark);
+            proxy.createWithHeader("secret", Map.of("name", "Juan"));
+
+            verify(clientRequest).header("X-Token", "secret");
+        }
+    }
+
+    @Nested
+    class FormData {
+
+        @Test
+        void givenMultiValueMap_whenInvoked_thenSetsFormUrlEncodedContentType() {
+            when(ark.post("/api")).thenReturn(clientRequest);
+            when(clientRequest.contentType(eq("application/x-www-form-urlencoded"))).thenReturn(clientRequest);
+            when(clientRequest.body(any(String.class))).thenReturn(clientRequest);
+            when(clientRequest.retrieve()).thenReturn(clientResponse);
+            when(clientResponse.toBodilessEntity())
+                    .thenReturn(new ArkResponse<>(200, Map.of(), null));
+
+            MultiValueMap<String, String> form = new LinkedMultiValueMap<>();
+            form.add("grant_type", "client_credentials");
+            form.add("client_id", "myapp");
+
+            FullApi proxy = ArkProxy.create(FullApi.class, ark);
+            proxy.submitMultiValueForm(form);
+
+            verify(clientRequest).contentType("application/x-www-form-urlencoded");
+            verify(clientRequest).body(argThat((String s) ->
+                    s.contains("grant_type=client_credentials") && s.contains("client_id=myapp")));
+        }
+
+        @Test
+        void givenMapWithFormContentType_whenInvoked_thenEncodesAsForm() {
+            when(ark.post("/api")).thenReturn(clientRequest);
+            when(clientRequest.contentType(eq("application/x-www-form-urlencoded"))).thenReturn(clientRequest);
+            when(clientRequest.body(any(String.class))).thenReturn(clientRequest);
+            when(clientRequest.retrieve()).thenReturn(clientResponse);
+            when(clientResponse.toBodilessEntity())
+                    .thenReturn(new ArkResponse<>(200, Map.of(), null));
+
+            FullApi proxy = ArkProxy.create(FullApi.class, ark);
+            proxy.submitForm(Map.of("key", "value"));
+
+            verify(clientRequest).contentType("application/x-www-form-urlencoded");
+            verify(clientRequest).body(argThat((String s) -> s.contains("key=value")));
+        }
+    }
+
+    @Nested
+    class ImplicitBody {
+
+        @Test
+        void givenNoAnnotation_whenInvoked_thenTreatsAsBody() {
+            when(ark.post("/api")).thenReturn(clientRequest);
+            when(clientRequest.body(eq("implicit"))).thenReturn(clientRequest);
+            when(clientRequest.retrieve()).thenReturn(clientResponse);
+            when(clientResponse.toBodilessEntity())
+                    .thenReturn(new ArkResponse<>(201, Map.of(), null));
+
+            FullApi proxy = ArkProxy.create(FullApi.class, ark);
+            proxy.implicitBody("implicit");
+
+            verify(clientRequest).body("implicit");
         }
     }
 

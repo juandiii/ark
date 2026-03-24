@@ -90,6 +90,26 @@ class VertxArkClientTest {
         void givenClient_whenGetWithoutPath_thenDefaultsToRoot() {
             assertNotNull(client().get());
         }
+
+        @Test
+        void givenClient_whenPostWithoutPath_thenDefaultsToRoot() {
+            assertNotNull(client().post());
+        }
+
+        @Test
+        void givenClient_whenPutWithoutPath_thenDefaultsToRoot() {
+            assertNotNull(client().put());
+        }
+
+        @Test
+        void givenClient_whenPatchWithoutPath_thenDefaultsToRoot() {
+            assertNotNull(client().patch());
+        }
+
+        @Test
+        void givenClient_whenDeleteWithoutPath_thenDefaultsToRoot() {
+            assertNotNull(client().delete());
+        }
     }
 
     @Nested
