@@ -1,0 +1,47 @@
+name: Auto Label PR
+
+on:
+  pull_request:
+    types: [opened, synchronize]
+
+jobs:
+  label:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Auto label from commit messages
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          PR_NUMBER=${{ github.event.pull_request.number }}
+          COMMITS=$(gh pr view "$PR_NUMBER" --json commits --jq '.commits[].messageHeadline')
+
+          echo "Commits: $COMMITS"
+
+          if echo "$COMMITS" | grep -qiE '(BREAKING CHANGE|^.+!:)'; then
+            gh pr edit "$PR_NUMBER" --add-label "breaking change"
+          elif echo "$COMMITS" | grep -qiE '^feat'; then
+            gh pr edit "$PR_NUMBER" --add-label "feat"
+          elif echo "$COMMITS" | grep -qiE '^fix'; then
+            gh pr edit "$PR_NUMBER" --add-label "fix"
+          elif echo "$COMMITS" | grep -qiE '^perf'; then
+            gh pr edit "$PR_NUMBER" --add-label "perf"
+          elif echo "$COMMITS" | grep -qiE '^docs'; then
+            gh pr edit "$PR_NUMBER" --add-label "docs"
+          elif echo "$COMMITS" | grep -qiE '^refactor'; then
+            gh pr edit "$PR_NUMBER" --add-label "refactor"
+          elif echo "$COMMITS" | grep -qiE '^test'; then
+            gh pr edit "$PR_NUMBER" --add-label "test"
+          elif echo "$COMMITS" | grep -qiE '^ci'; then
+            gh pr edit "$PR_NUMBER" --add-label "ci"
+          elif echo "$COMMITS" | grep -qiE '^chore'; then
+            gh pr edit "$PR_NUMBER" --add-label "chore"
+          elif echo "$COMMITS" | grep -qiE '^style'; then
+            gh pr edit "$PR_NUMBER" --add-label "style"
+          elif echo "$COMMITS" | grep -qiE '^build'; then
+            gh pr edit "$PR_NUMBER" --add-label "build"
+          fi

@@ -1,0 +1,56 @@
+name: Commit Lint
+
+on:
+  pull_request:
+    branches: [main]
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Validate PR commits follow Conventional Commits
+        run: |
+          COMMITS=$(git log --no-merges --format=%s origin/${{ github.base_ref }}..${{ github.event.pull_request.head.sha }})
+
+          echo "Checking commits:"
+          echo "$COMMITS"
+          echo "---"
+
+          PATTERN="^(feat|fix|docs|chore|refactor|test|ci|perf|style|build)(\(.+\))?(!)?: .+"
+          ERRORS=0
+
+          while IFS= read -r msg; do
+            if [ -z "$msg" ]; then continue; fi
+            if echo "$msg" | grep -qE "$PATTERN"; then
+              echo "✅ $msg"
+            else
+              echo "❌ $msg"
+              ERRORS=$((ERRORS + 1))
+            fi
+          done <<< "$COMMITS"
+
+          echo "---"
+
+          if [ "$ERRORS" -gt 0 ]; then
+            echo ""
+            echo "❌ $ERRORS commit(s) do not follow Conventional Commits."
+            echo ""
+            echo "Expected format: <type>(<scope>): <description>"
+            echo ""
+            echo "Types: feat, fix, docs, chore, refactor, test, ci, perf, style, build"
+            echo ""
+            echo "Examples:"
+            echo "  feat: add retry interceptor"
+            echo "  fix(transport): handle null timeout"
+            echo "  docs: update README"
+            echo "  feat!: redesign transport API"
+            exit 1
+          fi
+
+          echo "✅ All commits follow Conventional Commits."
