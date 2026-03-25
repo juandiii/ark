@@ -64,6 +64,8 @@
     <module>ark-core</module>
     <module>ark-async</module>
     <module>ark-jackson</module>
+    <module>ark-jackson-classic</module>
+    <module>ark-jsonb</module>
     <module>ark-reactor</module>
     <module>ark-transport-jdk</module>
     <module>ark-transport-reactor</module>
@@ -75,6 +77,7 @@
     <module>ark-proxy-spring</module>
     <module>ark-spring-boot-starter</module>
     <module>ark-spring-boot-starter-webflux</module>
+    <module>ark-quarkus-jackson</module>
   </modules>
   <distributionManagement>
     <repository>
