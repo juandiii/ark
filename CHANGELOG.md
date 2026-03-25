@@ -1,3 +1,11 @@
+## [v1.0.8](https://github.com/juandiii/ark/releases/tag/v1.0.8) — 2026-03-25
+
+### 🐛 Bug Fixes
+
+- fix: pipeline (#22) @juandiii
+
+---
+
 ## [v1.0.7](https://github.com/juandiii/ark/releases/tag/v1.0.7) — 2026-03-25
 
 ### 🐛 Bug Fixes
