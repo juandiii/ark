@@ -170,7 +170,6 @@ mvn clean install
 mvn clean install -DskipTests
 mvn test
 ```
-
 ---
 
 ## Contributing
