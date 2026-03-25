@@ -9,7 +9,7 @@ import jakarta.enterprise.inject.Produces;
 import jakarta.inject.Singleton;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import xyz.juandiii.ark.ArkClient;
-import xyz.juandiii.ark.JacksonClassicSerializer;
+import xyz.juandiii.ark.jackson.classic.JacksonClassicSerializer;
 import xyz.juandiii.ark.JsonSerializer;
 import xyz.juandiii.ark.http.HttpTransport;
 import xyz.juandiii.ark.mutiny.MutinyArkClient;

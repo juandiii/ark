@@ -1,18 +1,21 @@
-package xyz.juandiii.ark;
+package xyz.juandiii.ark.jackson.classic;
 
-import tools.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import xyz.juandiii.ark.JsonSerializer;
+import xyz.juandiii.ark.TypeRef;
 import xyz.juandiii.ark.exceptions.ArkException;
 
 /**
- * JSON serializer implementation using Jackson ObjectMapper.
+ * JSON serializer using Jackson 2.x (com.fasterxml) ObjectMapper.
+ * Use this for Quarkus, Spring Boot 3.x, and legacy projects.
  *
  * @author Juan Diego Lopez V.
  */
-public class JacksonSerializer implements JsonSerializer {
+public class JacksonClassicSerializer implements JsonSerializer {
 
     private final ObjectMapper objectMapper;
 
-    public JacksonSerializer(ObjectMapper objectMapper) {
+    public JacksonClassicSerializer(ObjectMapper objectMapper) {
         this.objectMapper = objectMapper;
     }
 

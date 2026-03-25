@@ -6,7 +6,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Scope;
 import reactor.netty.http.client.HttpClient;
 import tools.jackson.databind.ObjectMapper;
-import xyz.juandiii.ark.JacksonSerializer;
+import xyz.juandiii.ark.jackson.JacksonSerializer;
 import xyz.juandiii.ark.JsonSerializer;
 import xyz.juandiii.ark.reactor.ReactorArkClient;
 import xyz.juandiii.ark.reactor.http.ReactorHttpTransport;

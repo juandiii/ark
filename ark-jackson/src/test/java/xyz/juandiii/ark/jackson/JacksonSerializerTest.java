@@ -1,9 +1,10 @@
-package xyz.juandiii.ark;
+package xyz.juandiii.ark.jackson;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import tools.jackson.databind.ObjectMapper;
+import xyz.juandiii.ark.TypeRef;
 import xyz.juandiii.ark.exceptions.ArkException;
 
 import java.util.List;
