@@ -1,28 +1,43 @@
 # Ark 🛳️
 
-**A lightweight, fluent HTTP client for Java 17+ with pluggable transport, pluggable serialization, and first-class support for sync, async, and reactive applications.**
+**A modular HTTP client toolkit for Java 17+ with fluent and declarative APIs, pluggable transports, pluggable serialization, and first-class support for sync, async, and reactive applications.**
 
-> Fluent HTTP for modern Java applications.  
-> Bring your own transport. Keep your execution model. Stay type-safe.
+> Fluent when you want control. Declarative when you want contracts.
+
+Ark lets you build HTTP clients in the style that fits your application:
+
+- **Fluent API** for explicit request composition
+- **Spring HTTP interfaces** with `@HttpExchange` and related annotations
+
+All while keeping transport, serialization, and execution model explicit and reusable.
 
 ---
 
 ## Why Ark?
 
-Java HTTP clients often mix transport, serialization, and execution style into one abstraction.
+Java HTTP clients often force you into one specific style, one framework, or one transport model.
 
-Ark keeps them separate:
+Ark takes a different approach:
 
-- Bring your own HTTP transport
-- Choose your execution model
-- Keep a consistent fluent API
-- Stay easy to test and evolve
+- Use a **fluent API** when you want explicit request control
+- Use **declarative interfaces** when you want contract-first clients
+- Keep your **HTTP transport pluggable**
+- Keep your **serializer replaceable**
+- Choose the **execution model** that matches your stack
+- Reuse the same mental model across Spring, Quarkus, and plain Java
+
+Ark is not just an HTTP engine.  
+It is a **client toolkit** for building HTTP clients in a consistent, framework-friendly, and transport-agnostic way.
 
 ---
 
-## Core Philosophy
+## Client Styles
 
-**method → configure → retrieve → extract**
+Ark supports multiple ways to define HTTP clients.
+
+### Fluent API
+
+Use the fluent API when you want full control over request composition.
 
 ```java
 Ark client = ArkClient.builder()
@@ -37,39 +52,40 @@ User user = client.get("/users/1")
     .body(User.class);
 ```
 
+### Declarative Spring HTTP Interfaces
+
+Use Spring HTTP interface annotations with `@HttpExchange`.
+
+```java
+@HttpExchange("/users")
+public interface UserApi {
+
+    @GetExchange("/{id}")
+    User getUser(@PathVariable String id);
+}
+```
+
 ---
 
 ## Features
 
 - Java 17+
 - Fluent HTTP API
-- Pluggable transports (JDK, Reactor Netty, Vert.x, Apache HttpClient 5)
-- Pluggable serializers (Jackson, Gson, custom)
+- Declarative HTTP clients with **Spring `@HttpExchange`**
+- Pluggable transports
+- Pluggable serializers
 - Dedicated sync, async, Reactor, Mutiny, and Vert.x APIs
 - Request and response interceptors
-- Per-request timeout
+- Per-request timeout support
 - Spring Boot and Quarkus integration
 - Easy to test and mock
-
----
-
-## Documentation
-
-- [Getting Started](docs/getting-started.md) — Quick start, building clients, making requests
-- [Transport Model](docs/transports.md) — Bridge pattern, built-in transports, custom transport
-- [Sync Client](docs/sync.md) — ArkClient usage and error handling
-- [Async Client](docs/async.md) — AsyncArkClient with CompletableFuture
-- [Reactor Client](docs/reactor.md) — ReactorArkClient with Mono/Flux
-- [Mutiny Client](docs/mutiny.md) — MutinyArkClient with Uni
-- [Vert.x Client](docs/vertx.md) — VertxArkClient with Future
-- [Spring Boot Integration](docs/spring-boot.md) — Starter auto-configuration
-- [Quarkus Integration](docs/quarkus.md) — CDI producer setup
-- [Testing](docs/testing.md) — Mock transports and unit testing
-- [Design Principles](docs/design.md) — Architecture, modules, requirements
+- Modular Maven structure
 
 ---
 
 ## Execution Models
+
+Ark provides dedicated entry points for different execution models while preserving a consistent client experience.
 
 | Model | Client | Return Type |
 |-------|--------|-------------|
@@ -112,19 +128,27 @@ Future<User> future = vertxClient
 
 ## Installation
 
+Import the BOM first:
+
 ```xml
 <dependencyManagement>
     <dependencies>
         <dependency>
             <groupId>xyz.juandiii</groupId>
             <artifactId>ark-bom</artifactId>
-            <version>1.0.8</version> <!-- ark-bom -->
+            <version>1.0.9-SNAPSHOT</version> <!-- ark-bom -->
             <type>pom</type>
             <scope>import</scope>
         </dependency>
     </dependencies>
 </dependencyManagement>
+```
 
+Then choose the modules you need.
+
+### Core + Jackson + JDK transport
+
+```xml
 <dependencies>
     <dependency>
         <groupId>xyz.juandiii</groupId>
@@ -141,7 +165,55 @@ Future<User> future = vertxClient
 </dependencies>
 ```
 
-### Starter Modules
+### Optional modules
+
+For async support:
+
+```xml
+<dependency>
+    <groupId>xyz.juandiii</groupId>
+    <artifactId>ark-async</artifactId>
+</dependency>
+```
+
+For Reactor support:
+
+```xml
+<dependency>
+    <groupId>xyz.juandiii</groupId>
+    <artifactId>ark-reactor</artifactId>
+</dependency>
+<dependency>
+    <groupId>xyz.juandiii</groupId>
+    <artifactId>ark-transport-reactor</artifactId>
+</dependency>
+```
+
+For Mutiny support:
+
+```xml
+<dependency>
+    <groupId>xyz.juandiii</groupId>
+    <artifactId>ark-mutiny</artifactId>
+</dependency>
+<dependency>
+    <groupId>xyz.juandiii</groupId>
+    <artifactId>ark-transport-vertx-mutiny</artifactId>
+</dependency>
+```
+
+For Vert.x `Future` support:
+
+```xml
+<dependency>
+    <groupId>xyz.juandiii</groupId>
+    <artifactId>ark-vertx</artifactId>
+</dependency>
+<dependency>
+    <groupId>xyz.juandiii</groupId>
+    <artifactId>ark-transport-vertx</artifactId>
+</dependency>
+```
 
 For Spring Boot:
 
@@ -152,7 +224,7 @@ For Spring Boot:
 </dependency>
 ```
 
-For WebFlux:
+For Spring WebFlux:
 
 ```xml
 <dependency>
@@ -160,6 +232,110 @@ For WebFlux:
     <artifactId>ark-spring-boot-starter-webflux</artifactId>
 </dependency>
 ```
+
+For Quarkus (Jackson):
+
+```xml
+<dependency>
+    <groupId>xyz.juandiii</groupId>
+    <artifactId>ark-quarkus-jackson</artifactId>
+</dependency>
+```
+
+Auto-configures `JsonSerializer` (Jackson 2.x), `ArkClient.Builder` (sync), and `MutinyArkClient.Builder` (reactive) as CDI beans.
+
+---
+
+## Transport Model
+
+Ark uses a **bridge pattern**.
+
+The transport layer is a thin adapter around an already configured HTTP client.  
+Ark does not own connection pools, low-level HTTP tuning, or TLS setup. Those concerns stay in the underlying transport.
+
+This makes Ark flexible by design.
+
+Built-in transports include:
+
+- JDK `HttpClient`
+- Reactor Netty
+- Vert.x Web Client
+- Vert.x Mutiny Web Client
+- Apache HttpClient 5
+
+You can also provide your own transport implementation.
+
+---
+
+## Serialization
+
+Serialization is explicit and replaceable.
+
+Use Jackson, Gson, or your own serializer implementation without changing the shape of your clients.
+
+```java
+Ark client = ArkClient.builder()
+    .serializer(new JacksonSerializer(new ObjectMapper()))
+    .transport(new ArkJdkHttpTransport(HttpClient.newBuilder().build()))
+    .baseUrl("https://api.example.com")
+    .build();
+```
+
+---
+
+## Testing
+
+Ark is easy to test because transport is an explicit dependency.
+
+You can plug in a fake transport without starting a server or mocking a concrete HTTP client.
+
+```java
+HttpTransport transport = (method, uri, headers, body, timeout) ->
+    new RawResponse(
+        200,
+        Map.of("Content-Type", List.of("application/json")),
+        "{\"id\":1,\"name\":\"Juan\"}"
+    );
+
+Ark client = ArkClient.builder()
+    .serializer(new JacksonSerializer(new ObjectMapper()))
+    .transport(transport)
+    .baseUrl("https://api.example.com")
+    .build();
+
+User user = client.get("/users/1")
+    .retrieve()
+    .body(User.class);
+```
+
+---
+
+## Documentation
+
+- [Getting Started](docs/getting-started.md)
+- [Transport Model](docs/transports.md)
+- [Spring `@HttpExchange` Clients](docs/declarative-spring.md)
+- [Sync Client](docs/sync.md)
+- [Async Client](docs/async.md)
+- [Reactor Client](docs/reactor.md)
+- [Mutiny Client](docs/mutiny.md)
+- [Vert.x Client](docs/vertx.md)
+- [Spring Boot Integration](docs/spring-boot.md)
+- [Quarkus Integration](docs/quarkus.md)
+- [Quarkus Jackson Extension](docs/quarkus-jackson.md)
+- [Testing](docs/testing.md)
+- [Design Principles](docs/design.md)
+
+---
+
+## Design Principles
+
+- Keep transport explicit
+- Keep serialization replaceable
+- Support fluent and declarative styles
+- Keep execution models separate
+- Stay framework-friendly
+- Prefer composition over lock-in
 
 ---
 
@@ -170,11 +346,12 @@ mvn clean install
 mvn clean install -DskipTests
 mvn test
 ```
+
 ---
 
 ## Contributing
 
-Contributions are welcome! 
+Contributions are welcome!
 
 Please read [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines on commit conventions, PR labels, and the release process.
 

@@ -1,31 +1,41 @@
 # Transport Model
 
-Ark uses a **bridge pattern**.
+Ark uses a **bridge pattern** — the transport is a thin adapter around an already configured HTTP client. Timeouts, SSL, connection pools, and HTTP version are configured on the client itself, not on Ark.
 
-The transport layer is a thin adapter around an already configured HTTP client.
-Ark does not own connection pools, SSL setup, HTTP version selection, or low-level tuning.
+---
 
-Those concerns remain where they belong: in the underlying HTTP client.
-
-## Transport interfaces
+## Transport Interfaces
 
 | Interface | Returns | Module |
-|---|---|---|
+|-----------|---------|--------|
 | `HttpTransport` | `RawResponse` | `ark-core` |
 | `AsyncHttpTransport` | `CompletableFuture<RawResponse>` | `ark-async` |
 | `ReactorHttpTransport` | `Mono<RawResponse>` | `ark-reactor` |
 | `MutinyHttpTransport` | `Uni<RawResponse>` | `ark-mutiny` |
 | `VertxHttpTransport` | `Future<RawResponse>` | `ark-vertx` |
 
-A single transport may implement multiple interfaces.
-
-For example, `ArkJdkHttpTransport` supports both sync and async execution.
+A single transport can implement multiple interfaces. For example, `ArkJdkHttpTransport` implements both `HttpTransport` and `AsyncHttpTransport`.
 
 ---
 
 ## Built-in Transports
 
-### Java native HTTP client
+| Transport | Implements | Module |
+|-----------|------------|--------|
+| `ArkJdkHttpTransport` | `HttpTransport` + `AsyncHttpTransport` | `ark-transport-jdk` |
+| `ArkReactorNettyTransport` | `ReactorHttpTransport` | `ark-transport-reactor` |
+| `ArkVertxFutureTransport` | `VertxHttpTransport` | `ark-transport-vertx` |
+| `ArkVertxMutinyTransport` | `MutinyHttpTransport` | `ark-transport-vertx-mutiny` |
+| `ArkApacheTransport` | `HttpTransport` | `ark-transport-apache` |
+
+### Java Native HttpClient
+
+```xml
+<dependency>
+    <groupId>xyz.juandiii</groupId>
+    <artifactId>ark-transport-jdk</artifactId>
+</dependency>
+```
 
 ```java
 HttpClient httpClient = HttpClient.newBuilder()
@@ -40,6 +50,13 @@ ArkJdkHttpTransport transport = new ArkJdkHttpTransport(httpClient);
 
 ### Reactor Netty
 
+```xml
+<dependency>
+    <groupId>xyz.juandiii</groupId>
+    <artifactId>ark-transport-reactor</artifactId>
+</dependency>
+```
+
 ```java
 reactor.netty.http.client.HttpClient httpClient = HttpClient.create()
     .responseTimeout(Duration.ofSeconds(30))
@@ -49,7 +66,14 @@ reactor.netty.http.client.HttpClient httpClient = HttpClient.create()
 ArkReactorNettyTransport transport = new ArkReactorNettyTransport(httpClient);
 ```
 
-### Vert.x with `CompletableFuture`
+### Vert.x Future
+
+```xml
+<dependency>
+    <groupId>xyz.juandiii</groupId>
+    <artifactId>ark-transport-vertx</artifactId>
+</dependency>
+```
 
 ```java
 WebClient webClient = WebClient.create(vertx, new WebClientOptions()
@@ -57,16 +81,17 @@ WebClient webClient = WebClient.create(vertx, new WebClientOptions()
     .setConnectTimeout(5000)
     .setMaxPoolSize(50));
 
-ArkVertxTransport transport = new ArkVertxTransport(webClient);
-```
-
-### Vert.x with native `Future`
-
-```java
 ArkVertxFutureTransport transport = new ArkVertxFutureTransport(webClient);
 ```
 
 ### Vert.x Mutiny
+
+```xml
+<dependency>
+    <groupId>xyz.juandiii</groupId>
+    <artifactId>ark-transport-vertx-mutiny</artifactId>
+</dependency>
+```
 
 ```java
 io.vertx.mutiny.ext.web.client.WebClient webClient = WebClient.create(vertx);
@@ -75,6 +100,13 @@ ArkVertxMutinyTransport transport = new ArkVertxMutinyTransport(webClient);
 ```
 
 ### Apache HttpClient 5
+
+```xml
+<dependency>
+    <groupId>xyz.juandiii</groupId>
+    <artifactId>ark-transport-apache</artifactId>
+</dependency>
+```
 
 ```java
 CloseableHttpClient httpClient = HttpClients.custom()
@@ -94,7 +126,7 @@ ArkApacheTransport transport = new ArkApacheTransport(httpClient);
 
 ## Custom Transport
 
-Bringing your own transport is intentionally simple.
+Implement the interface that matches your execution model:
 
 ```java
 public class MyTransport implements HttpTransport {
@@ -106,16 +138,19 @@ public class MyTransport implements HttpTransport {
     }
 
     @Override
-    public RawResponse send(
-            String method,
-            URI uri,
-            Map<String, String> headers,
-            String body,
-            Duration timeout
-    ) {
+    public RawResponse send(String method, URI uri, Map<String, String> headers,
+                            String body, Duration timeout) {
         // Adapt your client's API and return RawResponse
     }
 }
 ```
 
-This makes Ark easy to integrate with existing infrastructure and internal HTTP abstractions.
+---
+
+## Related
+
+- [Getting Started](getting-started.md)
+- [Sync Client](sync.md)
+- [Reactor Client](reactor.md)
+- [Mutiny Client](mutiny.md)
+- [Design Principles](design.md)

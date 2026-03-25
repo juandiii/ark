@@ -1,5 +1,52 @@
 # Getting Started
 
+---
+
+## Installation
+
+Import the BOM:
+
+```xml
+<dependencyManagement>
+    <dependencies>
+        <dependency>
+            <groupId>xyz.juandiii</groupId>
+            <artifactId>ark-bom</artifactId>
+            <version>1.0.9-SNAPSHOT</version> <!-- ark-bom -->
+            <type>pom</type>
+            <scope>import</scope>
+        </dependency>
+    </dependencies>
+</dependencyManagement>
+```
+
+Add the modules you need:
+
+```xml
+<dependency>
+    <groupId>xyz.juandiii</groupId>
+    <artifactId>ark-core</artifactId>
+</dependency>
+<dependency>
+    <groupId>xyz.juandiii</groupId>
+    <artifactId>ark-jackson</artifactId>
+</dependency>
+<dependency>
+    <groupId>xyz.juandiii</groupId>
+    <artifactId>ark-transport-jdk</artifactId>
+</dependency>
+```
+
+Or use a starter:
+
+| Starter | Stack |
+|---------|-------|
+| `ark-spring-boot-starter` | Spring MVC (sync) |
+| `ark-spring-boot-starter-webflux` | Spring WebFlux (reactive) |
+| `ark-quarkus-jackson` | Quarkus (sync + Mutiny) |
+
+---
+
 ## Quick Start
 
 ### Sync
@@ -20,7 +67,7 @@ User user = client.get("/users/1")
 
 ```java
 AsyncArk client = AsyncArkClient.builder()
-    .serializer(new JacksonSerializer(new ObjectMapper()))
+    .serializer(serializer)
     .transport(new ArkJdkHttpTransport(HttpClient.newBuilder().build()))
     .baseUrl("https://api.example.com")
     .build();
@@ -34,8 +81,8 @@ CompletableFuture<User> user = client.get("/users/1")
 
 ```java
 ReactorArk client = ReactorArkClient.builder()
-    .serializer(new JacksonSerializer(new ObjectMapper()))
-    .transport(new ArkReactorNettyTransport(httpClient))
+    .serializer(serializer)
+    .transport(new ArkReactorNettyTransport(HttpClient.create()))
     .baseUrl("https://api.example.com")
     .build();
 
@@ -49,7 +96,7 @@ Mono<User> user = client.get("/users/1")
 ```java
 MutinyArk client = MutinyArkClient.builder()
     .serializer(serializer)
-    .transport(new ArkVertxMutinyTransport(webClient))
+    .transport(new ArkVertxMutinyTransport(WebClient.create(vertx)))
     .baseUrl("https://api.example.com")
     .build();
 
@@ -63,7 +110,7 @@ Uni<User> user = client.get("/users/1")
 ```java
 VertxArk client = VertxArkClient.builder()
     .serializer(serializer)
-    .transport(new ArkVertxFutureTransport(webClient))
+    .transport(new ArkVertxFutureTransport(WebClient.create(vertx)))
     .baseUrl("https://api.example.com")
     .build();
 
@@ -74,96 +121,20 @@ Future<User> user = client.get("/users/1")
 
 ---
 
-## Building a Client
-
-All client variants share the same builder style.
-
-```java
-Ark client = ArkClient.builder()
-    .serializer(serializer)
-    .transport(new ArkJdkHttpTransport(httpClient))
-    .baseUrl("https://api.example.com")
-    .build();
-
-AsyncArk asyncClient = AsyncArkClient.builder()
-    .serializer(serializer)
-    .transport(new ArkJdkHttpTransport(httpClient))
-    .baseUrl("https://api.example.com")
-    .build();
-
-ReactorArk reactorClient = ReactorArkClient.builder()
-    .serializer(serializer)
-    .transport(new ArkReactorNettyTransport(reactorHttpClient))
-    .baseUrl("https://api.example.com")
-    .build();
-
-MutinyArk mutinyClient = MutinyArkClient.builder()
-    .serializer(serializer)
-    .transport(new ArkVertxMutinyTransport(mutinyWebClient))
-    .baseUrl("https://api.example.com")
-    .build();
-
-VertxArk vertxClient = VertxArkClient.builder()
-    .serializer(serializer)
-    .transport(new ArkVertxFutureTransport(webClient))
-    .baseUrl("https://api.example.com")
-    .build();
-```
-
----
-
-## Full Configuration Example
-
-```java
-HttpClient httpClient = HttpClient.newBuilder()
-    .version(HttpClient.Version.HTTP_2)
-    .connectTimeout(Duration.ofSeconds(10))
-    .followRedirects(HttpClient.Redirect.NORMAL)
-    .sslContext(mySSLContext)
-    .executor(Executors.newVirtualThreadPerTaskExecutor())
-    .build();
-
-Ark client = ArkClient.builder()
-    .serializer(serializer)
-    .transport(new ArkJdkHttpTransport(httpClient))
-    .baseUrl("https://api.example.com")
-    .userAgent("MyApp", "2.0")
-    .requestInterceptor(request ->
-        request.header("X-Request-Id", UUID.randomUUID().toString()))
-    .responseInterceptor(response -> {
-        log.info("Status: {}", response.statusCode());
-        return response;
-    })
-    .build();
-```
-
----
-
 ## Making Requests
 
-### Simple response extraction
+### Response extraction
 
 ```java
-User user = client.get("/users/1")
-    .retrieve()
-    .body(User.class);
+// Class<T> — simple types
+User user = client.get("/users/1").retrieve().body(User.class);
+String html = client.get("/health").retrieve().body(String.class);
 
-String html = client.get("/health")
-    .retrieve()
-    .body(String.class);
+// TypeRef<T> — generic types
+List<User> users = client.get("/users").retrieve().body(new TypeRef<List<User>>() {});
 ```
 
-### Generic response extraction with `TypeRef`
-
-Use `TypeRef<T>` for generic types.
-
-```java
-List<User> users = client.get("/users")
-    .retrieve()
-    .body(new TypeRef<List<User>>() {});
-```
-
-### GET with query parameters
+### Query parameters
 
 ```java
 List<User> users = client.get("/users")
@@ -186,23 +157,25 @@ User created = client.post("/users")
 ### DELETE
 
 ```java
-client.delete("/users/1")
-    .retrieve()
-    .toBodilessEntity();
+client.delete("/users/1").retrieve().toBodilessEntity();
 ```
 
-### Full response extraction
+### Full response (status + headers + body)
 
 ```java
 ArkResponse<User> response = client.get("/users/1")
     .retrieve()
     .toEntity(User.class);
+
+int status = response.statusCode();
+User body = response.body();
+boolean ok = response.isSuccessful();
 ```
 
 ### Per-request timeout
 
 ```java
-User result = client.get("/slow-endpoint")
+User user = client.get("/slow-endpoint")
     .timeout(Duration.ofSeconds(120))
     .retrieve()
     .body(User.class);
@@ -210,28 +183,50 @@ User result = client.get("/slow-endpoint")
 
 ---
 
-## Same Fluent API, Different Return Types
-
-Ark keeps the request flow consistent across all execution styles.
+## Full Configuration
 
 ```java
-User user = client.get("/users/1")
-    .retrieve()
-    .body(User.class);
+HttpClient httpClient = HttpClient.newBuilder()
+    .version(HttpClient.Version.HTTP_2)
+    .connectTimeout(Duration.ofSeconds(10))
+    .followRedirects(HttpClient.Redirect.NORMAL)
+    .sslContext(mySSLContext)
+    .build();
 
-CompletableFuture<User> cf = asyncClient.get("/users/1")
-    .retrieve()
-    .body(User.class);
-
-Mono<User> mono = reactorClient.get("/users/1")
-    .retrieve()
-    .body(User.class);
-
-Uni<User> uni = mutinyClient.get("/users/1")
-    .retrieve()
-    .body(User.class);
-
-Future<User> future = vertxClient.get("/users/1")
-    .retrieve()
-    .body(User.class);
+Ark client = ArkClient.builder()
+    .serializer(serializer)
+    .transport(new ArkJdkHttpTransport(httpClient))
+    .baseUrl("https://api.example.com")
+    .userAgent("MyApp", "2.0")
+    .requestInterceptor(request ->
+        request.header("X-Request-Id", UUID.randomUUID().toString()))
+    .responseInterceptor(response -> {
+        log.info("Status: {}", response.statusCode());
+        return response;
+    })
+    .build();
 ```
+
+---
+
+## Same API, Different Return Types
+
+```java
+User user                    = client.get("/users/1").retrieve().body(User.class);
+CompletableFuture<User> cf   = asyncClient.get("/users/1").retrieve().body(User.class);
+Mono<User> mono              = reactorClient.get("/users/1").retrieve().body(User.class);
+Uni<User> uni                = mutinyClient.get("/users/1").retrieve().body(User.class);
+Future<User> future          = vertxClient.get("/users/1").retrieve().body(User.class);
+```
+
+---
+
+## Next Steps
+
+- [Sync Client](sync.md) — error handling, full response
+- [Reactor Client](reactor.md) — Spring WebFlux
+- [Mutiny Client](mutiny.md) — Quarkus
+- [Transport Model](transports.md) — built-in and custom transports
+- [Spring Boot Integration](spring-boot.md)
+- [Quarkus Integration](quarkus.md)
+- [Testing](testing.md)
