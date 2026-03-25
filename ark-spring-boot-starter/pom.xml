@@ -5,7 +5,7 @@
   <parent>
     <groupId>xyz.juandiii</groupId>
     <artifactId>ark</artifactId>
-    <version>1.0.7-SNAPSHOT</version>
+    <version>1.0.7</version>
   </parent>
   <artifactId>ark-spring-boot-starter</artifactId>
   <name>ark-spring-boot-starter</name>
