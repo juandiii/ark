@@ -6,7 +6,7 @@ on:
 
 jobs:
   test:
-    if: "!contains(github.event.head_commit.message, '[no deploy]')"
+    if: "!contains(github.event.head_commit.message, '[skip ci]') && !contains(github.event.head_commit.message, 'Release v')"
     uses: ./.github/workflows/test.yml
     secrets: inherit
 

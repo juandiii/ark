@@ -13,7 +13,7 @@ NEXT="$MAJOR.$MINOR.$((PATCH + 1))-SNAPSHOT"
 
 ./mvnw versions:set -DnewVersion="$NEXT" -DgenerateBackupPoms=false
 git add -A
-git commit -m "chore(release): prepare $NEXT [no deploy]"
+git commit -m "chore(release): prepare $NEXT [skip ci]"
 git push origin main
 
 echo "Bumped to $NEXT"
