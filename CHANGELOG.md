@@ -1,3 +1,11 @@
+## [v1.0.7](https://github.com/juandiii/ark/releases/tag/v1.0.7) — 2026-03-25
+
+### 🐛 Bug Fixes
+
+- fix: adjust workflow github (#20) @juandiii
+
+---
+
 ## [v1.0.6](https://github.com/juandiii/ark/releases/tag/v1.0.6) — 2026-03-25
 
 ### 🐛 Bug Fixes
