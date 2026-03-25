@@ -57,7 +57,7 @@ jobs:
       - name: Create release branch and prepare
         if: steps.version.outputs.SKIP != 'true'
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.GH_PAT }}
           NEXUS_MIRROR_URL: ${{ secrets.NEXUS_MIRROR_URL }}
           NEXUS_MIRROR_SNAPSHOT_URL: ${{ secrets.NEXUS_MIRROR_SNAPSHOT_URL }}
         run: |
@@ -67,6 +67,9 @@ jobs:
 
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          # Delete existing release branch if any
+          git push origin --delete "$BRANCH" 2>/dev/null || true
 
           # Create release branch
           git checkout -b "$BRANCH"
