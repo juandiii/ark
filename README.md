@@ -118,7 +118,7 @@ Future<User> future = vertxClient
         <dependency>
             <groupId>xyz.juandiii</groupId>
             <artifactId>ark-bom</artifactId>
-            <version>1.0.6</version> <!-- ark-bom -->
+            <version>1.0.7</version> <!-- ark-bom -->
             <type>pom</type>
             <scope>import</scope>
         </dependency>
