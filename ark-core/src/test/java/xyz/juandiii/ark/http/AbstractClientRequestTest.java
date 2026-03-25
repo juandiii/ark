@@ -32,7 +32,11 @@ class AbstractClientRequestTest {
     JsonSerializer serializer;
 
     private DefaultClientRequest request(String method, String path) {
-        return new DefaultClientRequest(method, "https://api.example.com", path,
+        return request(method, "https://api.example.com", path);
+    }
+
+    private DefaultClientRequest request(String method, String baseUrl, String path) {
+        return new DefaultClientRequest(method, baseUrl, path,
                 transport, serializer, Collections.emptyList(), Collections.emptyList());
     }
 
@@ -65,6 +69,42 @@ class AbstractClientRequestTest {
             DefaultClientRequest req = request("GET", "/users");
             req.queryParam("page", null);
             assertFalse(req.buildUri().toString().contains("?"));
+        }
+
+        @Test
+        void givenTrailingSlashOnBaseUrl_whenPathStartsWithSlash_thenNormalizesDoubleSlash() {
+            assertEquals(URI.create("https://api.example.com/users"),
+                    request("GET", "https://api.example.com/", "/users").buildUri());
+        }
+
+        @Test
+        void givenTrailingSlashOnBaseUrl_whenPathIsSlash_thenNormalizesToSingleSlash() {
+            assertEquals(URI.create("https://api.example.com/"),
+                    request("GET", "https://api.example.com/", "/").buildUri());
+        }
+
+        @Test
+        void givenTrailingSlashOnBaseUrl_whenPathIsEmpty_thenNoDoubleSlash() {
+            assertEquals(URI.create("https://api.example.com/"),
+                    request("GET", "https://api.example.com/", "").buildUri());
+        }
+
+        @Test
+        void givenMultipleSlashes_whenBuildUri_thenNormalizesToSingle() {
+            assertEquals(URI.create("https://api.example.com/users"),
+                    request("GET", "https://api.example.com///", "///users").buildUri());
+        }
+
+        @Test
+        void givenNoTrailingSlash_whenPathHasNoLeadingSlash_thenConcatenatesCorrectly() {
+            assertEquals(URI.create("https://api.example.com/users"),
+                    request("GET", "https://api.example.com", "/users").buildUri());
+        }
+
+        @Test
+        void givenHttpsProtocol_whenNormalizing_thenPreservesProtocolSlashes() {
+            assertEquals(URI.create("https://api.example.com/users"),
+                    request("GET", "https://api.example.com", "/users").buildUri());
         }
 
         @Test
