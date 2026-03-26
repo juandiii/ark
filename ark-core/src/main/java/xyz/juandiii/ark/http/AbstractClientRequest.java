@@ -58,7 +58,7 @@ public abstract class AbstractClientRequest<T extends AbstractClientRequest<T>>
 
     @Override
     public String path() {
-        return baseUrl + path;
+        return normalizedUrl();
     }
 
     @Override
@@ -137,10 +137,7 @@ public abstract class AbstractClientRequest<T extends AbstractClientRequest<T>>
     }
 
     protected URI buildUri() {
-        String url = (baseUrl + path).replaceAll("(?<=[^:])//+", "/");
-        if (!url.contains("://") || url.indexOf('/', url.indexOf("://") + 3) == -1) {
-            url += "/";
-        }
+        String url = normalizedUrl();
         if (!queryParams.isEmpty()) {
             StringJoiner joiner = new StringJoiner("&");
             queryParams.forEach((k, v) -> joiner.add(encode(k) + "=" + encode(v)));
@@ -155,6 +152,12 @@ public abstract class AbstractClientRequest<T extends AbstractClientRequest<T>>
 
     protected boolean needsBody() {
         return "POST".equals(method) || "PUT".equals(method) || "PATCH".equals(method);
+    }
+
+    private String normalizedUrl() {
+        String base = baseUrl.endsWith("/") ? baseUrl.substring(0, baseUrl.length() - 1) : baseUrl;
+        String p = path.startsWith("/") ? path : "/" + path;
+        return (base + p).replaceAll("(?<=[^:])//+", "/");
     }
 
     private String encode(String value) {

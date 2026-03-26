@@ -4,6 +4,7 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import xyz.juandiii.ark.http.RawResponse;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -11,139 +12,134 @@ import static org.junit.jupiter.api.Assertions.*;
 
 class LoggingInterceptorTest {
 
-    @Nested
-    class RequestLogging {
+    static class TestBuilder extends xyz.juandiii.ark.AbstractArkBuilder<TestBuilder> {
+        final List<RequestInterceptor> reqList = new ArrayList<>();
+        final List<ResponseInterceptor> resList = new ArrayList<>();
 
-        @Test
-        void givenBasicLevel_thenLogsMethodAndPath() {
-            RequestInterceptor interceptor = LoggingInterceptor.request();
-            RequestContext context = createContext("GET", "/users/1", Map.of(), null);
-
-            assertDoesNotThrow(() -> interceptor.intercept(context));
+        @Override
+        public TestBuilder requestInterceptor(RequestInterceptor interceptor) {
+            reqList.add(interceptor);
+            return super.requestInterceptor(interceptor);
         }
 
-        @Test
-        void givenHeadersLevel_thenLogsHeaders() {
-            RequestInterceptor interceptor = LoggingInterceptor.request(LoggingInterceptor.Level.HEADERS);
-            RequestContext context = createContext("POST", "/users",
-                    Map.of("Content-Type", "application/json"), null);
-
-            assertDoesNotThrow(() -> interceptor.intercept(context));
-        }
-
-        @Test
-        void givenBodyLevel_thenLogsBody() {
-            RequestInterceptor interceptor = LoggingInterceptor.request(LoggingInterceptor.Level.BODY);
-            RequestContext context = createContext("POST", "/users",
-                    Map.of("Content-Type", "application/json"), "{\"name\":\"Juan\"}");
-
-            assertDoesNotThrow(() -> interceptor.intercept(context));
-        }
-
-        @Test
-        void givenNullBody_thenDoesNotThrow() {
-            RequestInterceptor interceptor = LoggingInterceptor.request(LoggingInterceptor.Level.BODY);
-            RequestContext context = createContext("GET", "/users", Map.of(), null);
-
-            assertDoesNotThrow(() -> interceptor.intercept(context));
+        @Override
+        public TestBuilder responseInterceptor(ResponseInterceptor interceptor) {
+            resList.add(interceptor);
+            return super.responseInterceptor(interceptor);
         }
     }
 
     @Nested
-    class ResponseLogging {
+    class Apply {
 
         @Test
-        void givenBasicLevel_thenLogsStatusAndDuration() {
-            LoggingInterceptor.request().intercept(createContext("GET", "/", Map.of(), null));
+        void givenOffLevel_thenNoInterceptorsAdded() {
+            var builder = new TestBuilder();
+            LoggingInterceptor.apply(builder, LoggingInterceptor.Level.OFF);
 
-            ResponseInterceptor interceptor = LoggingInterceptor.response();
-            RawResponse raw = new RawResponse(200, Map.of(), "{\"ok\":true}");
+            assertTrue(builder.reqList.isEmpty());
+            assertTrue(builder.resList.isEmpty());
+        }
 
-            RawResponse result = interceptor.intercept(raw);
+        @Test
+        void givenBasicLevel_thenAddsInterceptors() {
+            var builder = new TestBuilder();
+            LoggingInterceptor.apply(builder, LoggingInterceptor.Level.BASIC);
+
+            assertEquals(1, builder.reqList.size());
+            assertEquals(1, builder.resList.size());
+        }
+
+        @Test
+        void givenHeadersLevel_thenAddsInterceptors() {
+            var builder = new TestBuilder();
+            LoggingInterceptor.apply(builder, LoggingInterceptor.Level.HEADERS);
+
+            assertEquals(1, builder.reqList.size());
+            assertEquals(1, builder.resList.size());
+        }
+
+        @Test
+        void givenBodyLevel_thenAddsInterceptors() {
+            var builder = new TestBuilder();
+            LoggingInterceptor.apply(builder, LoggingInterceptor.Level.BODY);
+
+            assertEquals(1, builder.reqList.size());
+            assertEquals(1, builder.resList.size());
+        }
+
+        @Test
+        void givenApply_thenRequestInterceptorExecutes() {
+            var builder = new TestBuilder();
+            LoggingInterceptor.apply(builder, LoggingInterceptor.Level.BODY);
+
+            RequestContext context = createContext("GET", "/users", Map.of("Accept", "application/json"), null);
+            assertDoesNotThrow(() -> builder.reqList.get(0).intercept(context));
+        }
+
+        @Test
+        void givenApply_thenResponseInterceptorReturnsRaw() {
+            var builder = new TestBuilder();
+            LoggingInterceptor.apply(builder, LoggingInterceptor.Level.BODY);
+
+            builder.reqList.get(0).intercept(createContext("GET", "/", Map.of(), null));
+            RawResponse raw = new RawResponse(200, Map.of("Content-Type", List.of("application/json")), "{\"ok\":true}");
+            RawResponse result = builder.resList.get(0).intercept(raw);
 
             assertSame(raw, result);
         }
 
         @Test
-        void givenHeadersLevel_thenLogsResponseHeaders() {
-            LoggingInterceptor.request().intercept(createContext("GET", "/", Map.of(), null));
+        void givenErrorResponse_thenDoesNotThrow() {
+            var builder = new TestBuilder();
+            LoggingInterceptor.apply(builder, LoggingInterceptor.Level.BASIC);
 
-            ResponseInterceptor interceptor = LoggingInterceptor.response(LoggingInterceptor.Level.HEADERS);
-            RawResponse raw = new RawResponse(200,
-                    Map.of("Content-Type", List.of("application/json")), "{}");
-
-            RawResponse result = interceptor.intercept(raw);
-
-            assertSame(raw, result);
-        }
-
-        @Test
-        void givenBodyLevel_thenLogsResponseBody() {
-            LoggingInterceptor.request().intercept(createContext("GET", "/", Map.of(), null));
-
-            ResponseInterceptor interceptor = LoggingInterceptor.response(LoggingInterceptor.Level.BODY);
-            RawResponse raw = new RawResponse(200, Map.of(), "{\"id\":1}");
-
-            RawResponse result = interceptor.intercept(raw);
-
-            assertSame(raw, result);
-        }
-
-        @Test
-        void givenLargeBody_thenTruncates() {
-            LoggingInterceptor.request().intercept(createContext("GET", "/", Map.of(), null));
-
-            ResponseInterceptor interceptor = LoggingInterceptor.response(LoggingInterceptor.Level.BODY);
-            String largeBody = "x".repeat(2000);
-            RawResponse raw = new RawResponse(200, Map.of(), largeBody);
-
-            RawResponse result = interceptor.intercept(raw);
-
-            assertSame(raw, result);
-        }
-
-        @Test
-        void givenErrorStatus_thenLogsAsWarning() {
-            LoggingInterceptor.request().intercept(createContext("GET", "/", Map.of(), null));
-
-            ResponseInterceptor interceptor = LoggingInterceptor.response();
+            builder.reqList.get(0).intercept(createContext("GET", "/", Map.of(), null));
             RawResponse raw = new RawResponse(500, Map.of(), "error");
 
-            RawResponse result = interceptor.intercept(raw);
-
-            assertSame(raw, result);
+            assertDoesNotThrow(() -> builder.resList.get(0).intercept(raw));
         }
 
         @Test
-        void givenNoRequestStart_thenDurationIsZero() {
-            ResponseInterceptor interceptor = LoggingInterceptor.response();
-            RawResponse raw = new RawResponse(200, Map.of(), "{}");
+        void givenLargeBody_thenDoesNotThrow() {
+            var builder = new TestBuilder();
+            LoggingInterceptor.apply(builder, LoggingInterceptor.Level.BODY);
 
-            assertDoesNotThrow(() -> interceptor.intercept(raw));
+            builder.reqList.get(0).intercept(createContext("GET", "/", Map.of(), null));
+            RawResponse raw = new RawResponse(200, Map.of(), "x".repeat(2000));
+
+            assertDoesNotThrow(() -> builder.resList.get(0).intercept(raw));
         }
 
         @Test
         void givenNullBody_thenDoesNotThrow() {
-            LoggingInterceptor.request().intercept(createContext("GET", "/", Map.of(), null));
+            var builder = new TestBuilder();
+            LoggingInterceptor.apply(builder, LoggingInterceptor.Level.BODY);
 
-            ResponseInterceptor interceptor = LoggingInterceptor.response(LoggingInterceptor.Level.BODY);
+            builder.reqList.get(0).intercept(createContext("POST", "/users", Map.of(), "body"));
             RawResponse raw = new RawResponse(204, Map.of(), null);
 
-            assertDoesNotThrow(() -> interceptor.intercept(raw));
+            assertDoesNotThrow(() -> builder.resList.get(0).intercept(raw));
         }
     }
 
     @Nested
-    class DefaultFactoryMethods {
+    class ParseLevel {
 
         @Test
-        void givenRequestDefault_thenReturnsInterceptor() {
-            assertNotNull(LoggingInterceptor.request());
+        void givenNull_thenReturnsOff() {
+            assertEquals(LoggingInterceptor.Level.OFF, LoggingInterceptor.parseLevel(null));
         }
 
         @Test
-        void givenResponseDefault_thenReturnsInterceptor() {
-            assertNotNull(LoggingInterceptor.response());
+        void givenValid_thenReturnsLevel() {
+            assertEquals(LoggingInterceptor.Level.BODY, LoggingInterceptor.parseLevel("BODY"));
+            assertEquals(LoggingInterceptor.Level.BODY, LoggingInterceptor.parseLevel("body"));
+        }
+
+        @Test
+        void givenInvalid_thenReturnsOff() {
+            assertEquals(LoggingInterceptor.Level.OFF, LoggingInterceptor.parseLevel("invalid"));
         }
     }
 

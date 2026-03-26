@@ -55,6 +55,7 @@ public class AsyncArkClient extends AbstractArkClient<DefaultAsyncClientRequest>
         public AsyncArk build() {
             Objects.requireNonNull(serializer, "serializer must not be null");
             Objects.requireNonNull(transport, "transport must not be null");
+            logConfiguration("AsyncArkClient (CompletableFuture)", transport.getClass().getSimpleName());
             return new AsyncArkClient(transport, serializer, buildUserAgent(),
                     baseUrl, requestInterceptors, responseInterceptors);
         }

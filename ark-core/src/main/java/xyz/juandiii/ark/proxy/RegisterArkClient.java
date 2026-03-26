@@ -35,10 +35,14 @@ public @interface RegisterArkClient {
     /**
      * Connection timeout in seconds.
      */
-    int connectTimeout() default 10;
+    int connectTimeout() default DEFAULT_CONNECT_TIMEOUT;
 
     /**
      * Read timeout in seconds.
      */
-    int readTimeout() default 30;
+    int readTimeout() default DEFAULT_READ_TIMEOUT;
+
+    HttpVersion DEFAULT_HTTP_VERSION = HttpVersion.HTTP_1_1;
+    int DEFAULT_CONNECT_TIMEOUT = 10;
+    int DEFAULT_READ_TIMEOUT = 30;
 }

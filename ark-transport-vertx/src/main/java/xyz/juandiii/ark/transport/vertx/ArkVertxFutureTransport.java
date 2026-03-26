@@ -6,14 +6,13 @@ import io.vertx.core.http.HttpMethod;
 import io.vertx.ext.web.client.HttpResponse;
 import io.vertx.ext.web.client.WebClient;
 import xyz.juandiii.ark.exceptions.ApiException;
+import xyz.juandiii.ark.http.HeaderUtils;
 import xyz.juandiii.ark.http.RawResponse;
 import xyz.juandiii.ark.http.TransportLogger;
 import xyz.juandiii.ark.vertx.http.VertxHttpTransport;
 
 import java.net.URI;
 import java.time.Duration;
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -56,19 +55,11 @@ public final class ArkVertxFutureTransport implements VertxHttpTransport {
     private RawResponse handleResponse(HttpResponse<Buffer> r) {
         int statusCode = r.statusCode();
         String responseBody = r.bodyAsString();
-        var responseHeaders = toHeaderMap(r.headers());
+        var responseHeaders = HeaderUtils.toHeaderMap(r.headers());
         LOGGER.log(System.Logger.Level.DEBUG, () -> TransportLogger.formatResponse(statusCode, responseHeaders, responseBody));
         if (RawResponse.isErrorStatus(statusCode)) {
             throw new ApiException(statusCode, responseBody);
         }
         return new RawResponse(statusCode, responseHeaders, responseBody);
-    }
-
-    private Map<String, List<String>> toHeaderMap(io.vertx.core.MultiMap multiMap) {
-        Map<String, List<String>> headers = new HashMap<>();
-        multiMap.forEach(entry ->
-                headers.computeIfAbsent(entry.getKey(), k -> new ArrayList<>())
-                        .add(entry.getValue()));
-        return headers;
     }
 }

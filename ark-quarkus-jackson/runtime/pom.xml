@@ -52,6 +52,12 @@
 
     <dependency>
       <groupId>xyz.juandiii</groupId>
+      <artifactId>ark-async</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+
+    <dependency>
+      <groupId>xyz.juandiii</groupId>
       <artifactId>ark-transport-jdk</artifactId>
       <version>${project.version}</version>
     </dependency>

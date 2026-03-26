@@ -11,6 +11,7 @@ import org.apache.hc.core5.http.io.support.ClassicRequestBuilder;
 import org.apache.hc.core5.util.Timeout;
 import xyz.juandiii.ark.exceptions.ApiException;
 import xyz.juandiii.ark.exceptions.ArkException;
+import xyz.juandiii.ark.http.HeaderUtils;
 import xyz.juandiii.ark.http.HttpTransport;
 import xyz.juandiii.ark.http.RawResponse;
 import xyz.juandiii.ark.http.TransportLogger;
@@ -18,8 +19,6 @@ import xyz.juandiii.ark.http.TransportLogger;
 import java.io.IOException;
 import java.net.URI;
 import java.time.Duration;
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -69,11 +68,10 @@ public final class ArkApacheTransport implements HttpTransport {
                     throw new ApiException(statusCode, responseBody);
                 }
 
-                Map<String, List<String>> responseHeaders = new HashMap<>();
-                for (Header header : response.getHeaders()) {
-                    responseHeaders.computeIfAbsent(header.getName(), k -> new ArrayList<>())
-                            .add(header.getValue());
-                }
+                Map<String, List<String>> responseHeaders = HeaderUtils.toHeaderMap(
+                        java.util.Arrays.stream(response.getHeaders())
+                                .map(h -> Map.entry(h.getName(), h.getValue()))
+                                .toList());
 
                 LOGGER.log(System.Logger.Level.DEBUG, () -> TransportLogger.formatResponse(statusCode, responseHeaders, responseBody));
                 return new RawResponse(statusCode, responseHeaders, responseBody);
