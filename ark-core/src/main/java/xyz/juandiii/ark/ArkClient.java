@@ -50,6 +50,7 @@ public class ArkClient extends AbstractArkClient<DefaultClientRequest> implement
         public Ark build() {
             Objects.requireNonNull(serializer, "serializer must not be null");
             Objects.requireNonNull(transport, "transport must not be null");
+            logConfiguration("ArkClient (sync)", transport.getClass().getSimpleName());
             return new ArkClient(transport, serializer, buildUserAgent(),
                     baseUrl, requestInterceptors, responseInterceptors);
         }

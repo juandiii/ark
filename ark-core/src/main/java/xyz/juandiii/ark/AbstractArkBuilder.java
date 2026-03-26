@@ -14,6 +14,8 @@ import java.util.List;
 @SuppressWarnings("unchecked")
 public abstract class AbstractArkBuilder<B extends AbstractArkBuilder<B>> {
 
+    private static final System.Logger LOGGER = System.getLogger("xyz.juandiii.ark.config");
+
     protected JsonSerializer serializer;
     protected String baseUrl = "";
     protected String name = ArkVersion.NAME;
@@ -56,4 +58,20 @@ public abstract class AbstractArkBuilder<B extends AbstractArkBuilder<B>> {
     protected String buildUserAgent() {
         return name + "/" + version;
     }
+
+    protected void logConfiguration(String clientType, String transportType) {
+        LOGGER.log(System.Logger.Level.DEBUG, () -> {
+            StringBuilder sb = new StringBuilder();
+            sb.append("Ark Client Configuration");
+            sb.append("\n    Client: ").append(clientType);
+            sb.append("\n    Transport: ").append(transportType);
+            sb.append("\n    Base URL: ").append(baseUrl.isEmpty() ? "(not set)" : baseUrl);
+            sb.append("\n    User-Agent: ").append(buildUserAgent());
+            sb.append("\n    Serializer: ").append(serializer != null ? serializer.getClass().getSimpleName() : "(not set)");
+            sb.append("\n    Request Interceptors: ").append(requestInterceptors.size());
+            sb.append("\n    Response Interceptors: ").append(responseInterceptors.size());
+            return sb.toString();
+        });
+    }
+
 }

@@ -6,13 +6,15 @@ import io.vertx.mutiny.core.buffer.Buffer;
 import io.vertx.mutiny.ext.web.client.HttpResponse;
 import io.vertx.mutiny.ext.web.client.WebClient;
 import xyz.juandiii.ark.exceptions.ApiException;
+import xyz.juandiii.ark.http.HeaderUtils;
 import xyz.juandiii.ark.http.RawResponse;
 import xyz.juandiii.ark.http.TransportLogger;
 import xyz.juandiii.ark.mutiny.http.MutinyHttpTransport;
 
 import java.net.URI;
 import java.time.Duration;
-import java.util.*;
+import java.util.Map;
+import java.util.Objects;
 
 /**
  * HTTP transport bridge using Vert.x Mutiny WebClient.
@@ -50,20 +52,13 @@ public final class ArkVertxMutinyTransport implements MutinyHttpTransport {
                 .transform(r -> {
                     int statusCode = r.statusCode();
                     String responseBody = r.bodyAsString();
-                    var responseHeaders = toHeaderMap(r.headers());
+                    // Unwrap Mutiny MultiMap to Vert.x core MultiMap for header conversion
+                    var responseHeaders = HeaderUtils.toHeaderMap(r.headers().getDelegate());
                     LOGGER.log(System.Logger.Level.DEBUG, () -> TransportLogger.formatResponse(statusCode, responseHeaders, responseBody));
                     if (RawResponse.isErrorStatus(statusCode)) {
                         throw new ApiException(statusCode, responseBody);
                     }
                     return new RawResponse(statusCode, responseHeaders, responseBody);
                 });
-    }
-
-    private Map<String, List<String>> toHeaderMap(io.vertx.mutiny.core.MultiMap multiMap) {
-        Map<String, List<String>> headers = new HashMap<>();
-        multiMap.getDelegate().forEach(entry ->
-                headers.computeIfAbsent(entry.getKey(), k -> new ArrayList<>())
-                        .add(entry.getValue()));
-        return headers;
     }
 }

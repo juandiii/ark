@@ -55,6 +55,7 @@ public class MutinyArkClient extends AbstractArkClient<DefaultMutinyClientReques
         public MutinyArk build() {
             Objects.requireNonNull(serializer, "serializer must not be null");
             Objects.requireNonNull(transport, "transport must not be null");
+            logConfiguration("MutinyArkClient (Uni/Multi)", transport.getClass().getSimpleName());
             return new MutinyArkClient(transport, serializer, buildUserAgent(),
                     baseUrl, requestInterceptors, responseInterceptors);
         }

@@ -5,6 +5,7 @@ import org.springframework.core.env.Environment;
 import xyz.juandiii.ark.Ark;
 import xyz.juandiii.ark.ArkClient;
 import xyz.juandiii.ark.JsonSerializer;
+import xyz.juandiii.ark.http.HttpTransport;
 import xyz.juandiii.ark.interceptor.LoggingInterceptor;
 import xyz.juandiii.ark.proxy.ArkProxy;
 import xyz.juandiii.ark.proxy.HttpVersion;
@@ -25,13 +26,16 @@ public class ArkClientFactoryBean<T> implements FactoryBean<T> {
 
     private final Class<T> clientInterface;
     private final JsonSerializer serializer;
+    private final HttpTransport defaultTransport;
     private final Environment environment;
 
     public ArkClientFactoryBean(Class<T> clientInterface,
                                 JsonSerializer serializer,
+                                HttpTransport defaultTransport,
                                 Environment environment) {
         this.clientInterface = clientInterface;
         this.serializer = serializer;
+        this.defaultTransport = defaultTransport;
         this.environment = environment;
     }
 
@@ -44,16 +48,11 @@ public class ArkClientFactoryBean<T> implements FactoryBean<T> {
         int connectTimeout = annotation.connectTimeout();
         int readTimeout = annotation.readTimeout();
 
-        HttpClient httpClient = HttpClient.newBuilder()
-                .version(httpVersion == HttpVersion.HTTP_2
-                        ? HttpClient.Version.HTTP_2
-                        : HttpClient.Version.HTTP_1_1)
-                .connectTimeout(Duration.ofSeconds(connectTimeout))
-                .build();
+        HttpTransport transport = resolveTransport(httpVersion, connectTimeout);
 
         ArkClient.Builder builder = ArkClient.builder()
                 .serializer(serializer)
-                .transport(new ArkJdkHttpTransport(httpClient))
+                .transport(transport)
                 .baseUrl(resolvedUrl)
                 .requestInterceptor(ctx -> {
                     if (ctx.timeout() == null) {
@@ -61,7 +60,8 @@ public class ArkClientFactoryBean<T> implements FactoryBean<T> {
                     }
                 });
 
-        LoggingInterceptor.apply(builder, resolveLoggingLevel());
+        LoggingInterceptor.apply(builder,
+                LoggingInterceptor.parseLevel(environment.getProperty("ark.logging.level")));
 
         @SuppressWarnings("unchecked")
         T proxy = (T) ArkProxy.create(clientInterface, builder.build());
@@ -73,12 +73,17 @@ public class ArkClientFactoryBean<T> implements FactoryBean<T> {
         return clientInterface;
     }
 
-    private LoggingInterceptor.Level resolveLoggingLevel() {
-        String level = environment.getProperty("ark.logging.level", "OFF");
-        try {
-            return LoggingInterceptor.Level.valueOf(level.toUpperCase());
-        } catch (IllegalArgumentException e) {
-            return LoggingInterceptor.Level.OFF;
+    private HttpTransport resolveTransport(HttpVersion httpVersion, int connectTimeout) {
+        boolean isDefault = httpVersion == RegisterArkClient.DEFAULT_HTTP_VERSION
+                && connectTimeout == RegisterArkClient.DEFAULT_CONNECT_TIMEOUT;
+        if (isDefault) {
+            return defaultTransport;
         }
+        return new ArkJdkHttpTransport(HttpClient.newBuilder()
+                .version(httpVersion == HttpVersion.HTTP_2
+                        ? HttpClient.Version.HTTP_2
+                        : HttpClient.Version.HTTP_1_1)
+                .connectTimeout(Duration.ofSeconds(connectTimeout))
+                .build());
     }
 }
