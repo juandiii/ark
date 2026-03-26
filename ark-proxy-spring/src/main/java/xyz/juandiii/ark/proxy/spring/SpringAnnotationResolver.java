@@ -8,6 +8,7 @@ import org.springframework.web.service.annotation.PatchExchange;
 import org.springframework.web.service.annotation.PostExchange;
 import org.springframework.web.service.annotation.PutExchange;
 import xyz.juandiii.ark.exceptions.ArkException;
+import xyz.juandiii.ark.proxy.AnnotationResolver;
 
 import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
@@ -18,44 +19,56 @@ import java.util.regex.Pattern;
  *
  * @author Juan Diego Lopez V.
  */
-final class AnnotationResolver {
+final class SpringAnnotationResolver implements AnnotationResolver {
 
     private static final Pattern UNRESOLVED_PLACEHOLDER = Pattern.compile("\\{[^}]+}");
 
-    record MethodInfo(String httpMethod, String path) {}
-
-    String resolveBasePath(Class<?> declaringClass) {
+    @Override
+    public String resolveBasePath(Class<?> declaringClass) {
         HttpExchange exchange = declaringClass.getAnnotation(HttpExchange.class);
         if (exchange == null) return "";
         return resolve(exchange.url(), exchange.value());
     }
 
-    MethodInfo resolveMethod(Method method) {
+    @Override
+    public MethodInfo resolveMethod(Method method) {
+        String classContentType = resolveClassContentType(method.getDeclaringClass());
+
         GetExchange get = method.getAnnotation(GetExchange.class);
-        if (get != null) return new MethodInfo("GET", resolve(get.url(), get.value()));
+        if (get != null) return new MethodInfo("GET", resolve(get.url(), get.value()), null, null);
 
         PostExchange post = method.getAnnotation(PostExchange.class);
-        if (post != null) return new MethodInfo("POST", resolve(post.url(), post.value()));
+        if (post != null) return new MethodInfo("POST", resolve(post.url(), post.value()),
+                resolveContentType(post.contentType(), classContentType), null);
 
         PutExchange put = method.getAnnotation(PutExchange.class);
-        if (put != null) return new MethodInfo("PUT", resolve(put.url(), put.value()));
+        if (put != null) return new MethodInfo("PUT", resolve(put.url(), put.value()),
+                resolveContentType(put.contentType(), classContentType), null);
 
         PatchExchange patch = method.getAnnotation(PatchExchange.class);
-        if (patch != null) return new MethodInfo("PATCH", resolve(patch.url(), patch.value()));
+        if (patch != null) return new MethodInfo("PATCH", resolve(patch.url(), patch.value()), null, null);
 
         DeleteExchange delete = method.getAnnotation(DeleteExchange.class);
-        if (delete != null) return new MethodInfo("DELETE", resolve(delete.url(), delete.value()));
+        if (delete != null) return new MethodInfo("DELETE", resolve(delete.url(), delete.value()), null, null);
 
         throw new ArkException("No @HttpExchange annotation found on method: " + method.getName());
     }
 
-    private String resolve(String url, String value) {
-        if (!url.isEmpty()) return url;
-        if (!value.isEmpty()) return value;
-        return "";
+    private String resolveClassContentType(Class<?> declaringClass) {
+        HttpExchange exchange = declaringClass.getAnnotation(HttpExchange.class);
+        if (exchange != null && !exchange.contentType().isEmpty()) {
+            return exchange.contentType();
+        }
+        return null;
     }
 
-    String resolvePath(String path, Method method, Object[] args) {
+    private String resolveContentType(String methodContentType, String classContentType) {
+        if (!methodContentType.isEmpty()) return methodContentType;
+        return classContentType;
+    }
+
+    @Override
+    public String resolvePath(String path, Method method, Object[] args) {
         if (args == null) return path;
         Parameter[] params = method.getParameters();
         for (int i = 0; i < params.length; i++) {
@@ -69,5 +82,22 @@ final class AnnotationResolver {
             throw new ArkException("Unresolved path variables in: " + path);
         }
         return path;
+    }
+
+    @Override
+    public String resolveSubResourcePath(Method method, Object[] args) {
+        return "";
+    }
+
+    @Override
+    public boolean isSubResource(Method method) {
+        Class<?> returnType = method.getReturnType();
+        return returnType.isInterface() && returnType.isAnnotationPresent(HttpExchange.class);
+    }
+
+    private String resolve(String url, String value) {
+        if (!url.isEmpty()) return url;
+        if (!value.isEmpty()) return value;
+        return "";
     }
 }

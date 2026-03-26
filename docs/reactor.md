@@ -130,6 +130,16 @@ response.subscribe(r -> {
 });
 ```
 
+### Flux (streaming from JSON array)
+
+```java
+Flux<User> users = client.get("/users")
+    .retrieve()
+    .bodyAsFlux(User.class);
+```
+
+Deserializes the JSON array response and streams each element as a `Flux<T>`.
+
 ### Per-Request Timeout
 
 ```java

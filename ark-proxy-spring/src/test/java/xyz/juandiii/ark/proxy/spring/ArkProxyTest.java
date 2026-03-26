@@ -17,11 +17,16 @@ import org.springframework.web.service.annotation.HttpExchange;
 import org.springframework.web.service.annotation.PatchExchange;
 import org.springframework.web.service.annotation.PostExchange;
 import org.springframework.web.service.annotation.PutExchange;
+import reactor.core.publisher.Mono;
 import xyz.juandiii.ark.Ark;
 import xyz.juandiii.ark.exceptions.ArkException;
 import xyz.juandiii.ark.http.ArkResponse;
 import xyz.juandiii.ark.http.ClientRequest;
 import xyz.juandiii.ark.http.ClientResponse;
+import xyz.juandiii.ark.proxy.ArkProxy;
+import xyz.juandiii.ark.reactor.ReactorArk;
+import xyz.juandiii.ark.reactor.http.ReactorClientRequest;
+import xyz.juandiii.ark.reactor.http.ReactorClientResponse;
 
 import java.util.Map;
 
@@ -32,14 +37,12 @@ import static org.mockito.Mockito.*;
 @ExtendWith(MockitoExtension.class)
 class ArkProxyTest {
 
-    @Mock
-    Ark ark;
-
-    @Mock
-    ClientRequest clientRequest;
-
-    @Mock
-    ClientResponse clientResponse;
+    @Mock Ark ark;
+    @Mock ClientRequest clientRequest;
+    @Mock ClientResponse clientResponse;
+    @Mock ReactorArk reactorArk;
+    @Mock ReactorClientRequest reactorClientRequest;
+    @Mock ReactorClientResponse reactorClientResponse;
 
     // ---- Test interfaces (using url = ...) ----
 
@@ -106,6 +109,27 @@ class ArkProxyTest {
 
         @PostExchange
         void implicitBody(Object body);
+    }
+
+    interface NoExchangeApi {
+        String noAnnotation();
+    }
+
+    @HttpExchange("/no-path")
+    interface NoPathBaseApi {
+
+        @GetExchange
+        String getRoot();
+    }
+
+    @HttpExchange("/reactor-users")
+    interface ReactorUserApi {
+
+        @GetExchange("/{id}")
+        Mono<String> findById(@PathVariable("id") Long id);
+
+        @PostExchange
+        Mono<Void> create(@RequestBody Object body);
     }
 
     static class NotAnInterface {}
@@ -339,19 +363,20 @@ class ArkProxyTest {
         }
 
         @Test
-        void givenMapWithFormContentType_whenInvoked_thenEncodesAsForm() {
+        void givenMapWithFormContentType_whenInvoked_thenSetsContentTypeFromAnnotation() {
+            Map<String, String> form = Map.of("key", "value");
             when(ark.post("/api")).thenReturn(clientRequest);
-            when(clientRequest.contentType(eq("application/x-www-form-urlencoded"))).thenReturn(clientRequest);
-            when(clientRequest.body(any(String.class))).thenReturn(clientRequest);
+            when(clientRequest.contentType("application/x-www-form-urlencoded")).thenReturn(clientRequest);
+            when(clientRequest.body(form)).thenReturn(clientRequest);
             when(clientRequest.retrieve()).thenReturn(clientResponse);
             when(clientResponse.toBodilessEntity())
                     .thenReturn(new ArkResponse<>(200, Map.of(), null));
 
             FullApi proxy = ArkProxy.create(FullApi.class, ark);
-            proxy.submitForm(Map.of("key", "value"));
+            proxy.submitForm(form);
 
             verify(clientRequest).contentType("application/x-www-form-urlencoded");
-            verify(clientRequest).body(argThat((String s) -> s.contains("key=value")));
+            verify(clientRequest).body(form);
         }
     }
 
@@ -401,6 +426,79 @@ class ArkProxyTest {
 
             assertNotNull(subProxy);
             assertTrue(subProxy instanceof SubResourceApi);
+        }
+    }
+
+    @Nested
+    class NoAnnotation {
+
+        @Test
+        void givenNoExchangeAnnotation_whenCreate_thenThrowsArkException() {
+            assertThrows(ArkException.class, () -> ArkProxy.create(NoExchangeApi.class, ark));
+        }
+    }
+
+    @Nested
+    class EmptyPath {
+
+        @Test
+        void givenEmptyMethodPath_whenInvoked_thenUsesBasePath() {
+            when(ark.get("/no-path")).thenReturn(clientRequest);
+            when(clientRequest.retrieve()).thenReturn(clientResponse);
+            when(clientResponse.body(any(xyz.juandiii.ark.TypeRef.class))).thenReturn("root");
+
+            NoPathBaseApi proxy = ArkProxy.create(NoPathBaseApi.class, ark);
+            assertEquals("root", proxy.getRoot());
+            verify(ark).get("/no-path");
+        }
+    }
+
+    @Nested
+    class NullQueryParam {
+
+        @Test
+        void givenNullQueryParam_whenInvoked_thenSkipsParam() {
+            when(ark.get("/users")).thenReturn(clientRequest);
+            when(clientRequest.retrieve()).thenReturn(clientResponse);
+            when(clientResponse.body(any(xyz.juandiii.ark.TypeRef.class))).thenReturn("result");
+
+            UserApi proxy = ArkProxy.create(UserApi.class, ark);
+            proxy.findByName(null);
+
+            verify(clientRequest, never()).queryParam(anyString(), anyString());
+        }
+    }
+
+    @Nested
+    class ReactorProxy {
+
+        @Test
+        void givenReactorArk_whenGetInvoked_thenCallsReactorArkGet() {
+            Mono<String> expected = Mono.just("Juan");
+            when(reactorArk.get("/reactor-users/1")).thenReturn(reactorClientRequest);
+            when(reactorClientRequest.retrieve()).thenReturn(reactorClientResponse);
+            when(reactorClientResponse.body(any(xyz.juandiii.ark.TypeRef.class))).thenReturn(expected);
+
+            ReactorUserApi proxy = ArkProxy.create(ReactorUserApi.class, reactorArk);
+            Mono<String> result = proxy.findById(1L);
+
+            assertSame(expected, result);
+            verify(reactorArk).get("/reactor-users/1");
+        }
+
+        @Test
+        void givenReactorArk_whenPostInvoked_thenCallsReactorArkPost() {
+            Mono<ArkResponse<Void>> expected =
+                    Mono.just(new ArkResponse<>(201, Map.of(), null));
+            when(reactorArk.post("/reactor-users")).thenReturn(reactorClientRequest);
+            when(reactorClientRequest.body(any())).thenReturn(reactorClientRequest);
+            when(reactorClientRequest.retrieve()).thenReturn(reactorClientResponse);
+            when(reactorClientResponse.toBodilessEntity()).thenReturn(expected);
+
+            ReactorUserApi proxy = ArkProxy.create(ReactorUserApi.class, reactorArk);
+            proxy.create("payload");
+
+            verify(reactorArk).post("/reactor-users");
         }
     }
 

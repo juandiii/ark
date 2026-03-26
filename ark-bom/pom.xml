@@ -85,6 +85,11 @@
             </dependency>
             <dependency>
                 <groupId>xyz.juandiii</groupId>
+                <artifactId>ark-proxy-jaxrs</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>xyz.juandiii</groupId>
                 <artifactId>ark-spring-boot-starter</artifactId>
                 <version>${project.version}</version>
             </dependency>

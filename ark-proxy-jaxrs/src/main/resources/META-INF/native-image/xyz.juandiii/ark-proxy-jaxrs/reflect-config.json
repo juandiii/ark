@@ -1,0 +1,17 @@
+[
+  {
+    "name": "xyz.juandiii.ark.proxy.jaxrs.JaxRsProxyProvider",
+    "methods": [{"name": "<init>", "parameterTypes": []}],
+    "allDeclaredMethods": true
+  },
+  {
+    "name": "xyz.juandiii.ark.proxy.jaxrs.JaxRsAnnotationResolver",
+    "methods": [{"name": "<init>", "parameterTypes": []}],
+    "allDeclaredMethods": true
+  },
+  {
+    "name": "xyz.juandiii.ark.proxy.jaxrs.JaxRsParameterBinder",
+    "methods": [{"name": "<init>", "parameterTypes": []}],
+    "allDeclaredMethods": true
+  }
+]

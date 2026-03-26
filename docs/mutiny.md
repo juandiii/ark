@@ -114,6 +114,16 @@ response.subscribe().with(r -> {
 });
 ```
 
+### Multi (streaming from JSON array)
+
+```java
+Multi<User> users = client.get("/users")
+    .retrieve()
+    .bodyAsMulti(User.class);
+```
+
+Deserializes the JSON array response and streams each element as a `Multi<T>`.
+
 ### Per-Request Timeout
 
 ```java

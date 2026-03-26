@@ -22,5 +22,12 @@
       <artifactId>spring-web</artifactId>
     </dependency>
 
+    <dependency>
+      <groupId>xyz.juandiii</groupId>
+      <artifactId>ark-reactor</artifactId>
+      <version>${project.version}</version>
+      <optional>true</optional>
+    </dependency>
+
   </dependencies>
 </project>

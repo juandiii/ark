@@ -1,0 +1,17 @@
+[
+  {
+    "name": "xyz.juandiii.ark.proxy.spring.SpringProxyProvider",
+    "methods": [{"name": "<init>", "parameterTypes": []}],
+    "allDeclaredMethods": true
+  },
+  {
+    "name": "xyz.juandiii.ark.proxy.spring.SpringAnnotationResolver",
+    "methods": [{"name": "<init>", "parameterTypes": []}],
+    "allDeclaredMethods": true
+  },
+  {
+    "name": "xyz.juandiii.ark.proxy.spring.SpringParameterBinder",
+    "methods": [{"name": "<init>", "parameterTypes": []}],
+    "allDeclaredMethods": true
+  }
+]

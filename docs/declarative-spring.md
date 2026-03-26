@@ -7,6 +7,7 @@ Ark supports declarative HTTP clients using Spring's `@HttpExchange` annotations
 ## Example
 
 ```java
+@RegisterArkClient(baseUrl = "${api.users.url}")
 @HttpExchange("/users")
 public interface UserApi {
 
@@ -24,7 +25,32 @@ public interface UserApi {
 }
 ```
 
+> `@RegisterArkClient` auto-creates the proxy bean. Supports property placeholders: `${property.key}` or `${property.key:default}`.
+
 ## Creating the Client
+
+### Automatic (recommended)
+
+With `@RegisterArkClient`, the bean is auto-created — just inject it:
+
+```java
+@RestController
+public class UserController {
+
+    private final UserApi userApi;
+
+    public UserController(UserApi userApi) {
+        this.userApi = userApi;
+    }
+}
+```
+
+```properties
+# application.properties
+api.users.url=https://api.example.com
+```
+
+### Manual
 
 ```java
 Ark ark = ArkClient.builder()
@@ -34,9 +60,6 @@ Ark ark = ArkClient.builder()
     .build();
 
 UserApi userApi = ArkProxy.create(UserApi.class, ark);
-
-User user = userApi.getUser("123");
-userApi.deleteUser("123");
 ```
 
 ---
@@ -68,8 +91,43 @@ Both `value` and `url` work: `@GetExchange("/users")` and `@GetExchange(url = "/
 | `void` | Calls `toBodilessEntity()` |
 | `ArkResponse<T>` | Full response (status + headers + body) |
 | `String` | Raw response body |
+| `Mono<T>` | Reactor reactive (requires `ReactorArk`) |
+| `Mono<ArkResponse<T>>` | Reactor full response |
+| `Flux<T>` | Reactor stream from JSON array |
 
-> **Note:** Only sync return types are supported. Async/reactive (`CompletableFuture`, `Mono`, `Uni`) are not yet supported.
+---
+
+## Reactive Client (Reactor)
+
+Pass a `ReactorArk` client to `ArkProxy.create()` for reactive Spring WebFlux clients:
+
+```java
+ReactorArk reactorArk = ReactorArkClient.builder()
+    .serializer(new JacksonSerializer(new ObjectMapper()))
+    .transport(new ArkReactorNettyTransport(HttpClient.create()))
+    .baseUrl("https://api.example.com")
+    .build();
+
+UserReactiveApi api = ArkProxy.create(UserReactiveApi.class, reactorArk);
+```
+
+```java
+@HttpExchange("/users")
+public interface UserReactiveApi {
+
+    @GetExchange("/{id}")
+    Mono<User> getUser(@PathVariable String id);
+
+    @GetExchange
+    Flux<User> listUsers();
+
+    @PostExchange
+    Mono<User> createUser(@RequestBody User user);
+
+    @DeleteExchange("/{id}")
+    Mono<Void> deleteUser(@PathVariable String id);
+}
+```
 
 ---
 
@@ -203,6 +261,23 @@ try {
     // connection or transport failure
 }
 ```
+
+---
+
+## GraalVM Native Image
+
+Annotate interfaces with `@RegisterArkClient` — the `ark-spring-boot-starter` auto-registers them as JDK proxy definitions at AOT build time:
+
+```java
+@RegisterArkClient(baseUrl = "${api.users.url}")
+@HttpExchange("/users")
+public interface UserApi {
+    @GetExchange("/{id}")
+    User getUser(@PathVariable String id);
+}
+```
+
+No additional configuration needed. The starter auto-discovers `@RegisterArkClient` interfaces at build time.
 
 ---
 
