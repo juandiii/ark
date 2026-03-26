@@ -69,7 +69,10 @@ public interface UserApi {
 
 ```java
 // Spring
-public UserController(@ArkClient UserApi userApi) { ... }
+public UserController(UserApi userApi) { ... }
+
+// Quarkus
+@Inject UserApi userApi;
 ```
 
 Supports Spring `@HttpExchange` and JAX-RS `@Path`/`@GET`/`@POST` annotations.
@@ -90,7 +93,7 @@ public interface UserApi {
 
 ```java
 // Quarkus
-public UserController(@ArkClient UserApi userApi) { ... }
+@Inject UserApi userApi;
 ```
 
 ### @RegisterArkClient Attributes

@@ -76,16 +76,13 @@ public class ArkClientAutoRegistrar implements ImportBeanDefinitionRegistrar, En
         AbstractBeanDefinition beanDef = BeanDefinitionBuilder
                 .genericBeanDefinition(ArkClientFactoryBean.class)
                 .addConstructorArgValue(iface)
-                .addConstructorArgValue(annotation.baseUrl())
-                .addConstructorArgValue(annotation.httpVersion())
-                .addConstructorArgValue(annotation.connectTimeout())
-                .addConstructorArgValue(annotation.readTimeout())
                 .addConstructorArgReference("jsonSerializer")
                 .addConstructorArgReference("environment")
                 .getBeanDefinition();
 
         beanDef.setAttribute(FactoryBean.OBJECT_TYPE_ATTRIBUTE,
                 ResolvableType.forClass(iface));
+        beanDef.setLazyInit(true);
 
         registry.registerBeanDefinition(beanName(iface), beanDef);
     }

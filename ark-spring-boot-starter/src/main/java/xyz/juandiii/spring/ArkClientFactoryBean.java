@@ -5,9 +5,10 @@ import org.springframework.core.env.Environment;
 import xyz.juandiii.ark.Ark;
 import xyz.juandiii.ark.ArkClient;
 import xyz.juandiii.ark.JsonSerializer;
+import xyz.juandiii.ark.interceptor.LoggingInterceptor;
 import xyz.juandiii.ark.proxy.ArkProxy;
 import xyz.juandiii.ark.proxy.HttpVersion;
-import xyz.juandiii.ark.proxy.PropertyResolver;
+import xyz.juandiii.ark.proxy.RegisterArkClient;
 import xyz.juandiii.ark.transport.jdk.ArkJdkHttpTransport;
 
 import java.net.http.HttpClient;
@@ -15,38 +16,33 @@ import java.time.Duration;
 
 /**
  * Spring FactoryBean that creates an Ark proxy client.
- * Compatible with Spring AOT/native compilation.
+ * Reads @RegisterArkClient annotation at runtime to avoid
+ * property placeholder resolution at AOT/build time.
  *
  * @author Juan Diego Lopez V.
  */
 public class ArkClientFactoryBean<T> implements FactoryBean<T> {
 
     private final Class<T> clientInterface;
-    private final String baseUrl;
-    private final HttpVersion httpVersion;
-    private final int connectTimeout;
-    private final int readTimeout;
     private final JsonSerializer serializer;
     private final Environment environment;
 
-    public ArkClientFactoryBean(Class<T> clientInterface, String baseUrl,
-                                HttpVersion httpVersion, int connectTimeout,
-                                int readTimeout, JsonSerializer serializer,
+    public ArkClientFactoryBean(Class<T> clientInterface,
+                                JsonSerializer serializer,
                                 Environment environment) {
         this.clientInterface = clientInterface;
-        this.baseUrl = baseUrl;
-        this.httpVersion = httpVersion;
-        this.connectTimeout = connectTimeout;
-        this.readTimeout = readTimeout;
         this.serializer = serializer;
         this.environment = environment;
     }
 
     @Override
-    @SuppressWarnings("unchecked")
     public T getObject() {
-        String resolvedUrl = PropertyResolver.resolve(baseUrl,
-                environment::getProperty);
+        RegisterArkClient annotation = clientInterface.getAnnotation(RegisterArkClient.class);
+
+        String resolvedUrl = environment.resolvePlaceholders(annotation.baseUrl());
+        HttpVersion httpVersion = annotation.httpVersion();
+        int connectTimeout = annotation.connectTimeout();
+        int readTimeout = annotation.readTimeout();
 
         HttpClient httpClient = HttpClient.newBuilder()
                 .version(httpVersion == HttpVersion.HTTP_2
@@ -55,7 +51,7 @@ public class ArkClientFactoryBean<T> implements FactoryBean<T> {
                 .connectTimeout(Duration.ofSeconds(connectTimeout))
                 .build();
 
-        Ark ark = ArkClient.builder()
+        ArkClient.Builder builder = ArkClient.builder()
                 .serializer(serializer)
                 .transport(new ArkJdkHttpTransport(httpClient))
                 .baseUrl(resolvedUrl)
@@ -63,10 +59,13 @@ public class ArkClientFactoryBean<T> implements FactoryBean<T> {
                     if (ctx.timeout() == null) {
                         ctx.timeout(Duration.ofSeconds(readTimeout));
                     }
-                })
-                .build();
+                });
 
-        return (T) ArkProxy.create(clientInterface, ark);
+        LoggingInterceptor.apply(builder, resolveLoggingLevel());
+
+        @SuppressWarnings("unchecked")
+        T proxy = (T) ArkProxy.create(clientInterface, builder.build());
+        return proxy;
     }
 
     @Override
@@ -74,8 +73,12 @@ public class ArkClientFactoryBean<T> implements FactoryBean<T> {
         return clientInterface;
     }
 
-    @Override
-    public boolean isSingleton() {
-        return true;
+    private LoggingInterceptor.Level resolveLoggingLevel() {
+        String level = environment.getProperty("ark.logging.level", "OFF");
+        try {
+            return LoggingInterceptor.Level.valueOf(level.toUpperCase());
+        } catch (IllegalArgumentException e) {
+            return LoggingInterceptor.Level.OFF;
+        }
     }
 }

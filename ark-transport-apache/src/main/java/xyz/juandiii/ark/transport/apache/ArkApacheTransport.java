@@ -13,6 +13,7 @@ import xyz.juandiii.ark.exceptions.ApiException;
 import xyz.juandiii.ark.exceptions.ArkException;
 import xyz.juandiii.ark.http.HttpTransport;
 import xyz.juandiii.ark.http.RawResponse;
+import xyz.juandiii.ark.http.TransportLogger;
 
 import java.io.IOException;
 import java.net.URI;
@@ -37,9 +38,12 @@ public final class ArkApacheTransport implements HttpTransport {
         this.httpClient = httpClient;
     }
 
+    private static final System.Logger LOGGER = System.getLogger(ArkApacheTransport.class.getName());
+
     @Override
     public RawResponse send(String method, URI uri, Map<String, String> headers,
                             String body, Duration timeout) {
+        LOGGER.log(System.Logger.Level.DEBUG, () -> TransportLogger.formatRequest(method, uri, headers, body));
         ClassicRequestBuilder builder = ClassicRequestBuilder.create(method).setUri(uri);
 
         headers.forEach(builder::addHeader);
@@ -71,6 +75,7 @@ public final class ArkApacheTransport implements HttpTransport {
                             .add(header.getValue());
                 }
 
+                LOGGER.log(System.Logger.Level.DEBUG, () -> TransportLogger.formatResponse(statusCode, responseHeaders, responseBody));
                 return new RawResponse(statusCode, responseHeaders, responseBody);
             });
         } catch (ApiException e) {

@@ -7,6 +7,7 @@ import io.vertx.mutiny.ext.web.client.HttpResponse;
 import io.vertx.mutiny.ext.web.client.WebClient;
 import xyz.juandiii.ark.exceptions.ApiException;
 import xyz.juandiii.ark.http.RawResponse;
+import xyz.juandiii.ark.http.TransportLogger;
 import xyz.juandiii.ark.mutiny.http.MutinyHttpTransport;
 
 import java.net.URI;
@@ -27,9 +28,12 @@ public final class ArkVertxMutinyTransport implements MutinyHttpTransport {
         this.webClient = webClient;
     }
 
+    private static final System.Logger LOGGER = System.getLogger(ArkVertxMutinyTransport.class.getName());
+
     @Override
     public Uni<RawResponse> send(String method, URI uri, Map<String, String> headers,
                                  String body, Duration timeout) {
+        LOGGER.log(System.Logger.Level.DEBUG, () -> TransportLogger.formatRequest(method, uri, headers, body));
         var request = webClient.requestAbs(HttpMethod.valueOf(method), uri.toString());
 
         headers.forEach(request::putHeader);
@@ -46,10 +50,12 @@ public final class ArkVertxMutinyTransport implements MutinyHttpTransport {
                 .transform(r -> {
                     int statusCode = r.statusCode();
                     String responseBody = r.bodyAsString();
+                    var responseHeaders = toHeaderMap(r.headers());
+                    LOGGER.log(System.Logger.Level.DEBUG, () -> TransportLogger.formatResponse(statusCode, responseHeaders, responseBody));
                     if (RawResponse.isErrorStatus(statusCode)) {
                         throw new ApiException(statusCode, responseBody);
                     }
-                    return new RawResponse(statusCode, toHeaderMap(r.headers()), responseBody);
+                    return new RawResponse(statusCode, responseHeaders, responseBody);
                 });
     }
 

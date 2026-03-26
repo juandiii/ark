@@ -11,13 +11,13 @@ import xyz.juandiii.ark.Ark;
 import xyz.juandiii.ark.ArkClient;
 import xyz.juandiii.ark.JsonSerializer;
 import xyz.juandiii.ark.http.HttpTransport;
+import xyz.juandiii.ark.interceptor.LoggingInterceptor;
 import xyz.juandiii.ark.mutiny.MutinyArkClient;
 import xyz.juandiii.ark.proxy.ArkProxy;
 import xyz.juandiii.ark.proxy.PropertyResolver;
 import xyz.juandiii.ark.transport.vertx.mutiny.ArkVertxMutinyTransport;
 
 import java.lang.reflect.Method;
-import java.lang.reflect.ParameterizedType;
 import java.util.function.Supplier;
 
 /**
@@ -39,6 +39,7 @@ public class ArkRecorder {
 
                 Class<?> iface = Thread.currentThread().getContextClassLoader().loadClass(interfaceName);
                 JsonSerializer serializer = Arc.container().instance(JsonSerializer.class).get();
+                LoggingInterceptor.Level loggingLevel = resolveLoggingLevel();
 
                 Object ark;
                 if (usesReactiveReturnTypes(iface)) {
@@ -48,18 +49,20 @@ public class ArkRecorder {
                                     ? HttpVersion.HTTP_2 : HttpVersion.HTTP_1_1)
                             .setConnectTimeout(connectTimeout * 1000)
                             .setIdleTimeout(readTimeout);
-                    ark = MutinyArkClient.builder()
+                    MutinyArkClient.Builder builder = MutinyArkClient.builder()
                             .serializer(serializer)
                             .transport(new ArkVertxMutinyTransport(WebClient.create(vertx, options)))
-                            .baseUrl(resolvedUrl)
-                            .build();
+                            .baseUrl(resolvedUrl);
+                    LoggingInterceptor.apply(builder, loggingLevel);
+                    ark = builder.build();
                 } else {
                     HttpTransport transport = Arc.container().instance(HttpTransport.class).get();
-                    ark = ArkClient.builder()
+                    ArkClient.Builder builder = ArkClient.builder()
                             .serializer(serializer)
                             .transport(transport)
-                            .baseUrl(resolvedUrl)
-                            .build();
+                            .baseUrl(resolvedUrl);
+                    LoggingInterceptor.apply(builder, loggingLevel);
+                    ark = builder.build();
                 }
 
                 return ArkProxy.create(iface, ark);
@@ -67,6 +70,17 @@ public class ArkRecorder {
                 throw new RuntimeException("Failed to create Ark client for " + interfaceName, e);
             }
         };
+    }
+
+    private static LoggingInterceptor.Level resolveLoggingLevel() {
+        String level = ConfigProvider.getConfig()
+                .getOptionalValue("ark.logging.level", String.class)
+                .orElse("OFF");
+        try {
+            return LoggingInterceptor.Level.valueOf(level.toUpperCase());
+        } catch (IllegalArgumentException e) {
+            return LoggingInterceptor.Level.OFF;
+        }
     }
 
     private static boolean usesReactiveReturnTypes(Class<?> iface) {

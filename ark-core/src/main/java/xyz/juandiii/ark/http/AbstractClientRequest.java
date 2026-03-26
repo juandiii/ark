@@ -138,6 +138,9 @@ public abstract class AbstractClientRequest<T extends AbstractClientRequest<T>>
 
     protected URI buildUri() {
         String url = (baseUrl + path).replaceAll("(?<=[^:])//+", "/");
+        if (!url.contains("://") || url.indexOf('/', url.indexOf("://") + 3) == -1) {
+            url += "/";
+        }
         if (!queryParams.isEmpty()) {
             StringJoiner joiner = new StringJoiner("&");
             queryParams.forEach((k, v) -> joiner.add(encode(k) + "=" + encode(v)));

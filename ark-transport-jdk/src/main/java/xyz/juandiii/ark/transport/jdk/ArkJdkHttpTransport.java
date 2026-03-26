@@ -5,6 +5,7 @@ import xyz.juandiii.ark.exceptions.ArkException;
 import xyz.juandiii.ark.async.http.AsyncHttpTransport;
 import xyz.juandiii.ark.http.HttpTransport;
 import xyz.juandiii.ark.http.RawResponse;
+import xyz.juandiii.ark.http.TransportLogger;
 
 import java.io.IOException;
 import java.net.URI;
@@ -39,13 +40,17 @@ public final class ArkJdkHttpTransport implements HttpTransport, AsyncHttpTransp
         this.executor = executor;
     }
 
+    private static final System.Logger LOGGER = System.getLogger(ArkJdkHttpTransport.class.getName());
+
     @Override
     public RawResponse send(String method, URI uri, Map<String, String> headers,
                             String body, Duration timeout) {
+        LOGGER.log(System.Logger.Level.DEBUG, () -> TransportLogger.formatRequest(method, uri, headers, body));
         HttpRequest request = buildRequest(method, uri, headers, body, timeout);
 
         try {
             HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+            LOGGER.log(System.Logger.Level.DEBUG, () -> TransportLogger.formatResponse(response.statusCode(), response.headers().map(), response.body()));
             return toRawResponse(response);
         } catch (IOException e) {
             throw new ArkException("API request failed: " + e.getMessage(), e);
@@ -59,6 +64,7 @@ public final class ArkJdkHttpTransport implements HttpTransport, AsyncHttpTransp
     public CompletableFuture<RawResponse> sendAsync(String method, URI uri,
                                                     Map<String, String> headers,
                                                     String body, Duration timeout) {
+        LOGGER.log(System.Logger.Level.DEBUG, () -> TransportLogger.formatRequest(method, uri, headers, body));
         HttpRequest request = buildRequest(method, uri, headers, body, timeout);
 
         return httpClient.sendAsync(request, HttpResponse.BodyHandlers.ofString())

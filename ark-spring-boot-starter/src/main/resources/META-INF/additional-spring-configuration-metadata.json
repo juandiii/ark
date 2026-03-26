@@ -1,0 +1,19 @@
+{
+  "groups": [
+    {
+      "name": "ark.client",
+      "description": "Ark HTTP client configuration properties used in @RegisterArkClient(baseUrl = \"${...}\")."
+    }
+  ],
+  "hints": [
+    {
+      "name": "ark.client.base-url",
+      "description": "Base URL for an Ark client. Reference this property in @RegisterArkClient(baseUrl = \"${ark.client.base-url}\").",
+      "providers": [
+        {
+          "name": "any"
+        }
+      ]
+    }
+  ]
+}
