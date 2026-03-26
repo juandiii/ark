@@ -1,20 +1,24 @@
-package xyz.juandiii.ark;
+package xyz.juandiii.ark.jsonb;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.json.bind.Jsonb;
+import xyz.juandiii.ark.JsonSerializer;
+import xyz.juandiii.ark.TypeRef;
 import xyz.juandiii.ark.exceptions.ArkException;
 
+import java.lang.reflect.Type;
+
 /**
- * JSON serializer using Jackson 2.x (com.fasterxml) ObjectMapper.
- * Use this for Quarkus, Spring Boot 3.x, and legacy projects.
+ * JSON serializer using Jakarta JSON-B (JSON Binding).
+ * Use this for Quarkus with JSON-B, MicroProfile, or Jakarta EE projects.
  *
  * @author Juan Diego Lopez V.
  */
-public class JacksonClassicSerializer implements JsonSerializer {
+public class JsonbSerializer implements JsonSerializer {
 
-    private final ObjectMapper objectMapper;
+    private final Jsonb jsonb;
 
-    public JacksonClassicSerializer(ObjectMapper objectMapper) {
-        this.objectMapper = objectMapper;
+    public JsonbSerializer(Jsonb jsonb) {
+        this.jsonb = jsonb;
     }
 
     @Override
@@ -22,7 +26,7 @@ public class JacksonClassicSerializer implements JsonSerializer {
         if (body == null) return null;
         if (body instanceof String s) return s;
         try {
-            return objectMapper.writeValueAsString(body);
+            return jsonb.toJson(body);
         } catch (Exception e) {
             throw new ArkException("Failed to serialize object: " + e.getMessage(), e);
         }
@@ -34,7 +38,8 @@ public class JacksonClassicSerializer implements JsonSerializer {
         if (json == null || json.isBlank()) return null;
         if (type.getType() == String.class) return (T) json;
         try {
-            return objectMapper.readValue(json, objectMapper.constructType(type.getType()));
+            Type javaType = type.getType();
+            return jsonb.fromJson(json, javaType);
         } catch (Exception e) {
             throw new ArkException("Failed to deserialize response: " + e.getMessage(), e);
         }

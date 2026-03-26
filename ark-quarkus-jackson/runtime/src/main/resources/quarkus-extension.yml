@@ -1,0 +1,11 @@
+name: "quarkus-ark-jackson"
+artifact: ${project.groupId}:${project.artifactId}:${project.version}
+metadata:
+  short-name: "ark-jackson"
+  keywords:
+    - "jackson"
+    - "client"
+    - "ark"
+  categories:
+    - "client"
+  status: "stable"

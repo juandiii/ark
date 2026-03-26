@@ -3,10 +3,12 @@ package xyz.juandiii.spring;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Import;
+import org.springframework.context.annotation.ImportRuntimeHints;
 import org.springframework.context.annotation.Scope;
 import tools.jackson.databind.ObjectMapper;
 import xyz.juandiii.ark.ArkClient;
-import xyz.juandiii.ark.JacksonSerializer;
+import xyz.juandiii.ark.jackson.JacksonSerializer;
 import xyz.juandiii.ark.JsonSerializer;
 import xyz.juandiii.ark.http.HttpTransport;
 import xyz.juandiii.ark.transport.jdk.ArkJdkHttpTransport;
@@ -19,6 +21,8 @@ import java.net.http.HttpClient;
  * @author Juan Diego Lopez V.
  */
 @AutoConfiguration
+@Import(ArkClientAutoRegistrar.class)
+@ImportRuntimeHints(ArkClientRuntimeHints.class)
 public class ArkAutoConfiguration {
 
     @Bean

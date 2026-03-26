@@ -55,6 +55,7 @@ public class ReactorArkClient extends AbstractArkClient<DefaultReactorClientRequ
         public ReactorArk build() {
             Objects.requireNonNull(serializer, "serializer must not be null");
             Objects.requireNonNull(transport, "transport must not be null");
+            logConfiguration("ReactorArkClient (Mono/Flux)", transport.getClass().getSimpleName());
             return new ReactorArkClient(transport, serializer, buildUserAgent(),
                     baseUrl, requestInterceptors, responseInterceptors);
         }

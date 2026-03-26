@@ -1,0 +1,17 @@
+[
+  {
+    "name": "xyz.juandiii.ark.mutiny.proxy.MutinyExecutionModelProvider",
+    "methods": [{"name": "<init>", "parameterTypes": []}],
+    "allDeclaredMethods": true
+  },
+  {
+    "name": "xyz.juandiii.ark.mutiny.proxy.MutinyDispatchers",
+    "methods": [{"name": "<init>", "parameterTypes": []}],
+    "allDeclaredMethods": true
+  },
+  {
+    "name": "xyz.juandiii.ark.mutiny.proxy.MutinyReturnTypeHandler",
+    "methods": [{"name": "<init>", "parameterTypes": []}],
+    "allDeclaredMethods": true
+  }
+]

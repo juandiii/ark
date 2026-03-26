@@ -57,6 +57,7 @@ public class VertxArkClient extends AbstractArkClient<DefaultVertxClientRequest>
                 serializer = new VertxJsonSerializer();
             }
             Objects.requireNonNull(transport, "transport must not be null");
+            logConfiguration("VertxArkClient (Future)", transport.getClass().getSimpleName());
             return new VertxArkClient(transport, serializer, buildUserAgent(),
                     baseUrl, requestInterceptors, responseInterceptors);
         }

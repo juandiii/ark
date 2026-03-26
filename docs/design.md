@@ -58,7 +58,7 @@ Import the BOM first:
         <dependency>
             <groupId>xyz.juandiii</groupId>
             <artifactId>ark-bom</artifactId>
-            <version>1.0.8</version> <!-- ark-bom -->
+            <version>1.0.9-SNAPSHOT</version> <!-- ark-bom -->
             <type>pom</type>
             <scope>import</scope>
         </dependency>
@@ -132,6 +132,56 @@ Then choose only the modules you need.
     <artifactId>ark-spring-boot-starter</artifactId>
 </dependency>
 ```
+
+### Declarative proxy (Spring)
+
+```xml
+<dependency>
+    <groupId>xyz.juandiii</groupId>
+    <artifactId>ark-proxy-spring</artifactId>
+</dependency>
+```
+
+### Declarative proxy (JAX-RS)
+
+```xml
+<dependency>
+    <groupId>xyz.juandiii</groupId>
+    <artifactId>ark-proxy-jaxrs</artifactId>
+</dependency>
+```
+
+Annotate your interface with `@RegisterArkClient` and inject it directly:
+
+```java
+@RegisterArkClient(baseUrl = "${api.users.url}")
+@Path("/users")   // or @HttpExchange("/users")
+interface UserApi { ... }
+
+// Quarkus
+@Inject UserApi userApi;
+
+// Spring
+public MyController(UserApi userApi) { ... }
+```
+
+Or create manually with `ArkProxy.create()`:
+
+```java
+UserApi api = ArkProxy.create(UserApi.class, ark);           // sync
+UserApi api = ArkProxy.create(UserApi.class, asyncArk);      // CompletableFuture
+UserApi api = ArkProxy.create(UserApi.class, reactorArk);    // Mono/Flux
+UserApi api = ArkProxy.create(UserApi.class, mutinyArk);     // Uni/Multi
+```
+
+### @RegisterArkClient attributes
+
+| Attribute | Default | Description |
+|-----------|---------|-------------|
+| `baseUrl` | `""` | Base URL, supports `${property}` placeholders |
+| `httpVersion` | `HTTP_1_1` | HTTP/1.1 or HTTP/2 |
+| `connectTimeout` | `10` | Connection timeout (seconds) |
+| `readTimeout` | `30` | Read timeout (seconds) |
 
 ---
 

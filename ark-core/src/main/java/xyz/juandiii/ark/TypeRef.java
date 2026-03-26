@@ -2,6 +2,7 @@ package xyz.juandiii.ark;
 
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
+import java.util.List;
 import java.util.Objects;
 
 /**
@@ -29,5 +30,21 @@ public abstract class TypeRef<T> {
     @SuppressWarnings("unchecked")
     public static <T> TypeRef<T> of(Type type) {
         return new TypeRef<>(type) {};
+    }
+
+    public static <T> TypeRef<List<T>> ofList(TypeRef<T> elementType) {
+        return of(listType(elementType.getType()));
+    }
+
+    public static <T> TypeRef<List<T>> ofList(Class<T> elementType) {
+        return of(listType(elementType));
+    }
+
+    private static Type listType(Type elementType) {
+        return new ParameterizedType() {
+            @Override public Type[] getActualTypeArguments() { return new Type[]{elementType}; }
+            @Override public Type getRawType() { return List.class; }
+            @Override public Type getOwnerType() { return null; }
+        };
     }
 }
