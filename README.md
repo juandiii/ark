@@ -7,7 +7,8 @@
 Ark lets you build HTTP clients in the style that fits your application:
 
 - **Fluent API** for explicit request composition
-- **Spring HTTP interfaces** with `@HttpExchange` and related annotations
+- **Declarative clients** with Spring `@HttpExchange` or JAX-RS `@Path`/`@GET`/`@POST` annotations
+- **Auto-registration** with `@RegisterArkClient` — zero boilerplate injection
 
 All while keeping transport, serialization, and execution model explicit and reusable.
 
@@ -52,11 +53,12 @@ User user = client.get("/users/1")
     .body(User.class);
 ```
 
-### Declarative Spring HTTP Interfaces
+### Declarative Clients
 
-Use Spring HTTP interface annotations with `@HttpExchange`.
+Define an interface with `@RegisterArkClient` and inject it directly:
 
 ```java
+@RegisterArkClient(baseUrl = "${api.users.url}")
 @HttpExchange("/users")
 public interface UserApi {
 
@@ -65,13 +67,49 @@ public interface UserApi {
 }
 ```
 
+```java
+// Spring
+public UserController(@ArkClient UserApi userApi) { ... }
+```
+
+Supports Spring `@HttpExchange` and JAX-RS `@Path`/`@GET`/`@POST` annotations.
+
+### JAX-RS Example
+
+```java
+@RegisterArkClient(baseUrl = "${api.users.url}")
+@Path("/users")
+@Produces("application/json")
+public interface UserApi {
+
+    @GET
+    @Path("/{id}")
+    User getUser(@PathParam("id") String id);
+}
+```
+
+```java
+// Quarkus
+public UserController(@ArkClient UserApi userApi) { ... }
+```
+
+### @RegisterArkClient Attributes
+
+| Attribute | Default | Description |
+|-----------|---------|-------------|
+| `baseUrl` | `""` | Base URL, supports `${property}` placeholders |
+| `httpVersion` | `HTTP_1_1` | HTTP/1.1 or HTTP/2 |
+| `connectTimeout` | `10` | Connection timeout (seconds) |
+| `readTimeout` | `30` | Read timeout (seconds) |
+
 ---
 
 ## Features
 
 - Java 17+
 - Fluent HTTP API
-- Declarative HTTP clients with **Spring `@HttpExchange`**
+- Declarative HTTP clients with **Spring `@HttpExchange`** or **JAX-RS `@Path`/`@GET`**
+- `@RegisterArkClient` for zero-boilerplate auto-registration and injection
 - Pluggable transports
 - Pluggable serializers
 - Dedicated sync, async, Reactor, Mutiny, and Vert.x APIs
@@ -314,7 +352,8 @@ User user = client.get("/users/1")
 
 - [Getting Started](docs/getting-started.md)
 - [Transport Model](docs/transports.md)
-- [Spring `@HttpExchange` Clients](docs/declarative-spring.md)
+- [Declarative Spring Clients](docs/declarative-spring.md)
+- [Declarative JAX-RS Clients](docs/declarative-jaxrs.md)
 - [Sync Client](docs/sync.md)
 - [Async Client](docs/async.md)
 - [Reactor Client](docs/reactor.md)
