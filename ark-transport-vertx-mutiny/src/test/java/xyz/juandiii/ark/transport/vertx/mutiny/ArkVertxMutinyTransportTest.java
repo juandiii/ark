@@ -10,11 +10,16 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import xyz.juandiii.ark.exceptions.ApiException;
+import xyz.juandiii.ark.exceptions.ArkException;
+import xyz.juandiii.ark.exceptions.NotFoundException;
+import xyz.juandiii.ark.exceptions.ServerException;
 import xyz.juandiii.ark.http.RawResponse;
 
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.InetSocketAddress;
+import java.net.ServerSocket;
+import java.net.Socket;
 import java.net.URI;
 import java.time.Duration;
 import java.util.Map;
@@ -131,7 +136,7 @@ class ArkVertxMutinyTransportTest {
         }
 
         @Test
-        void given404Endpoint_whenSend_thenUniFailsWithApiException() {
+        void given404Endpoint_whenSend_thenUniFailsWithNotFoundException() {
             Uni<RawResponse> result = transport().send("GET", baseUri.resolve("/not-found"),
                     Map.of(), null, null);
 
@@ -140,13 +145,13 @@ class ArkVertxMutinyTransportTest {
 
             subscriber.awaitFailure(Duration.ofSeconds(10));
             Throwable failure = subscriber.getFailure();
-            assertInstanceOf(ApiException.class, failure);
+            assertInstanceOf(NotFoundException.class, failure);
             assertEquals(404, ((ApiException) failure).statusCode());
             assertEquals("Not Found", ((ApiException) failure).responseBody());
         }
 
         @Test
-        void given500Endpoint_whenSend_thenUniFailsWithApiException() {
+        void given500Endpoint_whenSend_thenUniFailsWithServerException() {
             Uni<RawResponse> result = transport().send("GET", baseUri.resolve("/server-error"),
                     Map.of(), null, null);
 
@@ -154,7 +159,7 @@ class ArkVertxMutinyTransportTest {
                     .subscribe().withSubscriber(UniAssertSubscriber.create());
 
             subscriber.awaitFailure(Duration.ofSeconds(10));
-            assertInstanceOf(ApiException.class, subscriber.getFailure());
+            assertInstanceOf(ServerException.class, subscriber.getFailure());
             assertEquals(500, ((ApiException) subscriber.getFailure()).statusCode());
         }
 
@@ -209,7 +214,7 @@ class ArkVertxMutinyTransportTest {
         }
 
         @Test
-        void givenTimeout_whenSlowEndpoint_thenUniFails() {
+        void givenTimeout_whenSlowEndpoint_thenUniFailsWithArkException() {
             Uni<RawResponse> result = transport().send("GET", baseUri.resolve("/slow"),
                     Map.of(), null, Duration.ofMillis(100));
 
@@ -217,7 +222,86 @@ class ArkVertxMutinyTransportTest {
                     .subscribe().withSubscriber(UniAssertSubscriber.create());
 
             subscriber.awaitFailure(Duration.ofSeconds(10));
-            assertNotNull(subscriber.getFailure());
+            assertInstanceOf(ArkException.class, subscriber.getFailure());
+        }
+
+        @Test
+        void givenConnectionRefused_whenSend_thenUniFailsWithArkException() {
+            Uni<RawResponse> result = transport().send("GET",
+                    URI.create("http://localhost:1/refused"), Map.of(), null, Duration.ofSeconds(2));
+
+            UniAssertSubscriber<RawResponse> subscriber = result
+                    .subscribe().withSubscriber(UniAssertSubscriber.create());
+
+            subscriber.awaitFailure(Duration.ofSeconds(10));
+            assertInstanceOf(ArkException.class, subscriber.getFailure());
+        }
+
+        @Test
+        void givenConnectionReset_whenSend_thenUniFailsWithArkException() throws Exception {
+            try (ServerSocket ss = new ServerSocket(0)) {
+                int port = ss.getLocalPort();
+                Thread t = new Thread(() -> {
+                    try (Socket c = ss.accept()) {
+                    } catch (IOException ignored) {}
+                });
+                t.setDaemon(true);
+                t.start();
+
+                Uni<RawResponse> result = transport().send("GET",
+                        URI.create("http://localhost:" + port + "/reset"), Map.of(), null, Duration.ofSeconds(5));
+
+                UniAssertSubscriber<RawResponse> subscriber = result
+                        .subscribe().withSubscriber(UniAssertSubscriber.create());
+                subscriber.awaitFailure(Duration.ofSeconds(10));
+                assertInstanceOf(ArkException.class, subscriber.getFailure());
+            }
+        }
+
+        @Test
+        void givenMalformedResponse_whenSend_thenUniFailsWithArkException() throws Exception {
+            try (ServerSocket ss = new ServerSocket(0)) {
+                int port = ss.getLocalPort();
+                Thread t = new Thread(() -> {
+                    try (Socket c = ss.accept(); OutputStream o = c.getOutputStream()) {
+                        o.write("GARBAGE_NOT_HTTP\r\n\r\n".getBytes());
+                        o.flush();
+                    } catch (IOException ignored) {}
+                });
+                t.setDaemon(true);
+                t.start();
+
+                Uni<RawResponse> result = transport().send("GET",
+                        URI.create("http://localhost:" + port + "/malformed"), Map.of(), null, Duration.ofSeconds(5));
+
+                UniAssertSubscriber<RawResponse> subscriber = result
+                        .subscribe().withSubscriber(UniAssertSubscriber.create());
+                subscriber.awaitFailure(Duration.ofSeconds(10));
+                assertInstanceOf(ArkException.class, subscriber.getFailure());
+            }
+        }
+
+        @Test
+        void givenSlowHeaders_whenSendWithTimeout_thenUniFailsWithArkException() throws Exception {
+            try (ServerSocket ss = new ServerSocket(0)) {
+                int port = ss.getLocalPort();
+                Thread t = new Thread(() -> {
+                    try (Socket c = ss.accept(); OutputStream o = c.getOutputStream()) {
+                        Thread.sleep(5000);
+                        o.write("HTTP/1.1 200 OK\r\n\r\nok".getBytes());
+                    } catch (IOException | InterruptedException ignored) {}
+                });
+                t.setDaemon(true);
+                t.start();
+
+                Uni<RawResponse> result = transport().send("GET",
+                        URI.create("http://localhost:" + port + "/slow-headers"), Map.of(), null, Duration.ofMillis(200));
+
+                UniAssertSubscriber<RawResponse> subscriber = result
+                        .subscribe().withSubscriber(UniAssertSubscriber.create());
+                subscriber.awaitFailure(Duration.ofSeconds(10));
+                assertInstanceOf(ArkException.class, subscriber.getFailure());
+            }
         }
     }
 

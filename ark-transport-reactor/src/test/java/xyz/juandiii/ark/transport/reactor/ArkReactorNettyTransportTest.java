@@ -9,11 +9,18 @@ import reactor.core.publisher.Mono;
 import reactor.netty.http.client.HttpClient;
 import reactor.test.StepVerifier;
 import xyz.juandiii.ark.exceptions.ApiException;
+import xyz.juandiii.ark.exceptions.ArkException;
+import xyz.juandiii.ark.exceptions.ConnectionException;
+import xyz.juandiii.ark.exceptions.NotFoundException;
+import xyz.juandiii.ark.exceptions.ServerException;
+import xyz.juandiii.ark.exceptions.TimeoutException;
 import xyz.juandiii.ark.http.RawResponse;
 
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.InetSocketAddress;
+import java.net.ServerSocket;
+import java.net.Socket;
 import java.net.URI;
 import java.time.Duration;
 import java.util.Map;
@@ -138,13 +145,13 @@ class ArkReactorNettyTransportTest {
         }
 
         @Test
-        void given404Endpoint_whenSend_thenEmitsApiException() {
+        void given404Endpoint_whenSend_thenEmitsNotFoundException() {
             Mono<RawResponse> result = transport().send("GET", baseUri.resolve("/not-found"),
                     Map.of(), null, null);
 
             StepVerifier.create(result)
                     .expectErrorSatisfies(error -> {
-                        assertInstanceOf(ApiException.class, error);
+                        assertInstanceOf(NotFoundException.class, error);
                         ApiException ex = (ApiException) error;
                         assertEquals(404, ex.statusCode());
                         assertEquals("Not Found", ex.responseBody());
@@ -153,13 +160,13 @@ class ArkReactorNettyTransportTest {
         }
 
         @Test
-        void given500Endpoint_whenSend_thenEmitsApiException() {
+        void given500Endpoint_whenSend_thenEmitsServerException() {
             Mono<RawResponse> result = transport().send("GET", baseUri.resolve("/server-error"),
                     Map.of(), null, null);
 
             StepVerifier.create(result)
                     .expectErrorSatisfies(error -> {
-                        assertInstanceOf(ApiException.class, error);
+                        assertInstanceOf(ServerException.class, error);
                         assertEquals(500, ((ApiException) error).statusCode());
                     })
                     .verify();
@@ -226,12 +233,24 @@ class ArkReactorNettyTransportTest {
         }
 
         @Test
-        void givenTimeout_whenSlowEndpoint_thenEmitsTimeoutError() {
+        void givenTimeout_whenSlowEndpoint_thenEmitsTimeoutException() {
             Mono<RawResponse> result = transport().send("GET", baseUri.resolve("/slow"),
                     Map.of(), null, Duration.ofMillis(100));
 
             StepVerifier.create(result)
-                    .expectError()
+                    .expectErrorSatisfies(error ->
+                            assertInstanceOf(TimeoutException.class, error))
+                    .verify(Duration.ofSeconds(5));
+        }
+
+        @Test
+        void givenConnectionRefused_whenSend_thenEmitsConnectionException() {
+            Mono<RawResponse> result = transport().send("GET",
+                    URI.create("http://localhost:1/refused"), Map.of(), null, Duration.ofSeconds(2));
+
+            StepVerifier.create(result)
+                    .expectErrorSatisfies(error ->
+                            assertInstanceOf(ConnectionException.class, error))
                     .verify(Duration.ofSeconds(5));
         }
 
@@ -246,6 +265,222 @@ class ArkReactorNettyTransportTest {
                         assertEquals("", response.body());
                     })
                     .verifyComplete();
+        }
+    }
+
+    @Nested
+    class MalformedResponse {
+
+        @Test
+        void givenMalformedResponse_whenSend_thenEmitsArkException() throws Exception {
+            // Raw TCP server that sends invalid HTTP
+            try (ServerSocket ss = new ServerSocket(0)) {
+                int port = ss.getLocalPort();
+                Thread serverThread = new Thread(() -> {
+                    try (Socket client = ss.accept();
+                         OutputStream out = client.getOutputStream()) {
+                        // Send garbage instead of valid HTTP
+                        out.write("GARBAGE_NOT_HTTP\r\n\r\n".getBytes());
+                        out.flush();
+                    } catch (IOException ignored) {}
+                });
+                serverThread.setDaemon(true);
+                serverThread.start();
+
+                Mono<RawResponse> result = transport().send("GET",
+                        URI.create("http://localhost:" + port + "/malformed"),
+                        Map.of(), null, Duration.ofSeconds(5));
+
+                StepVerifier.create(result)
+                        .expectErrorSatisfies(error ->
+                                assertInstanceOf(ArkException.class, error))
+                        .verify(Duration.ofSeconds(10));
+            }
+        }
+    }
+
+    @Nested
+    class RandomDataThenClose {
+
+        @Test
+        void givenRandomDataThenClose_whenSend_thenEmitsArkException() throws Exception {
+            try (ServerSocket ss = new ServerSocket(0)) {
+                int port = ss.getLocalPort();
+                Thread serverThread = new Thread(() -> {
+                    try (Socket client = ss.accept();
+                         OutputStream out = client.getOutputStream()) {
+                        // Send random bytes then close abruptly
+                        out.write(new byte[]{0x00, 0x1F, (byte) 0xFF, 0x42, 0x13});
+                        out.flush();
+                    } catch (IOException ignored) {}
+                });
+                serverThread.setDaemon(true);
+                serverThread.start();
+
+                Mono<RawResponse> result = transport().send("GET",
+                        URI.create("http://localhost:" + port + "/random"),
+                        Map.of(), null, Duration.ofSeconds(5));
+
+                StepVerifier.create(result)
+                        .expectErrorSatisfies(error ->
+                                assertInstanceOf(ArkException.class, error))
+                        .verify(Duration.ofSeconds(10));
+            }
+        }
+    }
+
+    @Nested
+    class ConnectionReset {
+
+        @Test
+        void givenConnectionReset_whenSend_thenEmitsArkException() throws Exception {
+            // Server accepts connection and closes immediately without responding
+            try (ServerSocket ss = new ServerSocket(0)) {
+                int port = ss.getLocalPort();
+                Thread serverThread = new Thread(() -> {
+                    try (Socket client = ss.accept()) {
+                        // Accept and close immediately — connection reset
+                    } catch (IOException ignored) {}
+                });
+                serverThread.setDaemon(true);
+                serverThread.start();
+
+                Mono<RawResponse> result = transport().send("GET",
+                        URI.create("http://localhost:" + port + "/reset"),
+                        Map.of(), null, Duration.ofSeconds(5));
+
+                StepVerifier.create(result)
+                        .expectErrorSatisfies(error ->
+                                assertInstanceOf(ArkException.class, error))
+                        .verify(Duration.ofSeconds(10));
+            }
+        }
+    }
+
+    @Nested
+    class PartialResponse {
+
+        @Test
+        void givenPartialResponse_whenSend_thenEmitsArkException() throws Exception {
+            // Server sends valid headers with Content-Length but only partial body then closes
+            try (ServerSocket ss = new ServerSocket(0)) {
+                int port = ss.getLocalPort();
+                Thread serverThread = new Thread(() -> {
+                    try (Socket client = ss.accept();
+                         OutputStream out = client.getOutputStream()) {
+                        String headers = "HTTP/1.1 200 OK\r\nContent-Length: 1000\r\n\r\n";
+                        out.write(headers.getBytes());
+                        out.write("partial".getBytes());
+                        out.flush();
+                        // Close without sending the remaining 993 bytes
+                    } catch (IOException ignored) {}
+                });
+                serverThread.setDaemon(true);
+                serverThread.start();
+
+                Mono<RawResponse> result = transport().send("GET",
+                        URI.create("http://localhost:" + port + "/partial"),
+                        Map.of(), null, Duration.ofSeconds(5));
+
+                StepVerifier.create(result)
+                        .expectErrorSatisfies(error ->
+                                assertInstanceOf(ArkException.class, error))
+                        .verify(Duration.ofSeconds(10));
+            }
+        }
+    }
+
+    @Nested
+    class EmptyResponse {
+
+        @Test
+        void givenEmptyResponse_whenSend_thenEmitsArkException() throws Exception {
+            // Server accepts connection, sends nothing, and closes
+            try (ServerSocket ss = new ServerSocket(0)) {
+                int port = ss.getLocalPort();
+                Thread serverThread = new Thread(() -> {
+                    try (Socket client = ss.accept()) {
+                        // Read the request but don't respond
+                        client.getInputStream().readAllBytes();
+                    } catch (IOException ignored) {}
+                });
+                serverThread.setDaemon(true);
+                serverThread.start();
+
+                Mono<RawResponse> result = transport().send("GET",
+                        URI.create("http://localhost:" + port + "/empty"),
+                        Map.of(), null, Duration.ofSeconds(5));
+
+                StepVerifier.create(result)
+                        .expectErrorSatisfies(error ->
+                                assertInstanceOf(ArkException.class, error))
+                        .verify(Duration.ofSeconds(10));
+            }
+        }
+    }
+
+    @Nested
+    class SlowHeaders {
+
+        @Test
+        void givenSlowHeaders_whenSendWithTimeout_thenEmitsTimeoutException() throws Exception {
+            // Server accepts connection but waits before sending any response
+            try (ServerSocket ss = new ServerSocket(0)) {
+                int port = ss.getLocalPort();
+                Thread serverThread = new Thread(() -> {
+                    try (Socket client = ss.accept();
+                         OutputStream out = client.getOutputStream()) {
+                        // Wait longer than the client timeout before sending anything
+                        Thread.sleep(5000);
+                        out.write("HTTP/1.1 200 OK\r\nContent-Length: 2\r\n\r\nok".getBytes());
+                        out.flush();
+                    } catch (IOException | InterruptedException ignored) {}
+                });
+                serverThread.setDaemon(true);
+                serverThread.start();
+
+                Mono<RawResponse> result = transport().send("GET",
+                        URI.create("http://localhost:" + port + "/slow-headers"),
+                        Map.of(), null, Duration.ofMillis(200));
+
+                StepVerifier.create(result)
+                        .expectErrorSatisfies(error ->
+                                assertInstanceOf(TimeoutException.class, error))
+                        .verify(Duration.ofSeconds(10));
+            }
+        }
+    }
+
+    @Nested
+    class HeadersOnlyNoBody {
+
+        @Test
+        void givenHeadersOnlyNoBody_whenSendWithTimeout_thenEmitsTimeoutException() throws Exception {
+            // Server sends headers with Content-Length but never sends body and never closes
+            try (ServerSocket ss = new ServerSocket(0)) {
+                int port = ss.getLocalPort();
+                Thread serverThread = new Thread(() -> {
+                    try (Socket client = ss.accept();
+                         OutputStream out = client.getOutputStream()) {
+                        String headers = "HTTP/1.1 200 OK\r\nContent-Length: 100\r\n\r\n";
+                        out.write(headers.getBytes());
+                        out.flush();
+                        // Keep connection open, never send body
+                        Thread.sleep(10000);
+                    } catch (IOException | InterruptedException ignored) {}
+                });
+                serverThread.setDaemon(true);
+                serverThread.start();
+
+                Mono<RawResponse> result = transport().send("GET",
+                        URI.create("http://localhost:" + port + "/headers-only"),
+                        Map.of(), null, Duration.ofMillis(200));
+
+                StepVerifier.create(result)
+                        .expectErrorSatisfies(error ->
+                                assertInstanceOf(TimeoutException.class, error))
+                        .verify(Duration.ofSeconds(10));
+            }
         }
     }
 

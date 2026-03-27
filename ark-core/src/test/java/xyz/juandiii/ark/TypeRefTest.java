@@ -34,4 +34,24 @@ class TypeRefTest {
     void ofRejectsNull() {
         assertThrows(NullPointerException.class, () -> TypeRef.of(null));
     }
+
+    @Test
+    void ofListWithClass_thenCreatesListType() {
+        TypeRef<List<String>> ref = TypeRef.ofList(String.class);
+        assertInstanceOf(ParameterizedType.class, ref.getType());
+        ParameterizedType pt = (ParameterizedType) ref.getType();
+        assertEquals(List.class, pt.getRawType());
+        assertEquals(String.class, pt.getActualTypeArguments()[0]);
+        assertNull(pt.getOwnerType());
+    }
+
+    @Test
+    void ofListWithTypeRef_thenCreatesListType() {
+        TypeRef<String> elementRef = TypeRef.of(String.class);
+        TypeRef<List<String>> ref = TypeRef.ofList(elementRef);
+        assertInstanceOf(ParameterizedType.class, ref.getType());
+        ParameterizedType pt = (ParameterizedType) ref.getType();
+        assertEquals(List.class, pt.getRawType());
+        assertEquals(String.class, pt.getActualTypeArguments()[0]);
+    }
 }

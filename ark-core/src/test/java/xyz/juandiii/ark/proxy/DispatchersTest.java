@@ -1,0 +1,75 @@
+package xyz.juandiii.ark.proxy;
+
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import xyz.juandiii.ark.Ark;
+import xyz.juandiii.ark.exceptions.ArkException;
+import xyz.juandiii.ark.http.ClientRequest;
+
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
+
+@ExtendWith(MockitoExtension.class)
+class DispatchersTest {
+
+    @Mock Ark ark;
+    @Mock ClientRequest request;
+
+    @Test
+    void givenGet_thenDispatches() {
+        when(ark.get("/path")).thenReturn(request);
+        assertSame(request, Dispatchers.sync(ark).dispatch("GET", "/path"));
+    }
+
+    @Test
+    void givenPost_thenDispatches() {
+        when(ark.post("/path")).thenReturn(request);
+        assertSame(request, Dispatchers.sync(ark).dispatch("POST", "/path"));
+    }
+
+    @Test
+    void givenPut_thenDispatches() {
+        when(ark.put("/path")).thenReturn(request);
+        assertSame(request, Dispatchers.sync(ark).dispatch("PUT", "/path"));
+    }
+
+    @Test
+    void givenPatch_thenDispatches() {
+        when(ark.patch("/path")).thenReturn(request);
+        assertSame(request, Dispatchers.sync(ark).dispatch("PATCH", "/path"));
+    }
+
+    @Test
+    void givenDelete_thenDispatches() {
+        when(ark.delete("/path")).thenReturn(request);
+        assertSame(request, Dispatchers.sync(ark).dispatch("DELETE", "/path"));
+    }
+
+    @Test
+    void givenUnsupported_thenThrows() {
+        assertThrows(ArkException.class, () ->
+                Dispatchers.sync(ark).dispatch("OPTIONS", "/path"));
+    }
+
+    @Test
+    void givenOf_thenDispatches() {
+        RequestDispatcher dispatcher = Dispatchers.of(
+                p -> request, p -> request, p -> request, p -> request, p -> request);
+
+        assertSame(request, dispatcher.dispatch("GET", "/path"));
+        assertSame(request, dispatcher.dispatch("POST", "/path"));
+        assertSame(request, dispatcher.dispatch("PUT", "/path"));
+        assertSame(request, dispatcher.dispatch("PATCH", "/path"));
+        assertSame(request, dispatcher.dispatch("DELETE", "/path"));
+    }
+
+    @Test
+    void givenOfUnsupported_thenThrows() {
+        RequestDispatcher dispatcher = Dispatchers.of(
+                p -> request, p -> request, p -> request, p -> request, p -> request);
+
+        assertThrows(ArkException.class, () -> dispatcher.dispatch("HEAD", "/path"));
+    }
+}

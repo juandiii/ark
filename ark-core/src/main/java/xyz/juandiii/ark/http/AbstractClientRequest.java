@@ -132,7 +132,7 @@ public abstract class AbstractClientRequest<T extends AbstractClientRequest<T>>
 
     protected void validateResponse(RawResponse raw) {
         if (raw.isError()) {
-            throw new ApiException(raw.statusCode(), raw.body());
+            throw ApiException.of(raw.statusCode(), raw.body());
         }
     }
 
@@ -156,6 +156,9 @@ public abstract class AbstractClientRequest<T extends AbstractClientRequest<T>>
 
     private String normalizedUrl() {
         String base = baseUrl.endsWith("/") ? baseUrl.substring(0, baseUrl.length() - 1) : baseUrl;
+        if (path.isEmpty() || path.equals("/")) {
+            return base;
+        }
         String p = path.startsWith("/") ? path : "/" + path;
         return (base + p).replaceAll("(?<=[^:])//+", "/");
     }

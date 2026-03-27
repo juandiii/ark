@@ -2,6 +2,7 @@ package xyz.juandiii.ark.transport.jdk;
 
 import xyz.juandiii.ark.exceptions.ApiException;
 import xyz.juandiii.ark.exceptions.ArkException;
+import xyz.juandiii.ark.exceptions.RequestInterruptedException;
 import xyz.juandiii.ark.async.http.AsyncHttpTransport;
 import xyz.juandiii.ark.http.HttpTransport;
 import xyz.juandiii.ark.http.RawResponse;
@@ -53,10 +54,10 @@ public final class ArkJdkHttpTransport implements HttpTransport, AsyncHttpTransp
             LOGGER.log(System.Logger.Level.DEBUG, () -> TransportLogger.formatResponse(response.statusCode(), response.headers().map(), response.body()));
             return toRawResponse(response);
         } catch (IOException e) {
-            throw new ArkException("API request failed: " + e.getMessage(), e);
+            throw ArkException.fromIOException(method, uri, e);
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
-            throw new ArkException("API request interrupted", e);
+            throw new RequestInterruptedException(method, uri, "Request interrupted", e);
         }
     }
 
@@ -71,7 +72,7 @@ public final class ArkJdkHttpTransport implements HttpTransport, AsyncHttpTransp
                 .thenApplyAsync(response -> {
                     if (RawResponse.isErrorStatus(response.statusCode())) {
                         throw new CompletionException(
-                                new ApiException(response.statusCode(), response.body()));
+                                ApiException.of(response.statusCode(), response.body()));
                     }
                     return new RawResponse(response.statusCode(), response.headers().map(), response.body());
                 }, executor);
@@ -97,7 +98,7 @@ public final class ArkJdkHttpTransport implements HttpTransport, AsyncHttpTransp
 
     private RawResponse toRawResponse(HttpResponse<String> response) {
         if (RawResponse.isErrorStatus(response.statusCode())) {
-            throw new ApiException(response.statusCode(), response.body());
+            throw ApiException.of(response.statusCode(), response.body());
         }
         return new RawResponse(response.statusCode(), response.headers().map(), response.body());
     }

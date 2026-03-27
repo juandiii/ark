@@ -18,8 +18,8 @@ class RawResponseTest {
     }
 
     @ParameterizedTest
-    @ValueSource(ints = {200, 201, 204, 301, 302, 399})
-    void isNotErrorStatusForSuccessCodes(int statusCode) {
+    @ValueSource(ints = {200, 201, 204, 301, 302, 399, 600, 999})
+    void isNotErrorStatusForNonErrorCodes(int statusCode) {
         assertFalse(RawResponse.isErrorStatus(statusCode));
     }
 
