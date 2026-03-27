@@ -21,6 +21,7 @@ final class ArkClientScanner {
     static final String TRANSPORT_BEAN = "httpTransport";
     static final String ENVIRONMENT_BEAN = "environment";
     static final String TLS_RESOLVER_BEAN = "arkTlsResolver";
+    static final String ARK_PROPERTIES_BEAN = "ark-" + ArkProperties.class.getName();
 
     private ArkClientScanner() {}
 
@@ -45,6 +46,7 @@ final class ArkClientScanner {
                 .addConstructorArgReference(TRANSPORT_BEAN)
                 .addConstructorArgReference(ENVIRONMENT_BEAN)
                 .addConstructorArgReference(TLS_RESOLVER_BEAN)
+                .addConstructorArgReference(ARK_PROPERTIES_BEAN)
                 .getBeanDefinition();
 
         beanDef.setAttribute(FactoryBean.OBJECT_TYPE_ATTRIBUTE,

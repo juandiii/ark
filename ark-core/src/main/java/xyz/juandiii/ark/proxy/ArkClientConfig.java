@@ -48,7 +48,7 @@ public final class ArkClientConfig {
         }
 
         String configKey = resolveConfigKey(annotation, iface);
-        String prefix = "ark.client.\"" + configKey + "\".";
+        String prefix = "ark.client." + configKey + ".";
 
         String baseUrl = firstNonEmpty(
                 propertyLookup.apply(prefix + "base-url"),
