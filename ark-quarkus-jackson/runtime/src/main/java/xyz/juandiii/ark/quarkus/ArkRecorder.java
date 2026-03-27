@@ -49,21 +49,29 @@ public class ArkRecorder {
                     MutinyArkClient.Builder builder = MutinyArkClient.builder()
                             .serializer(serializer)
                             .transport(buildMutinyTransport(httpVersion, connectTimeout, readTimeout))
-                            .baseUrl(resolvedUrl);
+                            .baseUrl(resolvedUrl)
+                            .connectTimeout(connectTimeout)
+                            .readTimeout(readTimeout);
                     LoggingInterceptor.apply(builder, loggingLevel);
                     return ArkJaxRsProxy.create(iface, builder.build());
                 } else if (usesAsyncReturnTypes(iface)) {
                     AsyncArkClient.Builder builder = AsyncArkClient.builder()
                             .serializer(serializer)
                             .transport(buildJdkTransport(httpVersion, connectTimeout))
-                            .baseUrl(resolvedUrl);
+                            .baseUrl(resolvedUrl)
+                            .connectTimeout(connectTimeout)
+                            .readTimeout(readTimeout)
+                            .requestInterceptor(defaultTimeout(readTimeout));
                     LoggingInterceptor.apply(builder, loggingLevel);
                     return ArkJaxRsProxy.create(iface, builder.build());
                 } else {
                     ArkClient.Builder builder = ArkClient.builder()
                             .serializer(serializer)
                             .transport(buildJdkTransport(httpVersion, connectTimeout))
-                            .baseUrl(resolvedUrl);
+                            .baseUrl(resolvedUrl)
+                            .connectTimeout(connectTimeout)
+                            .readTimeout(readTimeout)
+                            .requestInterceptor(defaultTimeout(readTimeout));
                     LoggingInterceptor.apply(builder, loggingLevel);
                     return ArkJaxRsProxy.create(iface, builder.build());
                 }
@@ -92,6 +100,14 @@ public class ArkRecorder {
                 .setConnectTimeout(connectTimeout * 1000)
                 .setIdleTimeout(readTimeout);
         return new ArkVertxMutinyTransport(WebClient.create(vertx, options));
+    }
+
+    private static xyz.juandiii.ark.interceptor.RequestInterceptor defaultTimeout(int readTimeout) {
+        return ctx -> {
+            if (ctx.timeout() == null) {
+                ctx.timeout(Duration.ofSeconds(readTimeout));
+            }
+        };
     }
 
     private static boolean usesReactiveReturnTypes(Class<?> iface) {

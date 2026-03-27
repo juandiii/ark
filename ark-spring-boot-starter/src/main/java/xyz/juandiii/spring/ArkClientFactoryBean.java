@@ -54,6 +54,8 @@ public class ArkClientFactoryBean<T> implements FactoryBean<T> {
                 .serializer(serializer)
                 .transport(transport)
                 .baseUrl(resolvedUrl)
+                .connectTimeout(connectTimeout)
+                .readTimeout(readTimeout)
                 .requestInterceptor(ctx -> {
                     if (ctx.timeout() == null) {
                         ctx.timeout(Duration.ofSeconds(readTimeout));
