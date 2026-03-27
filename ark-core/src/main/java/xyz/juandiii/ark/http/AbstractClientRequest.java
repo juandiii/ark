@@ -4,6 +4,7 @@ import xyz.juandiii.ark.JsonSerializer;
 import xyz.juandiii.ark.exceptions.ApiException;
 import xyz.juandiii.ark.exceptions.ArkException;
 import xyz.juandiii.ark.interceptor.RequestContext;
+import xyz.juandiii.ark.util.StringUtils;
 import xyz.juandiii.ark.interceptor.RequestInterceptor;
 import xyz.juandiii.ark.interceptor.ResponseInterceptor;
 
@@ -155,11 +156,12 @@ public abstract class AbstractClientRequest<T extends AbstractClientRequest<T>>
     }
 
     private String normalizedUrl() {
-        String base = baseUrl.endsWith("/") ? baseUrl.substring(0, baseUrl.length() - 1) : baseUrl;
-        if (path.isEmpty() || path.equals("/")) {
+        String base = StringUtils.stripTrailingSlash(StringUtils.trimToEmpty(baseUrl));
+        String trimmedPath = StringUtils.trimToEmpty(path);
+        if (StringUtils.isEmpty(trimmedPath) || trimmedPath.equals("/")) {
             return base;
         }
-        String p = path.startsWith("/") ? path : "/" + path;
+        String p = StringUtils.ensureLeadingSlash(trimmedPath);
         return (base + p).replaceAll("(?<=[^:])//+", "/");
     }
 

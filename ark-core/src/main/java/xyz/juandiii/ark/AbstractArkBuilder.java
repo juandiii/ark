@@ -2,6 +2,7 @@ package xyz.juandiii.ark;
 
 import xyz.juandiii.ark.interceptor.RequestInterceptor;
 import xyz.juandiii.ark.interceptor.ResponseInterceptor;
+import xyz.juandiii.ark.util.StringUtils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -68,7 +69,7 @@ public abstract class AbstractArkBuilder<B extends AbstractArkBuilder<B>> {
         sb.append("Ark Client Configuration");
         sb.append("\n    Client: ").append(clientType);
         sb.append("\n    Transport: ").append(transportType);
-        sb.append("\n    Base URL: ").append(baseUrl.isEmpty() ? "(not set)" : baseUrl);
+        sb.append("\n    Base URL: ").append(StringUtils.isEmpty(baseUrl) ? "(not set)" : baseUrl);
         sb.append("\n    User-Agent: ").append(buildUserAgent());
         sb.append("\n    Serializer: ").append(serializer != null ? serializer.getClass().getSimpleName() : "(not set)");
         sb.append("\n    Request Interceptors: ").append(requestInterceptors.size());

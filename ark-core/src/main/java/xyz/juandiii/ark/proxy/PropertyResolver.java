@@ -1,6 +1,7 @@
 package xyz.juandiii.ark.proxy;
 
 import xyz.juandiii.ark.exceptions.ArkException;
+import xyz.juandiii.ark.util.StringUtils;
 
 import java.util.function.Function;
 import java.util.regex.Matcher;
@@ -25,7 +26,7 @@ public final class PropertyResolver {
      * @return the resolved value
      */
     public static String resolve(String value, Function<String, String> propertyLookup) {
-        if (value == null || value.isEmpty()) return value;
+        if (StringUtils.isEmpty(value)) return value;
 
         Matcher m = PLACEHOLDER.matcher(value);
         if (!m.matches()) return value;
