@@ -3,6 +3,7 @@ package xyz.juandiii.ark.quarkus.config;
 import io.quarkus.runtime.annotations.ConfigGroup;
 import io.smallrye.config.WithDefault;
 import io.smallrye.config.WithName;
+import xyz.juandiii.ark.proxy.HttpVersion;
 
 import java.util.Optional;
 
@@ -25,7 +26,7 @@ public interface ArkClientNamedConfig {
      */
     @WithName("http-version")
     @WithDefault("HTTP_1_1")
-    String httpVersion();
+    HttpVersion httpVersion();
 
     /**
      * Connection timeout in seconds.

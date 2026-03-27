@@ -3,6 +3,7 @@ package xyz.juandiii.ark.quarkus.config;
 import io.quarkus.runtime.annotations.ConfigPhase;
 import io.quarkus.runtime.annotations.ConfigRoot;
 import io.smallrye.config.*;
+import xyz.juandiii.ark.interceptor.LoggingInterceptor;
 
 import java.util.Map;
 
@@ -35,5 +36,5 @@ public interface ArkClientsConfig {
      */
     @WithName("logging.level")
     @WithDefault("OFF")
-    String loggingLevel();
+    LoggingInterceptor.Level loggingLevel();
 }

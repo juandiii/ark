@@ -17,15 +17,17 @@ import java.util.Optional;
  * @author Juan Diego Lopez V.
  */
 @ApplicationScoped
-public class QuarkusVertxTlsResolver {
+public class QuarkusVertxTlsResolver implements VertxTlsResolver {
 
     @Inject
     TlsConfigurationRegistry tlsRegistry;
 
-    public TrustOptions resolveTrustOptions(String tlsConfigurationName) {
-        return getTlsConfig(tlsConfigurationName).getTrustStoreOptions();
+    @Override
+    public Optional<TrustOptions> resolveTrustOptions(String tlsConfigurationName) {
+        return Optional.ofNullable(getTlsConfig(tlsConfigurationName).getTrustStoreOptions());
     }
 
+    @Override
     public Optional<KeyCertOptions> resolveKeyCertOptions(String tlsConfigurationName) {
         return Optional.ofNullable(getTlsConfig(tlsConfigurationName).getKeyStoreOptions());
     }

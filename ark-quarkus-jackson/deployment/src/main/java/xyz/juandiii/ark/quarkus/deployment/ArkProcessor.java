@@ -117,13 +117,4 @@ public class ArkProcessor {
         return value != null ? value.asString() : defaultValue;
     }
 
-    private static String enumValue(AnnotationInstance instance, String name, String defaultValue) {
-        AnnotationValue value = instance.value(name);
-        return value != null ? value.asEnum() : defaultValue;
-    }
-
-    private static int intValue(AnnotationInstance instance, String name, int defaultValue) {
-        AnnotationValue value = instance.value(name);
-        return value != null ? value.asInt() : defaultValue;
-    }
 }
