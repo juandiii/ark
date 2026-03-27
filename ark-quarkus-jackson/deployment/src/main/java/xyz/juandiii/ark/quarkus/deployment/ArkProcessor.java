@@ -12,13 +12,11 @@ import io.quarkus.deployment.builditem.nativeimage.NativeImageProxyDefinitionBui
 import io.quarkus.deployment.builditem.nativeimage.NativeImageResourceBuildItem;
 import io.quarkus.deployment.builditem.nativeimage.ReflectiveClassBuildItem;
 import jakarta.enterprise.context.ApplicationScoped;
-import org.jboss.jandex.AnnotationInstance;
-import org.jboss.jandex.AnnotationValue;
-import org.jboss.jandex.ClassInfo;
-import org.jboss.jandex.DotName;
-import org.jboss.jandex.IndexView;
+import org.jboss.jandex.*;
 import xyz.juandiii.ark.quarkus.ArkProducer;
 import xyz.juandiii.ark.quarkus.ArkRecorder;
+import xyz.juandiii.ark.quarkus.QuarkusTlsResolver;
+import xyz.juandiii.ark.quarkus.QuarkusVertxTlsResolver;
 
 import java.util.List;
 
@@ -40,7 +38,11 @@ public class ArkProcessor {
     @BuildStep
     AdditionalBeanBuildItem registerBeans() {
         return AdditionalBeanBuildItem.builder()
-                .addBeanClasses(ArkProducer.class, xyz.juandiii.ark.quarkus.QuarkusTlsResolver.class, xyz.juandiii.ark.quarkus.QuarkusVertxTlsResolver.class)
+                .addBeanClasses(
+                        ArkProducer.class,
+                        QuarkusTlsResolver.class,
+                        QuarkusVertxTlsResolver.class
+                )
                 .setUnremovable()
                 .build();
     }
@@ -68,9 +70,10 @@ public class ArkProcessor {
     List<NativeImageProxyDefinitionBuildItem> registerArkProxyInterfaces(CombinedIndexBuildItem combinedIndex) {
         IndexView index = combinedIndex.getIndex();
 
-        return index.getAnnotations(ARK_CLIENT).stream()
+        return index.getAnnotations(ARK_CLIENT)
+                .stream()
                 .map(AnnotationInstance::target)
-                .map(target -> target.asClass())
+                .map(AnnotationTarget::asClass)
                 .map(ClassInfo::name)
                 .map(name -> new NativeImageProxyDefinitionBuildItem(name.toString()))
                 .toList();
@@ -86,7 +89,9 @@ public class ArkProcessor {
                 "xyz.juandiii.ark.mutiny.proxy.MutinyExecutionModelProvider",
                 "xyz.juandiii.ark.mutiny.proxy.MutinyDispatchers",
                 "xyz.juandiii.ark.mutiny.proxy.MutinyReturnTypeHandler"
-        ).constructors(true).methods(true).build();
+        ).constructors(true)
+                .methods(true)
+                .build();
     }
 
     @BuildStep
