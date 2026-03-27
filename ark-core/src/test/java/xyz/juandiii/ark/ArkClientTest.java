@@ -74,6 +74,26 @@ class ArkClientTest {
     }
 
     @Test
+    void defaultPostUsesRootPath() {
+        assertNotNull(client().post());
+    }
+
+    @Test
+    void defaultPutUsesRootPath() {
+        assertNotNull(client().put());
+    }
+
+    @Test
+    void defaultPatchUsesRootPath() {
+        assertNotNull(client().patch());
+    }
+
+    @Test
+    void defaultDeleteUsesRootPath() {
+        assertNotNull(client().delete());
+    }
+
+    @Test
     void setsUserAgentHeader() {
         when(transport.send(anyString(), any(), anyMap(), any(), any()))
                 .thenReturn(new RawResponse(200, Map.of(), "{}"));

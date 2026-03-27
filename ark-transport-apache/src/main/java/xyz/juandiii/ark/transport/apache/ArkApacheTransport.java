@@ -65,7 +65,7 @@ public final class ArkApacheTransport implements HttpTransport {
                 String responseBody = EntityUtils.toString(response.getEntity());
 
                 if (RawResponse.isErrorStatus(statusCode)) {
-                    throw new ApiException(statusCode, responseBody);
+                    throw ApiException.of(statusCode, responseBody);
                 }
 
                 Map<String, List<String>> responseHeaders = HeaderUtils.toHeaderMap(
@@ -79,7 +79,7 @@ public final class ArkApacheTransport implements HttpTransport {
         } catch (ApiException e) {
             throw e;
         } catch (IOException e) {
-            throw new ArkException("API request failed: " + e.getMessage(), e);
+            throw ArkException.fromIOException(method, uri, e);
         }
     }
 }

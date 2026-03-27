@@ -78,14 +78,14 @@ class AbstractClientRequestTest {
         }
 
         @Test
-        void givenTrailingSlashOnBaseUrl_whenPathIsSlash_thenNormalizesToSingleSlash() {
-            assertEquals(URI.create("https://api.example.com/"),
+        void givenTrailingSlashOnBaseUrl_whenPathIsSlash_thenNoTrailingSlash() {
+            assertEquals(URI.create("https://api.example.com"),
                     request("GET", "https://api.example.com/", "/").buildUri());
         }
 
         @Test
-        void givenTrailingSlashOnBaseUrl_whenPathIsEmpty_thenNoDoubleSlash() {
-            assertEquals(URI.create("https://api.example.com/"),
+        void givenTrailingSlashOnBaseUrl_whenPathIsEmpty_thenNoTrailingSlash() {
+            assertEquals(URI.create("https://api.example.com"),
                     request("GET", "https://api.example.com/", "").buildUri());
         }
 

@@ -2,6 +2,7 @@ package xyz.juandiii.ark;
 
 import xyz.juandiii.ark.interceptor.RequestInterceptor;
 import xyz.juandiii.ark.interceptor.ResponseInterceptor;
+import xyz.juandiii.ark.util.StringUtils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -20,6 +21,8 @@ public abstract class AbstractArkBuilder<B extends AbstractArkBuilder<B>> {
     protected String baseUrl = "";
     protected String name = ArkVersion.NAME;
     protected String version = ArkVersion.VERSION;
+    protected int connectTimeoutSecs = -1;
+    protected int readTimeoutSecs = -1;
     protected final List<RequestInterceptor> requestInterceptors = new ArrayList<>();
     protected final List<ResponseInterceptor> responseInterceptors = new ArrayList<>();
 
@@ -38,6 +41,16 @@ public abstract class AbstractArkBuilder<B extends AbstractArkBuilder<B>> {
     public B userAgent(String name, String version) {
         this.name = name;
         this.version = version;
+        return self();
+    }
+
+    public B connectTimeout(int seconds) {
+        this.connectTimeoutSecs = seconds;
+        return self();
+    }
+
+    public B readTimeout(int seconds) {
+        this.readTimeoutSecs = seconds;
         return self();
     }
 
@@ -60,18 +73,22 @@ public abstract class AbstractArkBuilder<B extends AbstractArkBuilder<B>> {
     }
 
     protected void logConfiguration(String clientType, String transportType) {
-        LOGGER.log(System.Logger.Level.DEBUG, () -> {
-            StringBuilder sb = new StringBuilder();
-            sb.append("Ark Client Configuration");
-            sb.append("\n    Client: ").append(clientType);
-            sb.append("\n    Transport: ").append(transportType);
-            sb.append("\n    Base URL: ").append(baseUrl.isEmpty() ? "(not set)" : baseUrl);
-            sb.append("\n    User-Agent: ").append(buildUserAgent());
-            sb.append("\n    Serializer: ").append(serializer != null ? serializer.getClass().getSimpleName() : "(not set)");
-            sb.append("\n    Request Interceptors: ").append(requestInterceptors.size());
-            sb.append("\n    Response Interceptors: ").append(responseInterceptors.size());
-            return sb.toString();
-        });
+        LOGGER.log(System.Logger.Level.DEBUG, () -> formatConfiguration(clientType, transportType));
+    }
+
+    protected String formatConfiguration(String clientType, String transportType) {
+        StringBuilder sb = new StringBuilder();
+        sb.append("Ark Client Configuration");
+        sb.append("\n    Client: ").append(clientType);
+        sb.append("\n    Transport: ").append(transportType);
+        sb.append("\n    Base URL: ").append(StringUtils.isEmpty(baseUrl) ? "(not set)" : baseUrl);
+        sb.append("\n    User-Agent: ").append(buildUserAgent());
+        sb.append("\n    Serializer: ").append(serializer != null ? serializer.getClass().getSimpleName() : "(not set)");
+        sb.append("\n    Connect Timeout: ").append(connectTimeoutSecs >= 0 ? connectTimeoutSecs + "s" : "(not set)");
+        sb.append("\n    Read Timeout: ").append(readTimeoutSecs >= 0 ? readTimeoutSecs + "s" : "(not set)");
+        sb.append("\n    Request Interceptors: ").append(requestInterceptors.size());
+        sb.append("\n    Response Interceptors: ").append(responseInterceptors.size());
+        return sb.toString();
     }
 
 }

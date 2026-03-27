@@ -92,5 +92,37 @@ class AbstractArkBuilderTest {
         assertSame(b, b.responseInterceptor(responseInterceptor));
     }
 
+    @Test
+    void formatConfigurationIncludesAllFields() {
+        TestBuilder b = builder().serializer(serializer).baseUrl("https://api.example.com");
+        String result = b.formatConfiguration("TestClient", "TestTransport");
+
+        assertTrue(result.contains("TestClient"));
+        assertTrue(result.contains("TestTransport"));
+        assertTrue(result.contains("https://api.example.com"));
+    }
+
+    @Test
+    void formatConfigurationWithNullSerializer() {
+        TestBuilder b = builder().baseUrl("https://api.example.com");
+        String result = b.formatConfiguration("TestClient", "TestTransport");
+
+        assertTrue(result.contains("(not set)"));
+    }
+
+    @Test
+    void formatConfigurationWithEmptyBaseUrl() {
+        TestBuilder b = builder().serializer(serializer);
+        String result = b.formatConfiguration("TestClient", "TestTransport");
+
+        assertTrue(result.contains("Base URL: (not set)"));
+    }
+
+    @Test
+    void logConfigurationDoesNotThrow() {
+        TestBuilder b = builder().serializer(serializer).baseUrl("https://api.example.com");
+        assertDoesNotThrow(() -> b.logConfiguration("TestClient", "TestTransport"));
+    }
+
     static class TestBuilder extends AbstractArkBuilder<TestBuilder> {}
 }

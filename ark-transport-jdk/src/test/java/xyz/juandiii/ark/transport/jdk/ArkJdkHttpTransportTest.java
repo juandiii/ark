@@ -6,14 +6,15 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import xyz.juandiii.ark.async.http.AsyncHttpTransport;
-import xyz.juandiii.ark.exceptions.ApiException;
-import xyz.juandiii.ark.exceptions.ArkException;
+import xyz.juandiii.ark.exceptions.*;
 import xyz.juandiii.ark.http.HttpTransport;
 import xyz.juandiii.ark.http.RawResponse;
 
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.InetSocketAddress;
+import java.net.ServerSocket;
+import java.net.Socket;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
@@ -24,11 +25,10 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
 
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
-
-import static org.junit.jupiter.api.Assertions.*;
 
 class ArkJdkHttpTransportTest {
 
@@ -188,12 +188,12 @@ class ArkJdkHttpTransportTest {
 
             assertEquals(404, ex.statusCode());
             assertEquals("Resource not found", ex.responseBody());
-            assertTrue(ex.isNotFound());
+            assertInstanceOf(NotFoundException.class, ex);
         }
 
         @Test
-        void given500Endpoint_whenSend_thenThrowsApiException() {
-            ApiException ex = assertThrows(ApiException.class, () ->
+        void given500Endpoint_whenSend_thenThrowsServerException() {
+            ServerException ex = assertThrows(ServerException.class, () ->
                     transport().send("GET", baseUri.resolve("/server-error"), Map.of(), null, null));
 
             assertEquals(500, ex.statusCode());
@@ -249,10 +249,17 @@ class ArkJdkHttpTransportTest {
         }
 
         @Test
-        void givenTimeout_whenSlowEndpoint_thenThrowsArkException() {
-            assertThrows(ArkException.class, () ->
+        void givenTimeout_whenSlowEndpoint_thenThrowsTimeoutException() {
+            assertThrows(TimeoutException.class, () ->
                     transport().send("GET", baseUri.resolve("/slow"),
                             Map.of(), null, Duration.ofMillis(100)));
+        }
+
+        @Test
+        void givenConnectionRefused_whenSend_thenThrowsConnectionException() {
+            assertThrows(ConnectionException.class, () ->
+                    transport().send("GET", URI.create("http://localhost:1/refused"),
+                            Map.of(), null, Duration.ofSeconds(2)));
         }
 
         @Test
@@ -269,6 +276,101 @@ class ArkJdkHttpTransportTest {
                     Map.of(), null, null);
 
             assertEquals(204, response.statusCode());
+        }
+
+        @Test
+        void givenMalformedResponse_whenSend_thenThrowsArkException() throws Exception {
+            try (ServerSocket ss = new ServerSocket(0)) {
+                int port = ss.getLocalPort();
+                Thread t = new Thread(() -> {
+                    try (Socket c = ss.accept(); OutputStream o = c.getOutputStream()) {
+                        o.write("GARBAGE_NOT_HTTP\r\n\r\n".getBytes());
+                        o.flush();
+                    } catch (IOException ignored) {}
+                });
+                t.setDaemon(true);
+                t.start();
+
+                assertThrows(ArkException.class, () ->
+                        transport().send("GET", URI.create("http://localhost:" + port + "/malformed"),
+                                Map.of(), null, Duration.ofSeconds(5)));
+            }
+        }
+
+        @Test
+        void givenConnectionReset_whenSend_thenThrowsArkException() throws Exception {
+            try (ServerSocket ss = new ServerSocket(0)) {
+                int port = ss.getLocalPort();
+                Thread t = new Thread(() -> {
+                    try (Socket c = ss.accept()) {
+                    } catch (IOException ignored) {}
+                });
+                t.setDaemon(true);
+                t.start();
+
+                assertThrows(ArkException.class, () ->
+                        transport().send("GET", URI.create("http://localhost:" + port + "/reset"),
+                                Map.of(), null, Duration.ofSeconds(5)));
+            }
+        }
+
+        @Test
+        void givenPartialResponse_whenSend_thenThrowsArkException() throws Exception {
+            try (ServerSocket ss = new ServerSocket(0)) {
+                int port = ss.getLocalPort();
+                Thread t = new Thread(() -> {
+                    try (Socket c = ss.accept(); OutputStream o = c.getOutputStream()) {
+                        o.write("HTTP/1.1 200 OK\r\nContent-Length: 1000\r\n\r\n".getBytes());
+                        o.write("partial".getBytes());
+                        o.flush();
+                    } catch (IOException ignored) {}
+                });
+                t.setDaemon(true);
+                t.start();
+
+                assertThrows(ArkException.class, () ->
+                        transport().send("GET", URI.create("http://localhost:" + port + "/partial"),
+                                Map.of(), null, Duration.ofSeconds(5)));
+            }
+        }
+
+        @Test
+        void givenSlowHeaders_whenSendWithTimeout_thenThrowsTimeoutException() throws Exception {
+            try (ServerSocket ss = new ServerSocket(0)) {
+                int port = ss.getLocalPort();
+                Thread t = new Thread(() -> {
+                    try (Socket c = ss.accept(); OutputStream o = c.getOutputStream()) {
+                        Thread.sleep(5000);
+                        o.write("HTTP/1.1 200 OK\r\nContent-Length: 2\r\n\r\nok".getBytes());
+                    } catch (IOException | InterruptedException ignored) {}
+                });
+                t.setDaemon(true);
+                t.start();
+
+                assertThrows(TimeoutException.class, () ->
+                        transport().send("GET", URI.create("http://localhost:" + port + "/slow-headers"),
+                                Map.of(), null, Duration.ofMillis(200)));
+            }
+        }
+
+        @Test
+        void givenHeadersOnlyNoBody_whenSendWithTimeout_thenThrowsArkException() throws Exception {
+            try (ServerSocket ss = new ServerSocket(0)) {
+                int port = ss.getLocalPort();
+                Thread t = new Thread(() -> {
+                    try (Socket c = ss.accept(); OutputStream o = c.getOutputStream()) {
+                        o.write("HTTP/1.1 200 OK\r\nContent-Length: 100\r\n\r\n".getBytes());
+                        o.flush();
+                        Thread.sleep(10000);
+                    } catch (IOException | InterruptedException ignored) {}
+                });
+                t.setDaemon(true);
+                t.start();
+
+                assertThrows(ArkException.class, () ->
+                        transport().send("GET", URI.create("http://localhost:" + port + "/headers-only"),
+                                Map.of(), null, Duration.ofMillis(500)));
+            }
         }
     }
 
@@ -359,10 +461,9 @@ class ArkJdkHttpTransportTest {
 
             ArkJdkHttpTransport transport = new ArkJdkHttpTransport(mockClient);
 
-            ArkException ex = assertThrows(ArkException.class, () ->
+            RequestInterruptedException ex = assertThrows(RequestInterruptedException.class, () ->
                     transport.send("GET", URI.create("http://localhost/test"), Map.of(), null, null));
 
-            assertTrue(ex.getMessage().contains("interrupted"));
             assertInstanceOf(InterruptedException.class, ex.getCause());
             assertTrue(Thread.currentThread().isInterrupted());
 

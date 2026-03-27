@@ -5,6 +5,7 @@ import reactor.netty.ByteBufMono;
 import reactor.netty.http.client.HttpClient;
 import io.netty.handler.codec.http.HttpMethod;
 import xyz.juandiii.ark.exceptions.ApiException;
+import xyz.juandiii.ark.exceptions.ArkException;
 import xyz.juandiii.ark.http.HeaderUtils;
 import xyz.juandiii.ark.http.RawResponse;
 import xyz.juandiii.ark.http.TransportLogger;
@@ -12,7 +13,6 @@ import xyz.juandiii.ark.reactor.http.ReactorHttpTransport;
 
 import java.net.URI;
 import java.time.Duration;
-import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
@@ -47,7 +47,7 @@ public final class ArkReactorNettyTransport implements ReactorHttpTransport {
                             var responseHeaders = HeaderUtils.toHeaderMap(response.responseHeaders());
                             LOGGER.log(System.Logger.Level.DEBUG, () -> TransportLogger.formatResponse(statusCode, responseHeaders, responseBody));
                             if (RawResponse.isErrorStatus(statusCode)) {
-                                throw new ApiException(statusCode, responseBody);
+                                throw ApiException.of(statusCode, responseBody);
                             }
                             return new RawResponse(statusCode, responseHeaders, responseBody);
                         })
@@ -57,6 +57,7 @@ public final class ArkReactorNettyTransport implements ReactorHttpTransport {
             result = result.timeout(timeout);
         }
 
-        return result;
+        return result.onErrorMap(e -> !(e instanceof ArkException || e instanceof ApiException),
+                e -> ArkException.fromThrowable(method, uri, e));
     }
 }
