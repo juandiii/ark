@@ -39,7 +39,10 @@ public class ArkProcessor {
 
     @BuildStep
     AdditionalBeanBuildItem registerBeans() {
-        return AdditionalBeanBuildItem.unremovableOf(ArkProducer.class);
+        return AdditionalBeanBuildItem.builder()
+                .addBeanClasses(ArkProducer.class, xyz.juandiii.ark.quarkus.QuarkusTlsResolver.class, xyz.juandiii.ark.quarkus.QuarkusVertxTlsResolver.class)
+                .setUnremovable()
+                .build();
     }
 
     @BuildStep
@@ -95,22 +98,15 @@ public class ArkProcessor {
 
         for (AnnotationInstance instance : index.getAnnotations(ARK_CLIENT)) {
             ClassInfo classInfo = instance.target().asClass();
-            String baseUrl = stringValue(instance, "baseUrl", "");
-            if (baseUrl.isEmpty()) continue;
-
-            String httpVersion = enumValue(instance, "httpVersion", "HTTP_1_1");
-            int connectTimeout = intValue(instance, "connectTimeout", 10);
-            int readTimeout = intValue(instance, "readTimeout", 30);
             String className = classInfo.name().toString();
+            String configKey = stringValue(instance, "configKey", "");
 
             syntheticBeans.produce(
                     SyntheticBeanBuildItem.configure(DotName.createSimple(className))
                             .scope(ApplicationScoped.class)
                             .unremovable()
                             .setRuntimeInit()
-                            .supplier(recorder.createArkClient(
-                                    className, baseUrl, httpVersion,
-                                    connectTimeout, readTimeout))
+                            .supplier(recorder.createArkClient(className, configKey))
                             .done()
             );
         }

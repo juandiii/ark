@@ -22,8 +22,16 @@ import java.lang.annotation.Target;
 public @interface RegisterArkClient {
 
     /**
+     * Configuration key for resolving properties from application.properties.
+     * If empty, the fully qualified class name is used.
+     * Properties are resolved as: ark.client."configKey".base-url, etc.
+     */
+    String configKey() default "";
+
+    /**
      * Base URL of the remote service.
      * Supports property placeholders: "${property.key}" or "${property.key:default}".
+     * Can be overridden by ark.client."configKey".base-url in application.properties.
      */
     String baseUrl() default "";
 

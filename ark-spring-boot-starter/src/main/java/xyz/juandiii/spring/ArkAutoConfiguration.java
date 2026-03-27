@@ -11,7 +11,10 @@ import xyz.juandiii.ark.ArkClient;
 import xyz.juandiii.ark.jackson.JacksonSerializer;
 import xyz.juandiii.ark.JsonSerializer;
 import xyz.juandiii.ark.http.HttpTransport;
+import xyz.juandiii.ark.proxy.TlsResolver;
 import xyz.juandiii.ark.transport.jdk.ArkJdkHttpTransport;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
+import org.springframework.boot.ssl.SslBundles;
 
 import java.net.http.HttpClient;
 
@@ -44,5 +47,12 @@ public class ArkAutoConfiguration {
         return ArkClient.builder()
                 .serializer(serializer)
                 .transport(transport);
+    }
+
+    @Bean
+    @ConditionalOnBean(SslBundles.class)
+    @ConditionalOnMissingBean(TlsResolver.class)
+    public TlsResolver arkTlsResolver(SslBundles sslBundles) {
+        return new SpringTlsResolver(sslBundles);
     }
 }

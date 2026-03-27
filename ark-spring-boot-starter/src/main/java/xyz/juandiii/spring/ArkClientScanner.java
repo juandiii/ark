@@ -20,6 +20,7 @@ final class ArkClientScanner {
     static final String SERIALIZER_BEAN = "jsonSerializer";
     static final String TRANSPORT_BEAN = "httpTransport";
     static final String ENVIRONMENT_BEAN = "environment";
+    static final String TLS_RESOLVER_BEAN = "arkTlsResolver";
 
     private ArkClientScanner() {}
 
@@ -43,6 +44,7 @@ final class ArkClientScanner {
                 .addConstructorArgReference(SERIALIZER_BEAN)
                 .addConstructorArgReference(TRANSPORT_BEAN)
                 .addConstructorArgReference(ENVIRONMENT_BEAN)
+                .addConstructorArgReference(TLS_RESOLVER_BEAN)
                 .getBeanDefinition();
 
         beanDef.setAttribute(FactoryBean.OBJECT_TYPE_ATTRIBUTE,
