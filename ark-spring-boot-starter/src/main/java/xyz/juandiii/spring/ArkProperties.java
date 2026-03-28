@@ -58,11 +58,12 @@ public class ArkProperties {
     public static class ClientProperties {
 
         private String baseUrl;
-        private HttpVersion httpVersion = HttpVersion.HTTP_1_1;
+        private HttpVersion httpVersion = RegisterArkClient.DEFAULT_HTTP_VERSION;
         private int connectTimeout = RegisterArkClient.DEFAULT_CONNECT_TIMEOUT;
         private int readTimeout = RegisterArkClient.DEFAULT_READ_TIMEOUT;
         private String tlsConfigurationName;
         private boolean trustAll;
+        private Map<String, String> headers = new LinkedHashMap<>();
 
         public String getBaseUrl() {
             return baseUrl;
@@ -110,6 +111,14 @@ public class ArkProperties {
 
         public void setTrustAll(boolean trustAll) {
             this.trustAll = trustAll;
+        }
+
+        public Map<String, String> getHeaders() {
+            return headers;
+        }
+
+        public void setHeaders(Map<String, String> headers) {
+            this.headers = headers;
         }
     }
 }

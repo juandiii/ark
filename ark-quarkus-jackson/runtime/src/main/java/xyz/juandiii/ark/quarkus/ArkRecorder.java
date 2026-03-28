@@ -11,6 +11,7 @@ import xyz.juandiii.ark.JsonSerializer;
 import xyz.juandiii.ark.async.AsyncArkClient;
 import xyz.juandiii.ark.interceptor.LoggingInterceptor;
 import xyz.juandiii.ark.interceptor.RequestInterceptor;
+import xyz.juandiii.ark.proxy.InterceptorResolver;
 import xyz.juandiii.ark.mutiny.MutinyArkClient;
 import xyz.juandiii.ark.proxy.HttpVersion;
 import xyz.juandiii.ark.ssl.InsecureSslContext;
@@ -28,6 +29,7 @@ import javax.net.ssl.SSLContext;
 import java.lang.reflect.Method;
 import java.net.http.HttpClient;
 import java.time.Duration;
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Supplier;
 
@@ -67,7 +69,9 @@ public class ArkRecorder {
 
     private record ResolvedConfig(String clientName, String baseUrl, HttpVersion httpVersion,
                                    int connectTimeout, int readTimeout, String tlsConfigName,
-                                   boolean trustAll, LoggingInterceptor.Level loggingLevel) {}
+                                   boolean trustAll, Map<String, String> headers,
+                                   Class<?>[] interceptorClasses,
+                                   LoggingInterceptor.Level loggingLevel) {}
 
     private static ResolvedConfig resolveConfig(String clientName, ArkClientNamedConfig config,
                                                  RegisterArkClient annotation,
@@ -80,6 +84,8 @@ public class ArkRecorder {
                 config != null ? config.readTimeout() : annotation.readTimeout(),
                 config != null ? config.tlsConfigurationName().orElse(null) : null,
                 config != null && config.trustAll(),
+                config != null ? config.headers() : Map.of(),
+                annotation != null ? annotation.interceptors() : new Class<?>[0],
                 loggingLevel
         );
     }
@@ -88,13 +94,12 @@ public class ArkRecorder {
         if (usesReactiveReturnTypes(iface)) {
             MutinyArkClient.Builder builder = MutinyArkClient.builder()
                     .serializer(serializer)
-                    .transport(buildMutinyTransport(rc.clientName(), rc.httpVersion(), rc.connectTimeout(),
-                            rc.readTimeout(), rc.tlsConfigName(), rc.trustAll()))
+                    .transport(buildMutinyTransport(rc))
                     .baseUrl(rc.baseUrl())
                     .httpVersion(rc.httpVersion())
                     .connectTimeout(rc.connectTimeout())
                     .readTimeout(rc.readTimeout());
-            LoggingInterceptor.apply(builder, rc.loggingLevel());
+            applyInterceptors(builder, rc);
             return ArkJaxRsProxy.create(iface, builder.build());
         } else if (usesAsyncReturnTypes(iface)) {
             SSLContext sslContext = resolveSslContext(rc.clientName(), rc.tlsConfigName(), rc.trustAll());
@@ -106,7 +111,7 @@ public class ArkRecorder {
                     .connectTimeout(rc.connectTimeout())
                     .readTimeout(rc.readTimeout())
                     .requestInterceptor(defaultTimeout(rc.readTimeout()));
-            LoggingInterceptor.apply(builder, rc.loggingLevel());
+            applyInterceptors(builder, rc);
             return ArkJaxRsProxy.create(iface, builder.build());
         }
         SSLContext sslContext = resolveSslContext(rc.clientName(), rc.tlsConfigName(), rc.trustAll());
@@ -118,8 +123,16 @@ public class ArkRecorder {
                 .connectTimeout(rc.connectTimeout())
                 .readTimeout(rc.readTimeout())
                 .requestInterceptor(defaultTimeout(rc.readTimeout()));
-        LoggingInterceptor.apply(builder, rc.loggingLevel());
+        applyInterceptors(builder, rc);
         return ArkJaxRsProxy.create(iface, builder.build());
+    }
+
+    private static <B extends xyz.juandiii.ark.AbstractArkBuilder<B>> void applyInterceptors(
+            B builder, ResolvedConfig rc) {
+        InterceptorResolver.applyHeaders(builder, rc.headers());
+        InterceptorResolver.applyInterceptors(builder, rc.interceptorClasses(),
+                clazz -> Arc.container().instance(clazz).get());
+        LoggingInterceptor.apply(builder, rc.loggingLevel());
     }
 
     private static String resolveBaseUrl(ArkClientNamedConfig config, RegisterArkClient annotation) {
@@ -152,26 +165,24 @@ public class ArkRecorder {
         return new ArkJdkHttpTransport(httpBuilder.build());
     }
 
-    private static ArkVertxMutinyTransport buildMutinyTransport(String clientName, HttpVersion httpVersion,
-                                                                 int connectTimeout, int readTimeout,
-                                                                 String tlsConfigName, boolean trustAll) {
+    private static ArkVertxMutinyTransport buildMutinyTransport(ResolvedConfig rc) {
         Vertx vertx = Arc.container().instance(Vertx.class).get();
         WebClientOptions options = new WebClientOptions()
-                .setProtocolVersion(httpVersion == HttpVersion.HTTP_2
+                .setProtocolVersion(rc.httpVersion() == HttpVersion.HTTP_2
                         ? io.vertx.core.http.HttpVersion.HTTP_2
                         : io.vertx.core.http.HttpVersion.HTTP_1_1)
-                .setConnectTimeout(connectTimeout * 1000)
-                .setIdleTimeout(readTimeout);
+                .setConnectTimeout(rc.connectTimeout() * 1000)
+                .setIdleTimeout(rc.readTimeout());
 
-        if (trustAll) {
-            InsecureSslContext.warnTrustAll(clientName);
+        if (rc.trustAll()) {
+            InsecureSslContext.warnTrustAll(rc.clientName());
             options.setSsl(true).setTrustAll(true).setVerifyHost(false);
-        } else if (StringUtils.isNotEmpty(tlsConfigName)) {
+        } else if (StringUtils.isNotEmpty(rc.tlsConfigName())) {
             VertxTlsResolver vertxTlsResolver =
                     Arc.container().instance(VertxTlsResolver.class).get();
             options.setSsl(true);
-            vertxTlsResolver.resolveTrustOptions(tlsConfigName).ifPresent(options::setTrustOptions);
-            vertxTlsResolver.resolveKeyCertOptions(tlsConfigName).ifPresent(options::setKeyCertOptions);
+            vertxTlsResolver.resolveTrustOptions(rc.tlsConfigName()).ifPresent(options::setTrustOptions);
+            vertxTlsResolver.resolveKeyCertOptions(rc.tlsConfigName()).ifPresent(options::setKeyCertOptions);
         }
 
         return new ArkVertxMutinyTransport(WebClient.create(vertx, options));

@@ -5,6 +5,7 @@ import io.smallrye.config.WithDefault;
 import io.smallrye.config.WithName;
 import xyz.juandiii.ark.proxy.HttpVersion;
 
+import java.util.Map;
 import java.util.Optional;
 
 /**
@@ -25,7 +26,7 @@ public interface ArkClientNamedConfig {
      * HTTP version: HTTP_1_1 or HTTP_2.
      */
     @WithName("http-version")
-    @WithDefault("HTTP_1_1")
+    @WithDefault("HTTP_2")
     HttpVersion httpVersion();
 
     /**
@@ -54,4 +55,10 @@ public interface ArkClientNamedConfig {
     @WithName("trust-all")
     @WithDefault("false")
     boolean trustAll();
+
+    /**
+     * Default headers to add to every request.
+     */
+    @WithName("headers")
+    Map<String, String> headers();
 }

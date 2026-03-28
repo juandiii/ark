@@ -40,7 +40,9 @@ public class ArkAutoConfiguration {
     @Bean
     @ConditionalOnMissingBean(HttpTransport.class)
     public HttpTransport httpTransport() {
-        return new ArkJdkHttpTransport(HttpClient.newBuilder().build());
+        return new ArkJdkHttpTransport(HttpClient.newBuilder()
+                .version(HttpClient.Version.HTTP_2)
+                .build());
     }
 
     @Bean
