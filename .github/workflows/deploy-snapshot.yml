@@ -3,6 +3,13 @@ name: Deploy Snapshot
 on:
   push:
     branches: [main]
+    paths-ignore:
+      - '**.md'
+      - 'docs/**'
+      - '.github/workflows/**'
+      - '.github/scripts/**'
+      - 'LICENSE'
+      - '.gitignore'
 
 jobs:
   test:
