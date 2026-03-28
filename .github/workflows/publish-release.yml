@@ -6,8 +6,79 @@ on:
     branches: [main]
 
 jobs:
-  publish:
+  extract-version:
     if: github.event.pull_request.merged == true && contains(github.event.pull_request.labels.*.name, 'release')
+    runs-on: ubuntu-latest
+    outputs:
+      release: ${{ steps.version.outputs.RELEASE }}
+    steps:
+      - name: Extract version from branch name
+        id: version
+        run: |
+          BRANCH="${{ github.event.pull_request.head.ref }}"
+          VERSION=${BRANCH#release/v}
+          echo "RELEASE=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "Release version: $VERSION"
+
+  deploy:
+    needs: extract-version
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 25
+          cache: maven
+
+      - name: Set version and deploy
+        run: |
+          ./mvnw versions:set -DnewVersion=${{ needs.extract-version.outputs.release }} -DgenerateBackupPoms=false
+          ./mvnw clean deploy -DskipTests
+        env:
+          NEXUS_MIRROR_URL: ${{ secrets.NEXUS_MIRROR_URL }}
+          NEXUS_MIRROR_SNAPSHOT_URL: ${{ secrets.NEXUS_MIRROR_SNAPSHOT_URL }}
+          NEXUS_RELEASES_URL: ${{ secrets.NEXUS_RELEASES_URL }}
+          NEXUS_SNAPSHOTS_URL: ${{ secrets.NEXUS_SNAPSHOTS_URL }}
+          NEXUS_USERNAME: ${{ secrets.NEXUS_USERNAME }}
+          NEXUS_PASSWORD: ${{ secrets.NEXUS_PASSWORD }}
+
+  tag:
+    needs: [extract-version, deploy]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GH_PAT }}
+
+      - name: Create git tag
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git tag "v${{ needs.extract-version.outputs.release }}"
+          git push origin "v${{ needs.extract-version.outputs.release }}"
+
+  github-release:
+    needs: [extract-version, tag]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ needs.extract-version.outputs.release }}
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  bump-snapshot:
+    needs: [extract-version, tag]
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -23,52 +94,24 @@ jobs:
           java-version: 25
           cache: maven
 
-      - name: Extract version from branch name
-        id: version
-        run: |
-          BRANCH="${{ github.event.pull_request.head.ref }}"
-          VERSION=${BRANCH#release/v}
-          echo "RELEASE=$VERSION" >> "$GITHUB_OUTPUT"
-          echo "Release version: $VERSION"
-
-      - name: Set version and deploy
-        run: |
-          ./mvnw versions:set -DnewVersion=${{ steps.version.outputs.RELEASE }} -DgenerateBackupPoms=false
-          ./mvnw clean deploy -DskipTests
+      - name: Bump to next SNAPSHOT
         env:
           NEXUS_MIRROR_URL: ${{ secrets.NEXUS_MIRROR_URL }}
           NEXUS_MIRROR_SNAPSHOT_URL: ${{ secrets.NEXUS_MIRROR_SNAPSHOT_URL }}
-          NEXUS_RELEASES_URL: ${{ secrets.NEXUS_RELEASES_URL }}
-          NEXUS_SNAPSHOTS_URL: ${{ secrets.NEXUS_SNAPSHOTS_URL }}
-          NEXUS_USERNAME: ${{ secrets.NEXUS_USERNAME }}
-          NEXUS_PASSWORD: ${{ secrets.NEXUS_PASSWORD }}
+        run: .github/scripts/bump-snapshot.sh "${{ needs.extract-version.outputs.release }}"
 
-      - name: Create tag
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git tag "v${{ steps.version.outputs.RELEASE }}"
-          git push origin "v${{ steps.version.outputs.RELEASE }}"
+  cleanup:
+    needs: [extract-version, tag]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
 
-      - name: Bump back to SNAPSHOT
-        env:
-          NEXUS_MIRROR_URL: ${{ secrets.NEXUS_MIRROR_URL }}
-          NEXUS_MIRROR_SNAPSHOT_URL: ${{ secrets.NEXUS_MIRROR_SNAPSHOT_URL }}
-        run: .github/scripts/bump-snapshot.sh "${{ steps.version.outputs.RELEASE }}"
-
-      - name: Create GitHub Release
-        uses: softprops/action-gh-release@v2
-        with:
-          tag_name: v${{ steps.version.outputs.RELEASE }}
-          generate_release_notes: true
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Close milestone and cleanup
+      - name: Close milestone and delete branch
         env:
           GH_TOKEN: ${{ secrets.GH_PAT }}
         run: |
-          # Close milestone if assigned to PR
           MILESTONE="${{ github.event.pull_request.milestone.title }}"
           if [ -n "$MILESTONE" ]; then
             MILESTONE_NUMBER=$(gh api repos/${{ github.repository }}/milestones --jq ".[] | select(.title == \"$MILESTONE\") | .number")
@@ -78,5 +121,4 @@ jobs:
             fi
           fi
 
-          # Delete release branch
-          git push origin --delete "release/v${{ steps.version.outputs.RELEASE }}" || true
+          git push origin --delete "release/v${{ needs.extract-version.outputs.release }}" || true

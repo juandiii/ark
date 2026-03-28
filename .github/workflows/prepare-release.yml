@@ -19,22 +19,18 @@ on:
           - major
 
 jobs:
-  prepare:
+  preflight:
     runs-on: ubuntu-latest
     permissions:
-      contents: write
-      pull-requests: write
+      contents: read
+      pull-requests: read
+    outputs:
+      release: ${{ steps.version.outputs.RELEASE }}
+      skip: ${{ steps.version.outputs.SKIP }}
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-          token: ${{ secrets.GITHUB_TOKEN }}
-
-      - uses: actions/setup-java@v4
-        with:
-          distribution: temurin
-          java-version: 25
-          cache: maven
 
       - name: Check no existing release PR
         env:
@@ -54,46 +50,67 @@ jobs:
           MILESTONE: ${{ inputs.milestone }}
         run: .github/scripts/determine-version.sh
 
-      - name: Create release branch and prepare
-        if: steps.version.outputs.SKIP != 'true'
+  test:
+    needs: preflight
+    if: needs.preflight.outputs.skip != 'true'
+    uses: ./.github/workflows/test.yml
+    secrets: inherit
+
+  create-release-pr:
+    needs: [preflight, test]
+    if: needs.preflight.outputs.skip != 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GH_PAT }}
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 25
+          cache: maven
+
+      - name: Create release branch
         env:
           GH_TOKEN: ${{ secrets.GH_PAT }}
           NEXUS_MIRROR_URL: ${{ secrets.NEXUS_MIRROR_URL }}
           NEXUS_MIRROR_SNAPSHOT_URL: ${{ secrets.NEXUS_MIRROR_SNAPSHOT_URL }}
         run: |
-          VERSION="${{ steps.version.outputs.RELEASE }}"
+          VERSION="${{ needs.preflight.outputs.release }}"
           MILESTONE="${{ inputs.milestone }}"
           BRANCH="release/v${VERSION}"
 
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
-          # Delete existing release branch if any
           git push origin --delete "$BRANCH" 2>/dev/null || true
-
-          # Create release branch
           git checkout -b "$BRANCH"
 
-          # Set release version in POMs
           ./mvnw versions:set -DnewVersion="$VERSION" -DgenerateBackupPoms=false
-
-          # Generate CHANGELOG from milestone PRs
           .github/scripts/generate-changelog.sh "$VERSION" "${{ github.repository }}" "$MILESTONE"
-
-          # Update version in docs
           sed -i "s|<version>.*</version> <!-- ark-bom -->|<version>${VERSION}</version> <!-- ark-bom -->|g" README.md docs/design.md
 
-          # Commit and push
           git add -A
           git commit -m "chore(release): prepare v${VERSION}"
           git push origin "$BRANCH"
 
-          # Get PR list for the body
+      - name: Create pull request
+        env:
+          GH_TOKEN: ${{ secrets.GH_PAT }}
+        run: |
+          VERSION="${{ needs.preflight.outputs.release }}"
+          MILESTONE="${{ inputs.milestone }}"
+          BRANCH="release/v${VERSION}"
+
           PR_LIST=$(gh pr list --state merged --base main --search "milestone:\"$MILESTONE\"" \
             --json number,title,labels,author \
             --template '{{range .}}• {{.title}} (#{{.number}}) @{{.author.login}}{{"\n"}}{{end}}')
 
-          # Create PR
           gh pr create \
             --base main \
             --head "$BRANCH" \
