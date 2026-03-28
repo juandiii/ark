@@ -2,6 +2,7 @@ package xyz.juandiii.ark;
 
 import xyz.juandiii.ark.interceptor.RequestInterceptor;
 import xyz.juandiii.ark.interceptor.ResponseInterceptor;
+import xyz.juandiii.ark.proxy.HttpVersion;
 import xyz.juandiii.ark.util.StringUtils;
 
 import java.util.ArrayList;
@@ -21,6 +22,7 @@ public abstract class AbstractArkBuilder<B extends AbstractArkBuilder<B>> {
     protected String baseUrl = "";
     protected String name = ArkVersion.NAME;
     protected String version = ArkVersion.VERSION;
+    protected HttpVersion httpVersion;
     protected int connectTimeoutSecs = -1;
     protected int readTimeoutSecs = -1;
     protected final List<RequestInterceptor> requestInterceptors = new ArrayList<>();
@@ -41,6 +43,11 @@ public abstract class AbstractArkBuilder<B extends AbstractArkBuilder<B>> {
     public B userAgent(String name, String version) {
         this.name = name;
         this.version = version;
+        return self();
+    }
+
+    public B httpVersion(HttpVersion httpVersion) {
+        this.httpVersion = httpVersion;
         return self();
     }
 
@@ -78,9 +85,10 @@ public abstract class AbstractArkBuilder<B extends AbstractArkBuilder<B>> {
 
     protected String formatConfiguration(String clientType, String transportType) {
         StringBuilder sb = new StringBuilder();
-        sb.append("Ark Client Configuration");
+        sb.append("Ark ").append(ArkVersion.VERSION).append(" — Client Configuration");
         sb.append("\n    Client: ").append(clientType);
         sb.append("\n    Transport: ").append(transportType);
+        sb.append("\n    HTTP Version: ").append(httpVersion != null ? httpVersion : "(not set)");
         sb.append("\n    Base URL: ").append(StringUtils.isEmpty(baseUrl) ? "(not set)" : baseUrl);
         sb.append("\n    User-Agent: ").append(buildUserAgent());
         sb.append("\n    Serializer: ").append(serializer != null ? serializer.getClass().getSimpleName() : "(not set)");

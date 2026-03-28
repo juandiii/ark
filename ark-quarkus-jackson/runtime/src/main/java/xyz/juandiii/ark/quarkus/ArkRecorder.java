@@ -91,6 +91,7 @@ public class ArkRecorder {
                     .transport(buildMutinyTransport(rc.clientName(), rc.httpVersion(), rc.connectTimeout(),
                             rc.readTimeout(), rc.tlsConfigName(), rc.trustAll()))
                     .baseUrl(rc.baseUrl())
+                    .httpVersion(rc.httpVersion())
                     .connectTimeout(rc.connectTimeout())
                     .readTimeout(rc.readTimeout());
             LoggingInterceptor.apply(builder, rc.loggingLevel());
@@ -101,6 +102,7 @@ public class ArkRecorder {
                     .serializer(serializer)
                     .transport(buildJdkTransport(rc.httpVersion(), rc.connectTimeout(), sslContext))
                     .baseUrl(rc.baseUrl())
+                    .httpVersion(rc.httpVersion())
                     .connectTimeout(rc.connectTimeout())
                     .readTimeout(rc.readTimeout())
                     .requestInterceptor(defaultTimeout(rc.readTimeout()));
@@ -112,6 +114,7 @@ public class ArkRecorder {
                 .serializer(serializer)
                 .transport(buildJdkTransport(rc.httpVersion(), rc.connectTimeout(), sslContext))
                 .baseUrl(rc.baseUrl())
+                .httpVersion(rc.httpVersion())
                 .connectTimeout(rc.connectTimeout())
                 .readTimeout(rc.readTimeout())
                 .requestInterceptor(defaultTimeout(rc.readTimeout()));
