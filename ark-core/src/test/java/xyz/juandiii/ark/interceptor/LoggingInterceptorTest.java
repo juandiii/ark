@@ -35,7 +35,7 @@ class LoggingInterceptorTest {
         @Test
         void givenOffLevel_thenNoInterceptorsAdded() {
             var builder = new TestBuilder();
-            LoggingInterceptor.apply(builder, LoggingInterceptor.Level.OFF);
+            LoggingInterceptor.apply(builder, LoggingInterceptor.Level.NONE);
 
             assertTrue(builder.reqList.isEmpty());
             assertTrue(builder.resList.isEmpty());
@@ -232,7 +232,7 @@ class LoggingInterceptorTest {
 
         @Test
         void givenNull_thenReturnsOff() {
-            assertEquals(LoggingInterceptor.Level.OFF, LoggingInterceptor.parseLevel(null));
+            assertEquals(LoggingInterceptor.Level.NONE, LoggingInterceptor.parseLevel(null));
         }
 
         @Test
@@ -243,7 +243,7 @@ class LoggingInterceptorTest {
 
         @Test
         void givenInvalid_thenReturnsOff() {
-            assertEquals(LoggingInterceptor.Level.OFF, LoggingInterceptor.parseLevel("invalid"));
+            assertEquals(LoggingInterceptor.Level.NONE, LoggingInterceptor.parseLevel("invalid"));
         }
     }
 

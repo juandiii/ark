@@ -22,21 +22,21 @@ public final class LoggingInterceptor {
     private LoggingInterceptor() {}
 
     public enum Level {
-        OFF,
+        NONE,
         BASIC,
         HEADERS,
         BODY
     }
 
     /**
-     * Parses a logging level from a string. Returns OFF if null or invalid.
+     * Parses a logging level from a string. Returns NONE if null or invalid.
      */
     public static Level parseLevel(String value) {
-        if (value == null) return Level.OFF;
+        if (value == null) return Level.NONE;
         try {
             return Level.valueOf(value.toUpperCase());
         } catch (IllegalArgumentException e) {
-            return Level.OFF;
+            return Level.NONE;
         }
     }
 
@@ -46,7 +46,7 @@ public final class LoggingInterceptor {
     private static final ThreadLocal<Long> REQUEST_START = new ThreadLocal<>();
 
     public static <B extends AbstractArkBuilder<B>> void apply(B builder, Level level) {
-        if (level == Level.OFF) return;
+        if (level == Level.NONE) return;
         builder.requestInterceptor(context -> {
             REQUEST_START.set(System.currentTimeMillis());
             logRequest(context, level);

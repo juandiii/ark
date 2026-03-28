@@ -32,9 +32,9 @@ public interface ArkClientsConfig {
     Map<String, ArkClientNamedConfig> client();
 
     /**
-     * Global logging level: OFF, BASIC, HEADERS, BODY.
+     * Global logging level: NONE, BASIC, HEADERS, BODY.
      */
     @WithName("logging.level")
-    @WithDefault("OFF")
+    @WithDefault("NONE")
     LoggingInterceptor.Level loggingLevel();
 }

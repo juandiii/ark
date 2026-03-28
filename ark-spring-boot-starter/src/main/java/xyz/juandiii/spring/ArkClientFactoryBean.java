@@ -10,6 +10,7 @@ import xyz.juandiii.ark.proxy.ArkProxy;
 import xyz.juandiii.ark.proxy.HttpVersion;
 import xyz.juandiii.ark.proxy.RegisterArkClient;
 import xyz.juandiii.ark.proxy.TlsResolver;
+import xyz.juandiii.ark.ssl.InsecureSslContext;
 import xyz.juandiii.ark.transport.jdk.ArkJdkHttpTransport;
 import xyz.juandiii.ark.util.StringUtils;
 
@@ -63,8 +64,9 @@ public class ArkClientFactoryBean<T> implements FactoryBean<T> {
         int connectTimeout = config != null ? config.getConnectTimeout() : annotation.connectTimeout();
         int readTimeout = config != null ? config.getReadTimeout() : annotation.readTimeout();
         String tlsConfigName = config != null ? config.getTlsConfigurationName() : null;
+        boolean trustAll = config != null && config.isTrustAll();
 
-        HttpTransport transport = resolveTransport(httpVersion, connectTimeout, tlsConfigName);
+        HttpTransport transport = resolveTransport(httpVersion, connectTimeout, tlsConfigName, trustAll, configKey);
 
         ArkClient.Builder builder = ArkClient.builder()
                 .serializer(serializer)
@@ -89,8 +91,11 @@ public class ArkClientFactoryBean<T> implements FactoryBean<T> {
     }
 
     private HttpTransport resolveTransport(HttpVersion httpVersion, int connectTimeout,
-                                           String tlsConfigName) {
-        SSLContext sslContext = resolveSsl(tlsConfigName);
+                                           String tlsConfigName, boolean trustAll,
+                                           String clientName) {
+        SSLContext sslContext = trustAll
+                ? InsecureSslContext.create(clientName)
+                : resolveSsl(tlsConfigName);
 
         if (sslContext != null || httpVersion != HttpVersion.HTTP_1_1
                 || connectTimeout != RegisterArkClient.DEFAULT_CONNECT_TIMEOUT) {

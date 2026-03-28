@@ -47,4 +47,11 @@ public interface ArkClientNamedConfig {
      */
     @WithName("tls-configuration-name")
     Optional<String> tlsConfigurationName();
+
+    /**
+     * Trust all SSL certificates. For development/testing only.
+     */
+    @WithName("trust-all")
+    @WithDefault("false")
+    boolean trustAll();
 }
