@@ -157,18 +157,14 @@ public class UserResource {
 
 ## Error Handling
 
-Errors propagate through the `Uni`:
+Errors propagate through the `Uni`. Use typed exceptions:
 
 ```java
 client.get("/users/1")
     .retrieve()
     .body(User.class)
-    .onFailure(ApiException.class).recoverWithItem(ex -> {
-        if (((ApiException) ex).isNotFound()) {
-            return User.unknown();
-        }
-        throw ex;
-    });
+    .onFailure(NotFoundException.class).recoverWithItem(User.unknown())
+    .onFailure(ServerException.class).retry().atMost(3);
 ```
 
 ---

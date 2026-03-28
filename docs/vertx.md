@@ -103,15 +103,17 @@ client.get("/users/1")
 
 ## Error Handling
 
-Errors propagate through the `Future`:
+Errors propagate through the `Future`. Use typed exceptions:
 
 ```java
 client.get("/users/1")
     .retrieve()
     .body(User.class)
     .onFailure(err -> {
-        if (err instanceof ApiException ex) {
-            if (ex.isNotFound()) { /* 404 */ }
+        if (err instanceof NotFoundException) {
+            // 404
+        } else if (err instanceof TimeoutException) {
+            // request timed out
         }
     });
 ```

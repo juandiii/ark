@@ -1,5 +1,24 @@
 # Async Client
 
+The `AsyncArk` client returns `CompletableFuture<T>` — non-blocking execution using Java's built-in async primitives.
+
+---
+
+## Installation
+
+```xml
+<dependency>
+    <groupId>xyz.juandiii</groupId>
+    <artifactId>ark-async</artifactId>
+</dependency>
+<dependency>
+    <groupId>xyz.juandiii</groupId>
+    <artifactId>ark-transport-jdk</artifactId>
+</dependency>
+```
+
+---
+
 ## Building the Client
 
 ```java
@@ -8,14 +27,6 @@ AsyncArk client = AsyncArkClient.builder()
     .transport(new ArkJdkHttpTransport(HttpClient.newBuilder().build()))
     .baseUrl("https://api.example.com")
     .build();
-```
-
-## Making Requests
-
-```java
-CompletableFuture<User> user = client.get("/users/1")
-    .retrieve()
-    .body(User.class);
 ```
 
 ## Transport
@@ -33,12 +44,72 @@ HttpClient httpClient = HttpClient.newBuilder()
 ArkJdkHttpTransport transport = new ArkJdkHttpTransport(httpClient);
 ```
 
-## Same Fluent API
+---
 
-The request-building experience stays the same as the sync client -- only the return type changes.
+## Making Requests
+
+### GET
 
 ```java
-CompletableFuture<User> cf = asyncClient.get("/users/1")
+CompletableFuture<User> user = client.get("/users/1")
     .retrieve()
     .body(User.class);
 ```
+
+### POST
+
+```java
+CompletableFuture<User> created = client.post("/users")
+    .contentType(MediaType.APPLICATION_JSON)
+    .body(new User("Juan", "juan@example.com"))
+    .retrieve()
+    .body(User.class);
+```
+
+### Full Response
+
+```java
+CompletableFuture<ArkResponse<User>> response = client.get("/users/1")
+    .retrieve()
+    .toEntity(User.class);
+
+response.thenAccept(r -> {
+    int status = r.statusCode();
+    User body = r.body();
+});
+```
+
+### Per-Request Timeout
+
+```java
+CompletableFuture<User> user = client.get("/slow-endpoint")
+    .timeout(Duration.ofSeconds(60))
+    .retrieve()
+    .body(User.class);
+```
+
+---
+
+## Error Handling
+
+Errors propagate through the `CompletableFuture`:
+
+```java
+client.get("/users/1")
+    .retrieve()
+    .body(User.class)
+    .exceptionally(ex -> {
+        if (ex.getCause() instanceof NotFoundException) {
+            return User.unknown();
+        }
+        throw new CompletionException(ex);
+    });
+```
+
+---
+
+## Related
+
+- [Sync Client](sync.md) — full error hierarchy reference
+- [Getting Started](getting-started.md)
+- [Transport Model](transports.md)

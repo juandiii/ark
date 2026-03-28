@@ -146,23 +146,78 @@ String html = client.get("/health")
 
 ---
 
+## Logging
+
+Enable request/response logging via the `LoggingInterceptor`:
+
+```java
+Ark client = ArkClient.builder()
+    .serializer(serializer)
+    .transport(transport)
+    .baseUrl("https://api.example.com")
+    .build();
+
+LoggingInterceptor.apply(builder, LoggingInterceptor.Level.BODY);
+```
+
+| Level | Logs |
+|-------|------|
+| `OFF` | Nothing |
+| `BASIC` | Method, URL, status, duration |
+| `HEADERS` | BASIC + request/response headers |
+| `BODY` | HEADERS + request/response body |
+
+With Spring Boot or Quarkus, configure via `application.properties`:
+
+```properties
+ark.logging.level=BODY
+```
+
+---
+
 ## Error Handling
 
-| Exception | When | Contains |
-|-----------|------|----------|
-| `ApiException` | HTTP status >= 400 | `statusCode()`, `responseBody()`, `isUnauthorized()`, `isNotFound()` |
-| `ArkException` | Connection/IO errors | `message`, `cause` |
+Ark provides typed exceptions for common HTTP errors:
+
+| Exception | Status | Parent |
+|-----------|--------|--------|
+| `BadRequestException` | 400 | `ClientException` |
+| `UnauthorizedException` | 401 | `ClientException` |
+| `ForbiddenException` | 403 | `ClientException` |
+| `NotFoundException` | 404 | `ClientException` |
+| `ConflictException` | 409 | `ClientException` |
+| `UnprocessableEntityException` | 422 | `ClientException` |
+| `TooManyRequestsException` | 429 | `ClientException` |
+| `InternalServerErrorException` | 500 | `ServerException` |
+| `BadGatewayException` | 502 | `ServerException` |
+| `ServiceUnavailableException` | 503 | `ServerException` |
+| `GatewayTimeoutException` | 504 | `ServerException` |
+
+Transport errors:
+
+| Exception | When | Parent |
+|-----------|------|--------|
+| `TimeoutException` | Request timed out | `ArkException` |
+| `ConnectionException` | Connection failed | `ArkException` |
+| `RequestInterruptedException` | Thread interrupted | `ArkException` |
 
 ```java
 try {
     User user = client.get("/users/1")
         .retrieve()
         .body(User.class);
-} catch (ApiException e) {
-    if (e.isNotFound()) { /* 404 */ }
-    else if (e.isUnauthorized()) { /* 401 */ }
-} catch (ArkException e) {
-    log.error("Connection failed", e);
+} catch (NotFoundException e) {
+    // 404
+} catch (UnauthorizedException e) {
+    // 401
+} catch (ClientException e) {
+    // other 4xx
+} catch (ServerException e) {
+    // 5xx
+} catch (TimeoutException e) {
+    // request timed out
+} catch (ConnectionException e) {
+    // connection failed
 }
 ```
 
