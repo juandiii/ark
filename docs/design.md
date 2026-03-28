@@ -178,10 +178,35 @@ UserApi api = ArkProxy.create(UserApi.class, mutinyArk);     // Uni/Multi
 
 | Attribute | Default | Description |
 |-----------|---------|-------------|
+| `configKey` | `""` | Key for per-client config in `application.properties` |
 | `baseUrl` | `""` | Base URL, supports `${property}` placeholders |
 | `httpVersion` | `HTTP_1_1` | HTTP/1.1 or HTTP/2 |
 | `connectTimeout` | `10` | Connection timeout (seconds) |
 | `readTimeout` | `30` | Read timeout (seconds) |
+
+### Exception hierarchy
+
+```
+ArkException (transport/IO errors)
+  +-- TimeoutException
+  +-- ConnectionException
+  +-- RequestInterruptedException
+
+ApiException (HTTP status >= 400)
+  +-- ClientException (4xx)
+  |     +-- BadRequestException, UnauthorizedException, ForbiddenException,
+  |         NotFoundException, ConflictException, UnprocessableEntityException,
+  |         TooManyRequestsException
+  +-- ServerException (5xx)
+        +-- InternalServerErrorException, BadGatewayException,
+            ServiceUnavailableException, GatewayTimeoutException
+```
+
+### Logging
+
+`LoggingInterceptor` provides paired request/response logging at four levels: `OFF`, `BASIC`, `HEADERS`, `BODY`.
+
+Applied via `LoggingInterceptor.apply(builder, level)` or `ark.logging.level` in `application.properties`.
 
 ---
 

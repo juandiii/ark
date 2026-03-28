@@ -76,21 +76,38 @@ void givenUser_whenGetById_thenReturnsFuture() {
 
 ## Error Responses
 
-Test error handling with a transport that returns error status:
+Test error handling with typed exceptions:
 
 ```java
-HttpTransport errorTransport = (method, uri, headers, body, timeout) ->
+HttpTransport notFoundTransport = (method, uri, headers, body, timeout) ->
     new RawResponse(404, Map.of(), "Not Found");
 
 Ark client = ArkClient.builder()
     .serializer(serializer)
-    .transport(errorTransport)
+    .transport(notFoundTransport)
     .baseUrl("https://api.example.com")
     .build();
 
-assertThrows(ApiException.class, () ->
+// Typed exception — catches exact HTTP status
+assertThrows(NotFoundException.class, () ->
     client.get("/users/999").retrieve().body(User.class));
+
+// Server error
+HttpTransport serverErrorTransport = (method, uri, headers, body, timeout) ->
+    new RawResponse(503, Map.of(), "Service Unavailable");
+
+Ark errorClient = ArkClient.builder()
+    .serializer(serializer)
+    .transport(serverErrorTransport)
+    .baseUrl("https://api.example.com")
+    .build();
+
+ServiceUnavailableException ex = assertThrows(ServiceUnavailableException.class, () ->
+    errorClient.get("/health").retrieve().body(String.class));
+assertEquals(503, ex.statusCode());
 ```
+
+See [Sync Client — Error Handling](sync.md#error-handling) for the full exception hierarchy.
 
 ---
 

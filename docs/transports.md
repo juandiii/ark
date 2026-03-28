@@ -147,6 +147,22 @@ public class MyTransport implements HttpTransport {
 
 ---
 
+## Transport Logging
+
+All built-in transports include DEBUG-level logging via `TransportLogger`, showing method, URL, scheme, host, port, path, query, headers, body, and status. Enable with your logging framework:
+
+```properties
+# application.properties (Quarkus)
+quarkus.log.category."xyz.juandiii.ark.http.TransportLogger".level=DEBUG
+
+# application.properties (Spring Boot)
+logging.level.xyz.juandiii.ark.http.TransportLogger=DEBUG
+```
+
+For application-level logging (paired request/response with timing), use `LoggingInterceptor` instead — see [Sync Client](sync.md#logging).
+
+---
+
 ## Related
 
 - [Getting Started](getting-started.md)

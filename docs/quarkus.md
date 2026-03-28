@@ -100,6 +100,23 @@ public class UserResource {
 
 ---
 
+## Configuration
+
+Configure globally and per-client via `application.properties`:
+
+```properties
+ark.logging.level=BODY
+ark.client."user-api".base-url=https://api.example.com
+ark.client."user-api".http-version=HTTP_2
+ark.client."user-api".connect-timeout=5
+ark.client."user-api".read-timeout=15
+ark.client."user-api".tls-configuration-name=my-cert
+```
+
+See [Quarkus Jackson Extension](quarkus-jackson.md) for full configuration reference.
+
+---
+
 ## Native Image
 
 Supported out of the box. No additional configuration needed.
@@ -108,6 +125,7 @@ Supported out of the box. No additional configuration needed.
 
 ## More Details
 
-- [Quarkus Jackson Extension](quarkus-jackson.md) — full configuration, overrides, multiple clients
+- [Quarkus Jackson Extension](quarkus-jackson.md) — full configuration, overrides, TLS, logging
+- [Declarative JAX-RS Clients](declarative-jaxrs.md) — `@RegisterArkClient` proxy clients
 - [Mutiny Client](mutiny.md) — Mutiny-specific usage
 - [Getting Started](getting-started.md)
