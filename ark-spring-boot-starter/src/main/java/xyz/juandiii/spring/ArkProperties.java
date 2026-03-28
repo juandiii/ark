@@ -1,17 +1,19 @@
 package xyz.juandiii.spring;
 
+import java.util.LinkedHashMap;
+import java.util.Map;
+
 import org.springframework.boot.context.properties.ConfigurationProperties;
+
 import xyz.juandiii.ark.interceptor.LoggingInterceptor;
 import xyz.juandiii.ark.proxy.HttpVersion;
 import xyz.juandiii.ark.proxy.RegisterArkClient;
-
-import java.util.LinkedHashMap;
-import java.util.Map;
 
 /**
  * Type-safe configuration properties for Ark HTTP clients.
  * <p>
  * Example:
+ *
  * <pre>
  * ark.logging.level=BODY
  * ark.client.auth-api.base-url=https://auth.example.com
@@ -42,7 +44,7 @@ public class ArkProperties {
 
     public static class Logging {
 
-        private LoggingInterceptor.Level level = LoggingInterceptor.Level.OFF;
+        private LoggingInterceptor.Level level = LoggingInterceptor.Level.NONE;
 
         public LoggingInterceptor.Level getLevel() {
             return level;
@@ -60,6 +62,7 @@ public class ArkProperties {
         private int connectTimeout = RegisterArkClient.DEFAULT_CONNECT_TIMEOUT;
         private int readTimeout = RegisterArkClient.DEFAULT_READ_TIMEOUT;
         private String tlsConfigurationName;
+        private boolean trustAll;
 
         public String getBaseUrl() {
             return baseUrl;
@@ -99,6 +102,14 @@ public class ArkProperties {
 
         public void setTlsConfigurationName(String tlsConfigurationName) {
             this.tlsConfigurationName = tlsConfigurationName;
+        }
+
+        public boolean isTrustAll() {
+            return trustAll;
+        }
+
+        public void setTrustAll(boolean trustAll) {
+            this.trustAll = trustAll;
         }
     }
 }

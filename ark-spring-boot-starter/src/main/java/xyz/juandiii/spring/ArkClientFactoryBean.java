@@ -1,7 +1,13 @@
 package xyz.juandiii.spring;
 
+import java.net.http.HttpClient;
+import java.time.Duration;
+
+import javax.net.ssl.SSLContext;
+
 import org.springframework.beans.factory.FactoryBean;
 import org.springframework.core.env.Environment;
+
 import xyz.juandiii.ark.ArkClient;
 import xyz.juandiii.ark.JsonSerializer;
 import xyz.juandiii.ark.http.HttpTransport;
@@ -10,12 +16,9 @@ import xyz.juandiii.ark.proxy.ArkProxy;
 import xyz.juandiii.ark.proxy.HttpVersion;
 import xyz.juandiii.ark.proxy.RegisterArkClient;
 import xyz.juandiii.ark.proxy.TlsResolver;
+import xyz.juandiii.ark.ssl.InsecureSslContext;
 import xyz.juandiii.ark.transport.jdk.ArkJdkHttpTransport;
 import xyz.juandiii.ark.util.StringUtils;
-
-import javax.net.ssl.SSLContext;
-import java.net.http.HttpClient;
-import java.time.Duration;
 
 /**
  * Spring FactoryBean that creates an Ark proxy client.
@@ -33,11 +36,11 @@ public class ArkClientFactoryBean<T> implements FactoryBean<T> {
     private final ArkProperties arkProperties;
 
     public ArkClientFactoryBean(Class<T> clientInterface,
-                                JsonSerializer serializer,
-                                HttpTransport defaultTransport,
-                                Environment environment,
-                                TlsResolver tlsResolver,
-                                ArkProperties arkProperties) {
+            JsonSerializer serializer,
+            HttpTransport defaultTransport,
+            Environment environment,
+            TlsResolver tlsResolver,
+            ArkProperties arkProperties) {
         this.clientInterface = clientInterface;
         this.serializer = serializer;
         this.defaultTransport = defaultTransport;
@@ -47,7 +50,6 @@ public class ArkClientFactoryBean<T> implements FactoryBean<T> {
     }
 
     @Override
-    @SuppressWarnings("unchecked")
     public T getObject() {
         RegisterArkClient annotation = clientInterface.getAnnotation(RegisterArkClient.class);
         String configKey = StringUtils.isNotEmpty(annotation.configKey())
@@ -63,13 +65,15 @@ public class ArkClientFactoryBean<T> implements FactoryBean<T> {
         int connectTimeout = config != null ? config.getConnectTimeout() : annotation.connectTimeout();
         int readTimeout = config != null ? config.getReadTimeout() : annotation.readTimeout();
         String tlsConfigName = config != null ? config.getTlsConfigurationName() : null;
+        boolean trustAll = config != null && config.isTrustAll();
 
-        HttpTransport transport = resolveTransport(httpVersion, connectTimeout, tlsConfigName);
+        HttpTransport transport = resolveTransport(httpVersion, connectTimeout, tlsConfigName, trustAll, configKey);
 
         ArkClient.Builder builder = ArkClient.builder()
                 .serializer(serializer)
                 .transport(transport)
                 .baseUrl(baseUrl)
+                .httpVersion(httpVersion)
                 .connectTimeout(connectTimeout)
                 .readTimeout(readTimeout)
                 .requestInterceptor(ctx -> {
@@ -88,9 +92,15 @@ public class ArkClientFactoryBean<T> implements FactoryBean<T> {
         return clientInterface;
     }
 
-    private HttpTransport resolveTransport(HttpVersion httpVersion, int connectTimeout,
-                                           String tlsConfigName) {
-        SSLContext sslContext = resolveSsl(tlsConfigName);
+    private HttpTransport resolveTransport(
+            HttpVersion httpVersion,
+            int connectTimeout,
+            String tlsConfigName,
+            boolean trustAll,
+            String clientName) {
+        SSLContext sslContext = trustAll
+                ? InsecureSslContext.create(clientName)
+                : resolveSsl(tlsConfigName);
 
         if (sslContext != null || httpVersion != HttpVersion.HTTP_1_1
                 || connectTimeout != RegisterArkClient.DEFAULT_CONNECT_TIMEOUT) {
@@ -108,7 +118,8 @@ public class ArkClientFactoryBean<T> implements FactoryBean<T> {
     }
 
     private SSLContext resolveSsl(String tlsConfigurationName) {
-        if (StringUtils.isEmpty(tlsConfigurationName)) return null;
+        if (StringUtils.isEmpty(tlsConfigurationName))
+            return null;
         return tlsResolver.resolve(tlsConfigurationName);
     }
 }

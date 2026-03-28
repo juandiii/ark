@@ -3,11 +3,13 @@ package xyz.juandiii.ark.proxy;
 import xyz.juandiii.ark.Ark;
 import xyz.juandiii.ark.exceptions.ArkException;
 import xyz.juandiii.ark.interceptor.RequestContext;
+import xyz.juandiii.ark.util.StringUtils;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
+import java.util.regex.Pattern;
 
 /**
  * Dynamic proxy factory for creating HTTP clients from annotated interfaces.
@@ -19,6 +21,8 @@ import java.lang.reflect.Proxy;
 public final class ArkProxy {
 
     private ArkProxy() {}
+
+    private static final Pattern DOUBLE_SLASH = Pattern.compile("//+");
 
     private static final String[][] PROXY_PROVIDERS = {
             {"jakarta.ws.rs.Path", "jakarta.ws.rs.GET", "xyz.juandiii.ark.proxy.jaxrs.JaxRsProxyProvider"},
@@ -212,15 +216,15 @@ public final class ArkProxy {
 
             if (annotationResolver.isSubResource(method)) {
                 Class<?> returnClass = method.getReturnType();
-                String basePath = parentPath + annotationResolver.resolveBasePath(method.getDeclaringClass());
+                String basePath = combinePaths(parentPath, annotationResolver.resolveBasePath(method.getDeclaringClass()));
                 String subPath = annotationResolver.resolveSubResourcePath(method, args);
-                return ArkProxy.create(returnClass, dispatcher, basePath + subPath,
+                return ArkProxy.create(returnClass, dispatcher, combinePaths(basePath, subPath),
                         annotationResolver, parameterBinder, returnTypeHandler);
             }
 
-            String basePath = parentPath + annotationResolver.resolveBasePath(method.getDeclaringClass());
+            String basePath = combinePaths(parentPath, annotationResolver.resolveBasePath(method.getDeclaringClass()));
             AnnotationResolver.MethodInfo info = annotationResolver.resolveMethod(method);
-            String resolvedPath = annotationResolver.resolvePath(basePath + info.path(), method, args);
+            String resolvedPath = annotationResolver.resolvePath(combinePaths(basePath, info.path()), method, args);
 
             RequestContext request = dispatcher.dispatch(info.httpMethod(), resolvedPath);
 
@@ -235,5 +239,13 @@ public final class ArkProxy {
 
             return returnTypeHandler.handle(request, method.getGenericReturnType());
         }
+
+        private static String combinePaths(String left, String right) {
+            if (right == null || right.isEmpty() || right.equals("/")) return left;
+            if (left == null || left.isEmpty() || left.equals("/")) return right;
+            String combined = StringUtils.stripTrailingSlash(left) + StringUtils.ensureLeadingSlash(right);
+            return DOUBLE_SLASH.matcher(combined).replaceAll("/");
+        }
     }
 }
+
