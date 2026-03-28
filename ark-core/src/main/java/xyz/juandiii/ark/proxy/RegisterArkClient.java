@@ -38,7 +38,7 @@ public @interface RegisterArkClient {
     /**
      * HTTP protocol version.
      */
-    HttpVersion httpVersion() default HttpVersion.HTTP_1_1;
+    HttpVersion httpVersion() default HttpVersion.HTTP_2;
 
     /**
      * Connection timeout in seconds.
@@ -50,7 +50,17 @@ public @interface RegisterArkClient {
      */
     int readTimeout() default DEFAULT_READ_TIMEOUT;
 
-    HttpVersion DEFAULT_HTTP_VERSION = HttpVersion.HTTP_1_1;
+    /**
+     * Interceptor classes to apply to this client.
+     * Classes implementing {@link xyz.juandiii.ark.interceptor.RequestInterceptor}
+     * are added as request interceptors.
+     * Classes implementing {@link xyz.juandiii.ark.interceptor.ResponseInterceptor}
+     * are added as response interceptors.
+     * A class may implement both.
+     */
+    Class<?>[] interceptors() default {};
+
+    HttpVersion DEFAULT_HTTP_VERSION = HttpVersion.HTTP_2;
     int DEFAULT_CONNECT_TIMEOUT = 10;
     int DEFAULT_READ_TIMEOUT = 30;
 }

@@ -5,6 +5,8 @@ import java.time.Duration;
 
 import javax.net.ssl.SSLContext;
 
+import org.springframework.beans.factory.BeanFactory;
+import org.springframework.beans.factory.BeanFactoryAware;
 import org.springframework.beans.factory.FactoryBean;
 import org.springframework.core.env.Environment;
 
@@ -14,6 +16,7 @@ import xyz.juandiii.ark.http.HttpTransport;
 import xyz.juandiii.ark.interceptor.LoggingInterceptor;
 import xyz.juandiii.ark.proxy.ArkProxy;
 import xyz.juandiii.ark.proxy.HttpVersion;
+import xyz.juandiii.ark.proxy.InterceptorResolver;
 import xyz.juandiii.ark.proxy.RegisterArkClient;
 import xyz.juandiii.ark.proxy.TlsResolver;
 import xyz.juandiii.ark.ssl.InsecureSslContext;
@@ -26,7 +29,7 @@ import xyz.juandiii.ark.util.StringUtils;
  *
  * @author Juan Diego Lopez V.
  */
-public class ArkClientFactoryBean<T> implements FactoryBean<T> {
+public class ArkClientFactoryBean<T> implements FactoryBean<T>, BeanFactoryAware {
 
     private final Class<T> clientInterface;
     private final JsonSerializer serializer;
@@ -34,6 +37,7 @@ public class ArkClientFactoryBean<T> implements FactoryBean<T> {
     private final Environment environment;
     private final TlsResolver tlsResolver;
     private final ArkProperties arkProperties;
+    private BeanFactory beanFactory;
 
     public ArkClientFactoryBean(Class<T> clientInterface,
             JsonSerializer serializer,
@@ -47,6 +51,11 @@ public class ArkClientFactoryBean<T> implements FactoryBean<T> {
         this.environment = environment;
         this.tlsResolver = tlsResolver;
         this.arkProperties = arkProperties;
+    }
+
+    @Override
+    public void setBeanFactory(BeanFactory beanFactory) {
+        this.beanFactory = beanFactory;
     }
 
     @Override
@@ -82,6 +91,8 @@ public class ArkClientFactoryBean<T> implements FactoryBean<T> {
                     }
                 });
 
+        InterceptorResolver.applyHeaders(builder, config != null ? config.getHeaders() : null);
+        InterceptorResolver.applyInterceptors(builder, annotation.interceptors(), beanFactory::getBean);
         LoggingInterceptor.apply(builder, arkProperties.getLogging().getLevel());
 
         return (T) ArkProxy.create(clientInterface, builder.build());
@@ -97,12 +108,13 @@ public class ArkClientFactoryBean<T> implements FactoryBean<T> {
             int connectTimeout,
             String tlsConfigName,
             boolean trustAll,
-            String clientName) {
+            String clientName
+    ) {
         SSLContext sslContext = trustAll
                 ? InsecureSslContext.create(clientName)
                 : resolveSsl(tlsConfigName);
 
-        if (sslContext != null || httpVersion != HttpVersion.HTTP_1_1
+        if (sslContext != null || httpVersion != RegisterArkClient.DEFAULT_HTTP_VERSION
                 || connectTimeout != RegisterArkClient.DEFAULT_CONNECT_TIMEOUT) {
             HttpClient.Builder httpBuilder = HttpClient.newBuilder()
                     .version(httpVersion == HttpVersion.HTTP_2
@@ -112,7 +124,8 @@ public class ArkClientFactoryBean<T> implements FactoryBean<T> {
             if (sslContext != null) {
                 httpBuilder.sslContext(sslContext);
             }
-            return new ArkJdkHttpTransport(httpBuilder.build());
+            HttpClient httpClient = httpBuilder.build();
+            return new ArkJdkHttpTransport(httpClient);
         }
         return defaultTransport;
     }
