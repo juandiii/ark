@@ -1,3 +1,17 @@
+## [v1.0.9](https://github.com/juandiii/ark/releases/tag/v1.0.9) — 2026-03-28
+
+### 🐛 Bug Fixes
+
+- Add new extension for quarkus  (#24) @juandiii
+- Fix ark-quarkus-jackson and improve docs (#25) @juandiii
+- fix: add exceptions and add more code coverage and fix path uri with … (#27) @juandiii
+
+### 📦 Other Changes
+
+- Add Docs (#31) @juandiii
+
+---
+
 ## [v1.0.8](https://github.com/juandiii/ark/releases/tag/v1.0.8) — 2026-03-25
 
 ### 🐛 Bug Fixes
