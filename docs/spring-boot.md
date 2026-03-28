@@ -135,10 +135,85 @@ public class UserController {
 
 ---
 
+## Configuration (`ArkProperties`)
+
+The starter provides type-safe configuration via `@ConfigurationProperties`:
+
+```properties
+# application.properties
+
+# Global logging level: OFF, BASIC, HEADERS, BODY
+ark.logging.level=BODY
+
+# Per-client configuration (key matches @RegisterArkClient configKey)
+ark.client.user-api.base-url=https://api.example.com
+ark.client.user-api.http-version=HTTP_2
+ark.client.user-api.connect-timeout=5
+ark.client.user-api.read-timeout=15
+ark.client.user-api.tls-configuration-name=my-cert
+```
+
+```java
+@RegisterArkClient(configKey = "user-api")
+@HttpExchange("/users")
+public interface UserApi {
+    @GetExchange("/{id}")
+    User getUser(@PathVariable String id);
+}
+```
+
+Properties take precedence over annotation values.
+
+---
+
+## TLS / SSL
+
+Configure SSL bundles in `application.properties`:
+
+```properties
+spring.ssl.bundle.pem.my-cert.truststore.certificate=classpath:certs/ca.crt
+ark.client.user-api.tls-configuration-name=my-cert
+```
+
+The starter auto-detects `SslBundles` and creates a `TlsResolver` that resolves SSL contexts from Spring's SSL bundle registry.
+
+---
+
+## Declarative Clients
+
+With `@RegisterArkClient`, proxy beans are auto-created:
+
+```java
+@RegisterArkClient(configKey = "user-api", baseUrl = "${api.users.url:https://fallback.com}")
+@HttpExchange("/users")
+public interface UserApi {
+    @GetExchange("/{id}")
+    User getUser(@PathVariable String id);
+}
+```
+
+Just inject it:
+
+```java
+@Service
+public class UserService {
+    private final UserApi userApi;
+
+    public UserService(UserApi userApi) {
+        this.userApi = userApi;
+    }
+}
+```
+
+See [Declarative Spring Clients](declarative-spring.md) for full details.
+
+---
+
 ## Related
 
 - [Getting Started](getting-started.md)
 - [Sync Client](sync.md)
 - [Reactor Client](reactor.md)
+- [Declarative Spring Clients](declarative-spring.md)
 - [Transport Model](transports.md)
 - [Testing](testing.md)

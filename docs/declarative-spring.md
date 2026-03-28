@@ -27,6 +27,42 @@ public interface UserApi {
 
 > `@RegisterArkClient` auto-creates the proxy bean. Supports property placeholders: `${property.key}` or `${property.key:default}`.
 
+## @RegisterArkClient Attributes
+
+| Attribute | Default | Description |
+|-----------|---------|-------------|
+| `configKey` | `""` | Key for per-client config in `application.properties` |
+| `baseUrl` | `""` | Base URL, supports `${property}` placeholders |
+| `httpVersion` | `HTTP_1_1` | HTTP/1.1 or HTTP/2 |
+| `connectTimeout` | `10` | Connection timeout (seconds) |
+| `readTimeout` | `30` | Read timeout (seconds) |
+
+## Per-Client Configuration
+
+Use `configKey` to configure clients via `application.properties`:
+
+```java
+@RegisterArkClient(configKey = "user-api")
+@HttpExchange("/users")
+public interface UserApi { ... }
+```
+
+```properties
+# Spring Boot
+ark.client.user-api.base-url=https://api.example.com
+ark.client.user-api.http-version=HTTP_2
+ark.client.user-api.connect-timeout=5
+ark.client.user-api.read-timeout=15
+ark.client.user-api.tls-configuration-name=my-cert
+
+# TLS bundle
+spring.ssl.bundle.pem.my-cert.truststore.certificate=classpath:certs/ca.crt
+```
+
+Properties take precedence over annotation values. If no `configKey` is set, the fully qualified interface name is used.
+
+---
+
 ## Creating the Client
 
 ### Automatic (recommended)
@@ -248,19 +284,35 @@ client.findById("123");     // GET /users/123 (from UserClient)
 
 ---
 
+## Logging
+
+Configure request/response logging via `application.properties`:
+
+```properties
+ark.logging.level=BODY
+```
+
+Levels: `OFF`, `BASIC`, `HEADERS`, `BODY`.
+
+---
+
 ## Error Handling
 
-Same model as fluent clients:
+Same typed exceptions as fluent clients:
 
 ```java
 try {
     User user = userApi.getUser("123");
-} catch (ApiException e) {
-    if (e.isNotFound()) { /* 404 */ }
-} catch (ArkException e) {
-    // connection or transport failure
+} catch (NotFoundException e) {
+    // 404
+} catch (UnauthorizedException e) {
+    // 401
+} catch (TimeoutException e) {
+    // request timed out
 }
 ```
+
+See [Sync Client — Error Handling](sync.md#error-handling) for the full exception hierarchy.
 
 ---
 

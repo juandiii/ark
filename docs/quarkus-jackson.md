@@ -154,9 +154,79 @@ public HttpTransport apacheTransport() {
 
 ---
 
+## Configuration (`@ConfigMapping`)
+
+The extension provides type-safe configuration via Quarkus `@ConfigMapping`:
+
+```properties
+# application.properties
+
+# Global logging level: OFF, BASIC, HEADERS, BODY
+ark.logging.level=BODY
+
+# Per-client configuration (key matches @RegisterArkClient configKey)
+ark.client."user-api".base-url=https://api.example.com
+ark.client."user-api".http-version=HTTP_2
+ark.client."user-api".connect-timeout=5
+ark.client."user-api".read-timeout=15
+ark.client."user-api".tls-configuration-name=my-cert
+```
+
+```java
+@RegisterArkClient(configKey = "user-api")
+@Path("/users")
+@Produces("application/json")
+public interface UserApi {
+    @GET @Path("/{id}")
+    Uni<User> findById(@PathParam("id") Long id);
+}
+```
+
+Properties take precedence over annotation values. Quarkus map keys use quoted format: `ark.client."key-name".property`.
+
+---
+
+## TLS / SSL
+
+Configure TLS via Quarkus TLS Registry:
+
+```properties
+quarkus.tls."my-cert".trust-store.pem.certs=certs/ca.crt
+ark.client."user-api".tls-configuration-name=my-cert
+```
+
+For Vert.x Mutiny transports, the extension uses `VertxTlsResolver` which converts TLS Registry entries to native Vert.x `TrustOptions`/`KeyCertOptions` — no SSLContext conversion needed.
+
+---
+
+## Declarative Clients
+
+With `@RegisterArkClient`, proxy beans are auto-created and injected via CDI:
+
+```java
+@RegisterArkClient(configKey = "user-api", baseUrl = "${api.users.url:https://fallback.com}")
+@Path("/users")
+@Produces("application/json")
+public interface UserApi {
+    @GET @Path("/{id}")
+    Uni<User> findById(@PathParam("id") Long id);
+}
+```
+
+```java
+@ApplicationScoped
+public class UserService {
+    @Inject UserApi userApi;
+}
+```
+
+See [Declarative JAX-RS Clients](declarative-jaxrs.md) for full details.
+
+---
+
 ## Native Image
 
-Supports GraalVM native image out of the box. No additional configuration needed.
+Supports GraalVM native image out of the box. The extension auto-discovers `@RegisterArkClient` interfaces at build time and registers JDK proxy definitions.
 
 ---
 
@@ -164,5 +234,6 @@ Supports GraalVM native image out of the box. No additional configuration needed
 
 - [Getting Started](getting-started.md)
 - [Quarkus Integration](quarkus.md)
+- [Declarative JAX-RS Clients](declarative-jaxrs.md)
 - [Mutiny Client](mutiny.md)
 - [Testing](testing.md)

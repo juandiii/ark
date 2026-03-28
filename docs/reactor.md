@@ -181,18 +181,16 @@ public class UserController {
 
 ## Error Handling
 
-Errors propagate through the `Mono`:
+Errors propagate through the `Mono`. Use typed exceptions:
 
 ```java
 client.get("/users/1")
     .retrieve()
     .body(User.class)
-    .onErrorResume(ApiException.class, ex -> {
-        if (ex.isNotFound()) {
-            return Mono.just(User.unknown());
-        }
-        return Mono.error(ex);
-    });
+    .onErrorResume(NotFoundException.class, ex ->
+        Mono.just(User.unknown()))
+    .onErrorResume(ServerException.class, ex ->
+        Mono.error(new ServiceUnavailableException("Upstream error")));
 ```
 
 ---
