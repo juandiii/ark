@@ -263,6 +263,7 @@ Future<User> future          = vertxClient.get("/users/1").retrieve().body(User.
 - [Mutiny Client](mutiny.md) — Quarkus
 - [Transport Model](transports.md) — built-in and custom transports
 - [Logging](logging.md) — LoggingInterceptor + TransportLogger
+- [Retry & Backoff](retry.md) — automatic retry with exponential backoff
 - [Declarative JAX-RS](declarative-jaxrs.md) — `@RegisterArkClient` with JAX-RS
 - [Declarative Spring](declarative-spring.md) — `@RegisterArkClient` with `@HttpExchange`
 - [Spring Boot Integration](spring-boot.md) — auto-config, ArkProperties, TLS

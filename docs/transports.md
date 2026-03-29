@@ -159,4 +159,5 @@ All built-in transports include DEBUG-level logging via `TransportLogger`. See [
 - [Sync Client](sync.md)
 - [Reactor Client](reactor.md)
 - [Mutiny Client](mutiny.md)
+- [Retry & Backoff](retry.md) — transport decorator for automatic retry
 - [Design Principles](design.md)
