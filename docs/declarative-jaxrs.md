@@ -323,13 +323,11 @@ A class implementing both `RequestInterceptor` and `ResponseInterceptor` is auto
 
 ## Logging
 
-Configure request/response logging via `application.properties`:
+See [Logging](logging.md) for full details. Quick setup:
 
 ```properties
 ark.logging.level=BODY
 ```
-
-Levels: `NONE`, `BASIC`, `HEADERS`, `BODY`.
 
 ---
 

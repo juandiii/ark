@@ -211,17 +211,11 @@ Ark client = ArkClient.builder()
 
 ## Logging
 
-```java
-LoggingInterceptor.apply(builder, LoggingInterceptor.Level.BODY);
-```
-
-Or configure via `application.properties` (Spring Boot / Quarkus):
-
 ```properties
 ark.logging.level=BODY
 ```
 
-Levels: `NONE`, `BASIC`, `HEADERS`, `BODY`.
+Levels: `NONE`, `BASIC`, `HEADERS`, `BODY`. See [Logging](logging.md) for full details.
 
 ---
 
@@ -268,6 +262,7 @@ Future<User> future          = vertxClient.get("/users/1").retrieve().body(User.
 - [Reactor Client](reactor.md) — Spring WebFlux
 - [Mutiny Client](mutiny.md) — Quarkus
 - [Transport Model](transports.md) — built-in and custom transports
+- [Logging](logging.md) — LoggingInterceptor + TransportLogger
 - [Declarative JAX-RS](declarative-jaxrs.md) — `@RegisterArkClient` with JAX-RS
 - [Declarative Spring](declarative-spring.md) — `@RegisterArkClient` with `@HttpExchange`
 - [Spring Boot Integration](spring-boot.md) — auto-config, ArkProperties, TLS

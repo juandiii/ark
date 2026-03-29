@@ -148,30 +148,13 @@ String html = client.get("/health")
 
 ## Logging
 
-Enable request/response logging via the `LoggingInterceptor`:
-
-```java
-Ark client = ArkClient.builder()
-    .serializer(serializer)
-    .transport(transport)
-    .baseUrl("https://api.example.com")
-    .build();
-
-LoggingInterceptor.apply(builder, LoggingInterceptor.Level.BODY);
-```
-
-| Level | Logs |
-|-------|------|
-| `NONE` | Nothing |
-| `BASIC` | Method, URL, status, duration |
-| `HEADERS` | BASIC + request/response headers |
-| `BODY` | HEADERS + request/response body |
-
-With Spring Boot or Quarkus, configure via `application.properties`:
+See [Logging](logging.md) for full details. Quick setup:
 
 ```properties
 ark.logging.level=BODY
 ```
+
+Levels: `NONE`, `BASIC`, `HEADERS`, `BODY`.
 
 ---
 
