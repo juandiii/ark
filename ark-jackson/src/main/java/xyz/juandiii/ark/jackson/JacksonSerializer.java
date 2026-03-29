@@ -1,9 +1,9 @@
 package xyz.juandiii.ark.jackson;
 
 import tools.jackson.databind.ObjectMapper;
-import xyz.juandiii.ark.JsonSerializer;
-import xyz.juandiii.ark.TypeRef;
-import xyz.juandiii.ark.exceptions.ArkException;
+import xyz.juandiii.ark.core.JsonSerializer;
+import xyz.juandiii.ark.core.TypeRef;
+import xyz.juandiii.ark.core.exceptions.ArkException;
 
 /**
  * JSON serializer implementation using Jackson ObjectMapper.

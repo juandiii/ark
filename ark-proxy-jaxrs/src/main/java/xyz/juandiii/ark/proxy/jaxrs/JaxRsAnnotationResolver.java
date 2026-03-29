@@ -9,8 +9,8 @@ import jakarta.ws.rs.PUT;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.Produces;
-import xyz.juandiii.ark.exceptions.ArkException;
-import xyz.juandiii.ark.proxy.AnnotationResolver;
+import xyz.juandiii.ark.core.exceptions.ArkException;
+import xyz.juandiii.ark.core.proxy.AnnotationResolver;
 
 import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;

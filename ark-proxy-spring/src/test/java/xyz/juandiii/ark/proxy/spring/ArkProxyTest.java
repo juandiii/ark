@@ -18,12 +18,13 @@ import org.springframework.web.service.annotation.PatchExchange;
 import org.springframework.web.service.annotation.PostExchange;
 import org.springframework.web.service.annotation.PutExchange;
 import reactor.core.publisher.Mono;
-import xyz.juandiii.ark.Ark;
-import xyz.juandiii.ark.exceptions.ArkException;
-import xyz.juandiii.ark.http.ArkResponse;
-import xyz.juandiii.ark.http.ClientRequest;
-import xyz.juandiii.ark.http.ClientResponse;
-import xyz.juandiii.ark.proxy.ArkProxy;
+import xyz.juandiii.ark.core.Ark;
+import xyz.juandiii.ark.core.TypeRef;
+import xyz.juandiii.ark.core.exceptions.ArkException;
+import xyz.juandiii.ark.core.http.ArkResponse;
+import xyz.juandiii.ark.core.http.ClientRequest;
+import xyz.juandiii.ark.core.http.ClientResponse;
+import xyz.juandiii.ark.core.proxy.ArkProxy;
 import xyz.juandiii.ark.reactor.ReactorArk;
 import xyz.juandiii.ark.reactor.http.ReactorClientRequest;
 import xyz.juandiii.ark.reactor.http.ReactorClientResponse;
@@ -159,7 +160,7 @@ class ArkProxyTest {
         void givenGetExchange_whenInvoked_thenCallsArkGet() {
             when(ark.get("/users/1")).thenReturn(clientRequest);
             when(clientRequest.retrieve()).thenReturn(clientResponse);
-            when(clientResponse.body(any(xyz.juandiii.ark.TypeRef.class))).thenReturn("Juan");
+            when(clientResponse.body(any(TypeRef.class))).thenReturn("Juan");
 
             UserApi proxy = ArkProxy.create(UserApi.class, ark);
             String result = proxy.findById(1L);
@@ -190,7 +191,7 @@ class ArkProxyTest {
         void givenPathVariable_whenInvoked_thenResolvesPath() {
             when(ark.get("/users/42")).thenReturn(clientRequest);
             when(clientRequest.retrieve()).thenReturn(clientResponse);
-            when(clientResponse.body(any(xyz.juandiii.ark.TypeRef.class))).thenReturn("found");
+            when(clientResponse.body(any(TypeRef.class))).thenReturn("found");
 
             UserApi proxy = ArkProxy.create(UserApi.class, ark);
             String result = proxy.findById(42L);
@@ -204,7 +205,7 @@ class ArkProxyTest {
             when(ark.get("/users")).thenReturn(clientRequest);
             when(clientRequest.queryParam(eq("name"), eq("Juan"))).thenReturn(clientRequest);
             when(clientRequest.retrieve()).thenReturn(clientResponse);
-            when(clientResponse.body(any(xyz.juandiii.ark.TypeRef.class))).thenReturn("Juan");
+            when(clientResponse.body(any(TypeRef.class))).thenReturn("Juan");
 
             UserApi proxy = ArkProxy.create(UserApi.class, ark);
             String result = proxy.findByName("Juan");
@@ -236,7 +237,7 @@ class ArkProxyTest {
         void givenValueOnHttpExchange_whenInvoked_thenResolvesBasePath() {
             when(ark.get("/orders/1")).thenReturn(clientRequest);
             when(clientRequest.retrieve()).thenReturn(clientResponse);
-            when(clientResponse.body(any(xyz.juandiii.ark.TypeRef.class))).thenReturn("order");
+            when(clientResponse.body(any(TypeRef.class))).thenReturn("order");
 
             OrderApi proxy = ArkProxy.create(OrderApi.class, ark);
             String result = proxy.findById(1L);
@@ -268,7 +269,7 @@ class ArkProxyTest {
             when(ark.put("/api/1")).thenReturn(clientRequest);
             when(clientRequest.body(any())).thenReturn(clientRequest);
             when(clientRequest.retrieve()).thenReturn(clientResponse);
-            when(clientResponse.body(any(xyz.juandiii.ark.TypeRef.class))).thenReturn("updated");
+            when(clientResponse.body(any(TypeRef.class))).thenReturn("updated");
 
             FullApi proxy = ArkProxy.create(FullApi.class, ark);
             assertEquals("updated", proxy.update(1L, "payload"));
@@ -280,7 +281,7 @@ class ArkProxyTest {
             when(ark.patch("/api/1")).thenReturn(clientRequest);
             when(clientRequest.body(any())).thenReturn(clientRequest);
             when(clientRequest.retrieve()).thenReturn(clientResponse);
-            when(clientResponse.body(any(xyz.juandiii.ark.TypeRef.class))).thenReturn("patched");
+            when(clientResponse.body(any(TypeRef.class))).thenReturn("patched");
 
             FullApi proxy = ArkProxy.create(FullApi.class, ark);
             assertEquals("patched", proxy.patch(1L, "payload"));
@@ -307,7 +308,7 @@ class ArkProxyTest {
         void givenArkResponseReturnType_whenInvoked_thenCallsToEntity() {
             when(ark.get("/api/1")).thenReturn(clientRequest);
             when(clientRequest.retrieve()).thenReturn(clientResponse);
-            when(clientResponse.toEntity(any(xyz.juandiii.ark.TypeRef.class)))
+            when(clientResponse.toEntity(any(TypeRef.class)))
                     .thenReturn(new ArkResponse<>(200, Map.of(), "Juan"));
 
             FullApi proxy = ArkProxy.create(FullApi.class, ark);
@@ -315,7 +316,7 @@ class ArkProxyTest {
 
             assertEquals(200, result.statusCode());
             assertEquals("Juan", result.body());
-            verify(clientResponse).toEntity(any(xyz.juandiii.ark.TypeRef.class));
+            verify(clientResponse).toEntity(any(TypeRef.class));
         }
     }
 
@@ -445,7 +446,7 @@ class ArkProxyTest {
         void givenEmptyMethodPath_whenInvoked_thenUsesBasePath() {
             when(ark.get("/no-path")).thenReturn(clientRequest);
             when(clientRequest.retrieve()).thenReturn(clientResponse);
-            when(clientResponse.body(any(xyz.juandiii.ark.TypeRef.class))).thenReturn("root");
+            when(clientResponse.body(any(TypeRef.class))).thenReturn("root");
 
             NoPathBaseApi proxy = ArkProxy.create(NoPathBaseApi.class, ark);
             assertEquals("root", proxy.getRoot());
@@ -460,7 +461,7 @@ class ArkProxyTest {
         void givenNullQueryParam_whenInvoked_thenSkipsParam() {
             when(ark.get("/users")).thenReturn(clientRequest);
             when(clientRequest.retrieve()).thenReturn(clientResponse);
-            when(clientResponse.body(any(xyz.juandiii.ark.TypeRef.class))).thenReturn("result");
+            when(clientResponse.body(any(TypeRef.class))).thenReturn("result");
 
             UserApi proxy = ArkProxy.create(UserApi.class, ark);
             proxy.findByName(null);
@@ -477,7 +478,7 @@ class ArkProxyTest {
             Mono<String> expected = Mono.just("Juan");
             when(reactorArk.get("/reactor-users/1")).thenReturn(reactorClientRequest);
             when(reactorClientRequest.retrieve()).thenReturn(reactorClientResponse);
-            when(reactorClientResponse.body(any(xyz.juandiii.ark.TypeRef.class))).thenReturn(expected);
+            when(reactorClientResponse.body(any(TypeRef.class))).thenReturn(expected);
 
             ReactorUserApi proxy = ArkProxy.create(ReactorUserApi.class, reactorArk);
             Mono<String> result = proxy.findById(1L);

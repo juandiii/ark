@@ -1,8 +1,8 @@
 package xyz.juandiii.ark.async.proxy;
 
 import xyz.juandiii.ark.async.AsyncArk;
-import xyz.juandiii.ark.proxy.Dispatchers;
-import xyz.juandiii.ark.proxy.RequestDispatcher;
+import xyz.juandiii.ark.core.proxy.Dispatchers;
+import xyz.juandiii.ark.core.proxy.RequestDispatcher;
 
 /**
  * Factory for async RequestDispatcher.

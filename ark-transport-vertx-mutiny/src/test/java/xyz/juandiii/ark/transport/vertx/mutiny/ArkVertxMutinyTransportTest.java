@@ -9,11 +9,11 @@ import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
-import xyz.juandiii.ark.exceptions.ApiException;
-import xyz.juandiii.ark.exceptions.ArkException;
-import xyz.juandiii.ark.exceptions.NotFoundException;
-import xyz.juandiii.ark.exceptions.ServerException;
-import xyz.juandiii.ark.http.RawResponse;
+import xyz.juandiii.ark.core.exceptions.ApiException;
+import xyz.juandiii.ark.core.exceptions.ArkException;
+import xyz.juandiii.ark.core.exceptions.NotFoundException;
+import xyz.juandiii.ark.core.exceptions.ServerException;
+import xyz.juandiii.ark.core.http.RawResponse;
 
 import java.io.IOException;
 import java.io.OutputStream;

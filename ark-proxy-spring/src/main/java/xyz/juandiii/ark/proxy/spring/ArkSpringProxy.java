@@ -1,11 +1,11 @@
 package xyz.juandiii.ark.proxy.spring;
 
-import xyz.juandiii.ark.Ark;
-import xyz.juandiii.ark.proxy.ArkProxy;
-import xyz.juandiii.ark.proxy.Dispatchers;
-import xyz.juandiii.ark.proxy.RequestDispatcher;
-import xyz.juandiii.ark.proxy.ReturnTypeHandler;
-import xyz.juandiii.ark.proxy.SyncReturnTypeHandler;
+import xyz.juandiii.ark.core.Ark;
+import xyz.juandiii.ark.core.proxy.ArkProxy;
+import xyz.juandiii.ark.core.proxy.Dispatchers;
+import xyz.juandiii.ark.core.proxy.RequestDispatcher;
+import xyz.juandiii.ark.core.proxy.ReturnTypeHandler;
+import xyz.juandiii.ark.core.proxy.SyncReturnTypeHandler;
 import xyz.juandiii.ark.reactor.ReactorArk;
 import xyz.juandiii.ark.reactor.proxy.ReactorDispatchers;
 import xyz.juandiii.ark.reactor.proxy.ReactorReturnTypeHandler;

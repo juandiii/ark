@@ -17,7 +17,7 @@ public class ArkClientRuntimeHints implements RuntimeHintsRegistrar {
         registerIfPresent(hints, classLoader, "xyz.juandiii.ark.proxy.spring.SpringProxyProvider");
         registerIfPresent(hints, classLoader, "xyz.juandiii.ark.proxy.spring.SpringAnnotationResolver");
         registerIfPresent(hints, classLoader, "xyz.juandiii.ark.proxy.spring.SpringParameterBinder");
-        registerIfPresent(hints, classLoader, "xyz.juandiii.ark.proxy.SyncReturnTypeHandler");
+        registerIfPresent(hints, classLoader, "xyz.juandiii.ark.core.proxy.SyncReturnTypeHandler");
     }
 
     private void registerIfPresent(RuntimeHints hints, ClassLoader classLoader, String className) {

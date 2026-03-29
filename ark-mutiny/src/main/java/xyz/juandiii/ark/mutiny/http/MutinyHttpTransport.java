@@ -1,7 +1,7 @@
 package xyz.juandiii.ark.mutiny.http;
 
 import io.smallrye.mutiny.Uni;
-import xyz.juandiii.ark.http.RawResponse;
+import xyz.juandiii.ark.core.http.RawResponse;
 
 import java.net.URI;
 import java.time.Duration;

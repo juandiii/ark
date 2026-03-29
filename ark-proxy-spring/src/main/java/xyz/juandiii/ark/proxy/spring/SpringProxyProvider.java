@@ -1,8 +1,8 @@
 package xyz.juandiii.ark.proxy.spring;
 
-import xyz.juandiii.ark.proxy.AnnotationResolver;
-import xyz.juandiii.ark.proxy.ArkProxy;
-import xyz.juandiii.ark.proxy.ParameterBinder;
+import xyz.juandiii.ark.core.proxy.AnnotationResolver;
+import xyz.juandiii.ark.core.proxy.ArkProxy;
+import xyz.juandiii.ark.core.proxy.ParameterBinder;
 
 /**
  * Provides Spring annotation resolver and parameter binder for ArkProxy auto-detection.

@@ -5,10 +5,10 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestParam;
-import xyz.juandiii.ark.interceptor.RequestContext;
-import xyz.juandiii.ark.proxy.FormEncoder;
-import xyz.juandiii.ark.proxy.ParameterBinder;
-import xyz.juandiii.ark.type.MediaType;
+import xyz.juandiii.ark.core.interceptor.RequestContext;
+import xyz.juandiii.ark.core.proxy.FormEncoder;
+import xyz.juandiii.ark.core.proxy.ParameterBinder;
+import xyz.juandiii.ark.core.type.MediaType;
 
 import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;

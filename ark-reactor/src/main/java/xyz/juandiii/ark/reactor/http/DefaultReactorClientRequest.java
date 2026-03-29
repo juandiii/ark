@@ -1,11 +1,11 @@
 package xyz.juandiii.ark.reactor.http;
 
 import reactor.core.publisher.Mono;
-import xyz.juandiii.ark.JsonSerializer;
-import xyz.juandiii.ark.http.AbstractClientRequest;
-import xyz.juandiii.ark.http.RawResponse;
-import xyz.juandiii.ark.interceptor.RequestInterceptor;
-import xyz.juandiii.ark.interceptor.ResponseInterceptor;
+import xyz.juandiii.ark.core.JsonSerializer;
+import xyz.juandiii.ark.core.http.AbstractClientRequest;
+import xyz.juandiii.ark.core.http.RawResponse;
+import xyz.juandiii.ark.core.interceptor.RequestInterceptor;
+import xyz.juandiii.ark.core.interceptor.ResponseInterceptor;
 
 import java.util.List;
 

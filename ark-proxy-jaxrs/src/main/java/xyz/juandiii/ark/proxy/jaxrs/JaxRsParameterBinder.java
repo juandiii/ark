@@ -4,10 +4,10 @@ import jakarta.ws.rs.FormParam;
 import jakarta.ws.rs.HeaderParam;
 import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.QueryParam;
-import xyz.juandiii.ark.interceptor.RequestContext;
-import xyz.juandiii.ark.proxy.FormEncoder;
-import xyz.juandiii.ark.proxy.ParameterBinder;
-import xyz.juandiii.ark.type.MediaType;
+import xyz.juandiii.ark.core.interceptor.RequestContext;
+import xyz.juandiii.ark.core.proxy.FormEncoder;
+import xyz.juandiii.ark.core.proxy.ParameterBinder;
+import xyz.juandiii.ark.core.type.MediaType;
 
 import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;

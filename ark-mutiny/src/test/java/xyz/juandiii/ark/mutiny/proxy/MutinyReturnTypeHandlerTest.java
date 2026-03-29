@@ -7,13 +7,12 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import xyz.juandiii.ark.TypeRef;
-import xyz.juandiii.ark.http.ArkResponse;
+import xyz.juandiii.ark.core.TypeRef;
+import xyz.juandiii.ark.core.http.ArkResponse;
 import xyz.juandiii.ark.mutiny.http.MutinyClientRequest;
 import xyz.juandiii.ark.mutiny.http.MutinyClientResponse;
 
 import java.lang.reflect.Type;
-import java.util.List;
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;

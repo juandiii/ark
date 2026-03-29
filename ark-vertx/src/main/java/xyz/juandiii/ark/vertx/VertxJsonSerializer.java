@@ -3,9 +3,9 @@ package xyz.juandiii.ark.vertx;
 import io.vertx.core.json.Json;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
-import xyz.juandiii.ark.JsonSerializer;
-import xyz.juandiii.ark.TypeRef;
-import xyz.juandiii.ark.exceptions.ArkException;
+import xyz.juandiii.ark.core.JsonSerializer;
+import xyz.juandiii.ark.core.TypeRef;
+import xyz.juandiii.ark.core.exceptions.ArkException;
 
 /**
  * JSON serializer using Vert.x built-in Jackson integration.

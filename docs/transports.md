@@ -153,10 +153,10 @@ All built-in transports include DEBUG-level logging via `TransportLogger`, showi
 
 ```properties
 # application.properties (Quarkus)
-quarkus.log.category."xyz.juandiii.ark.http.TransportLogger".level=DEBUG
+quarkus.log.category."xyz.juandiii.ark.core.http.TransportLogger".level=DEBUG
 
 # application.properties (Spring Boot)
-logging.level.xyz.juandiii.ark.http.TransportLogger=DEBUG
+logging.level.xyz.juandiii.ark.core.http.TransportLogger=DEBUG
 ```
 
 For application-level logging (paired request/response with timing), use `LoggingInterceptor` instead — see [Sync Client](sync.md#logging).

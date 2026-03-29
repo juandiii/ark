@@ -1,12 +1,12 @@
 package xyz.juandiii.ark.async;
 
-import xyz.juandiii.ark.AbstractArkClient;
-import xyz.juandiii.ark.AbstractArkBuilder;
-import xyz.juandiii.ark.JsonSerializer;
+import xyz.juandiii.ark.core.AbstractArkClient;
+import xyz.juandiii.ark.core.AbstractArkBuilder;
+import xyz.juandiii.ark.core.JsonSerializer;
 import xyz.juandiii.ark.async.http.DefaultAsyncClientRequest;
 import xyz.juandiii.ark.async.http.AsyncHttpTransport;
-import xyz.juandiii.ark.interceptor.RequestInterceptor;
-import xyz.juandiii.ark.interceptor.ResponseInterceptor;
+import xyz.juandiii.ark.core.interceptor.RequestInterceptor;
+import xyz.juandiii.ark.core.interceptor.ResponseInterceptor;
 
 import java.util.List;
 import java.util.Objects;

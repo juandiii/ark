@@ -1,8 +1,8 @@
 package xyz.juandiii.ark.reactor.proxy;
 
-import xyz.juandiii.ark.proxy.ArkProxy;
-import xyz.juandiii.ark.proxy.RequestDispatcher;
-import xyz.juandiii.ark.proxy.ReturnTypeHandler;
+import xyz.juandiii.ark.core.proxy.ArkProxy;
+import xyz.juandiii.ark.core.proxy.RequestDispatcher;
+import xyz.juandiii.ark.core.proxy.ReturnTypeHandler;
 import xyz.juandiii.ark.reactor.ReactorArk;
 
 /**

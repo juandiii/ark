@@ -6,8 +6,8 @@ import org.jboss.shrinkwrap.api.ShrinkWrap;
 import org.jboss.shrinkwrap.api.spec.JavaArchive;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
-import xyz.juandiii.ark.ArkClient;
-import xyz.juandiii.ark.JsonSerializer;
+import xyz.juandiii.ark.core.ArkClient;
+import xyz.juandiii.ark.core.JsonSerializer;
 import xyz.juandiii.ark.mutiny.MutinyArkClient;
 
 import static org.junit.jupiter.api.Assertions.assertNotNull;

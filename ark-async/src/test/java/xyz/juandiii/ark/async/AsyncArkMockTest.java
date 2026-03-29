@@ -7,7 +7,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import xyz.juandiii.ark.async.http.AsyncClientRequest;
 import xyz.juandiii.ark.async.http.AsyncClientResponse;
-import xyz.juandiii.ark.http.ArkResponse;
+import xyz.juandiii.ark.core.http.ArkResponse;
 
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;

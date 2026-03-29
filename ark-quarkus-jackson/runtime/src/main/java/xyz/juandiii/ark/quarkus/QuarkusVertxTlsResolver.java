@@ -6,7 +6,7 @@ import io.vertx.core.net.KeyCertOptions;
 import io.vertx.core.net.TrustOptions;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
-import xyz.juandiii.ark.exceptions.ArkException;
+import xyz.juandiii.ark.core.exceptions.ArkException;
 
 import java.util.Optional;
 

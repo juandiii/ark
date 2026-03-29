@@ -1,7 +1,8 @@
 package xyz.juandiii.ark.proxy;
 
 import org.junit.jupiter.api.Test;
-import xyz.juandiii.ark.exceptions.ArkException;
+import xyz.juandiii.ark.core.exceptions.ArkException;
+import xyz.juandiii.ark.core.proxy.PropertyResolver;
 
 import java.util.Map;
 

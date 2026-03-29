@@ -4,10 +4,10 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import xyz.juandiii.ark.exceptions.ArkException;
+import xyz.juandiii.ark.core.exceptions.ArkException;
 import xyz.juandiii.ark.mutiny.MutinyArk;
 import xyz.juandiii.ark.mutiny.http.MutinyClientRequest;
-import xyz.juandiii.ark.proxy.RequestDispatcher;
+import xyz.juandiii.ark.core.proxy.RequestDispatcher;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;

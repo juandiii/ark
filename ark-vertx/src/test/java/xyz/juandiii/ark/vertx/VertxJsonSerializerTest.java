@@ -5,8 +5,8 @@ import io.vertx.core.json.JsonObject;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
-import xyz.juandiii.ark.TypeRef;
-import xyz.juandiii.ark.exceptions.ArkException;
+import xyz.juandiii.ark.core.TypeRef;
+import xyz.juandiii.ark.core.exceptions.ArkException;
 
 import java.util.List;
 import java.util.Map;

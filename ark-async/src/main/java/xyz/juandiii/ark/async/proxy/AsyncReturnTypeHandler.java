@@ -1,11 +1,11 @@
 package xyz.juandiii.ark.async.proxy;
 
-import xyz.juandiii.ark.TypeRef;
+import xyz.juandiii.ark.core.TypeRef;
 import xyz.juandiii.ark.async.http.AsyncClientRequest;
 import xyz.juandiii.ark.async.http.AsyncClientResponse;
-import xyz.juandiii.ark.http.ArkResponse;
-import xyz.juandiii.ark.interceptor.RequestContext;
-import xyz.juandiii.ark.proxy.ReturnTypeHandler;
+import xyz.juandiii.ark.core.http.ArkResponse;
+import xyz.juandiii.ark.core.interceptor.RequestContext;
+import xyz.juandiii.ark.core.proxy.ReturnTypeHandler;
 
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;

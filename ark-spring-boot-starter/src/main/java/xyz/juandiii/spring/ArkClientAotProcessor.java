@@ -1,10 +1,9 @@
 package xyz.juandiii.spring;
 
-import org.springframework.aot.generate.GenerationContext;
 import org.springframework.beans.factory.aot.BeanFactoryInitializationAotContribution;
 import org.springframework.beans.factory.aot.BeanFactoryInitializationAotProcessor;
 import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
-import xyz.juandiii.ark.proxy.RegisterArkClient;
+import xyz.juandiii.ark.core.proxy.RegisterArkClient;
 
 /**
  * AOT processor that discovers @ArkClient interfaces from bean definitions

@@ -1,6 +1,7 @@
 package xyz.juandiii.ark.proxy;
 
 import org.junit.jupiter.api.Test;
+import xyz.juandiii.ark.core.proxy.FormEncoder;
 
 import java.util.LinkedHashMap;
 import java.util.Map;

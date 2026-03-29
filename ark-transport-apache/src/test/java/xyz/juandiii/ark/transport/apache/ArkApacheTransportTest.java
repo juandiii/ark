@@ -4,19 +4,16 @@ import com.sun.net.httpserver.HttpServer;
 import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
 import org.apache.hc.client5.http.impl.classic.HttpClients;
 import org.apache.hc.client5.http.impl.io.PoolingHttpClientConnectionManagerBuilder;
-import org.apache.hc.client5.http.config.RequestConfig;
-import org.apache.hc.core5.util.Timeout;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
-import xyz.juandiii.ark.exceptions.ApiException;
-import xyz.juandiii.ark.exceptions.ArkException;
-import xyz.juandiii.ark.exceptions.ConnectionException;
-import xyz.juandiii.ark.exceptions.NotFoundException;
-import xyz.juandiii.ark.exceptions.ServerException;
-import xyz.juandiii.ark.exceptions.TimeoutException;
-import xyz.juandiii.ark.http.RawResponse;
+import xyz.juandiii.ark.core.exceptions.ApiException;
+import xyz.juandiii.ark.core.exceptions.ArkException;
+import xyz.juandiii.ark.core.exceptions.ConnectionException;
+import xyz.juandiii.ark.core.exceptions.NotFoundException;
+import xyz.juandiii.ark.core.exceptions.ServerException;
+import xyz.juandiii.ark.core.http.RawResponse;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -335,7 +332,7 @@ class ArkApacheTransportTest {
 
         @Test
         void givenTransport_whenChecked_thenImplementsHttpTransport() {
-            assertInstanceOf(xyz.juandiii.ark.http.HttpTransport.class, transport());
+            assertInstanceOf(xyz.juandiii.ark.core.http.HttpTransport.class, transport());
         }
     }
 }

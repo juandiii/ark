@@ -5,16 +5,15 @@ import io.vertx.core.buffer.Buffer;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.ext.web.client.HttpResponse;
 import io.vertx.ext.web.client.WebClient;
-import xyz.juandiii.ark.exceptions.ApiException;
-import xyz.juandiii.ark.exceptions.ArkException;
-import xyz.juandiii.ark.http.HeaderUtils;
-import xyz.juandiii.ark.http.RawResponse;
-import xyz.juandiii.ark.http.TransportLogger;
+import xyz.juandiii.ark.core.exceptions.ApiException;
+import xyz.juandiii.ark.core.exceptions.ArkException;
+import xyz.juandiii.ark.core.http.HeaderUtils;
+import xyz.juandiii.ark.core.http.RawResponse;
+import xyz.juandiii.ark.core.http.TransportLogger;
 import xyz.juandiii.ark.vertx.http.VertxHttpTransport;
 
 import java.net.URI;
 import java.time.Duration;
-import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 

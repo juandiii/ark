@@ -1,4 +1,4 @@
-package xyz.juandiii.ark.proxy.jaxrs;
+package xyz.juandiii.ark.jaxrs;
 
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.DELETE;
@@ -18,18 +18,19 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import io.smallrye.mutiny.Uni;
-import xyz.juandiii.ark.Ark;
+import xyz.juandiii.ark.core.Ark;
 import xyz.juandiii.ark.async.AsyncArk;
 import xyz.juandiii.ark.async.http.AsyncClientRequest;
 import xyz.juandiii.ark.async.http.AsyncClientResponse;
-import xyz.juandiii.ark.exceptions.ArkException;
-import xyz.juandiii.ark.http.ArkResponse;
-import xyz.juandiii.ark.http.ClientRequest;
-import xyz.juandiii.ark.http.ClientResponse;
+import xyz.juandiii.ark.core.TypeRef;
+import xyz.juandiii.ark.core.exceptions.ArkException;
+import xyz.juandiii.ark.core.http.ArkResponse;
+import xyz.juandiii.ark.core.http.ClientRequest;
+import xyz.juandiii.ark.core.http.ClientResponse;
 import xyz.juandiii.ark.mutiny.MutinyArk;
 import xyz.juandiii.ark.mutiny.http.MutinyClientRequest;
 import xyz.juandiii.ark.mutiny.http.MutinyClientResponse;
-import xyz.juandiii.ark.proxy.ArkProxy;
+import xyz.juandiii.ark.core.proxy.ArkProxy;
 
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
@@ -219,7 +220,7 @@ class ArkJaxRsProxyTest {
             when(clientRequest.accept(anyString())).thenReturn(clientRequest);
             when(clientRequest.contentType(anyString())).thenReturn(clientRequest);
             when(clientRequest.retrieve()).thenReturn(clientResponse);
-            when(clientResponse.body(any(xyz.juandiii.ark.TypeRef.class))).thenReturn("Juan");
+            when(clientResponse.body(any(TypeRef.class))).thenReturn("Juan");
 
             UserApi proxy = ArkProxy.create(UserApi.class, ark);
             String result = proxy.findById(1L);
@@ -254,7 +255,7 @@ class ArkJaxRsProxyTest {
             when(clientRequest.accept(anyString())).thenReturn(clientRequest);
             when(clientRequest.contentType(anyString())).thenReturn(clientRequest);
             when(clientRequest.retrieve()).thenReturn(clientResponse);
-            when(clientResponse.body(any(xyz.juandiii.ark.TypeRef.class))).thenReturn("found");
+            when(clientResponse.body(any(TypeRef.class))).thenReturn("found");
 
             UserApi proxy = ArkProxy.create(UserApi.class, ark);
             String result = proxy.findById(42L);
@@ -270,7 +271,7 @@ class ArkJaxRsProxyTest {
             when(clientRequest.contentType(anyString())).thenReturn(clientRequest);
             when(clientRequest.queryParam(eq("name"), eq("Juan"))).thenReturn(clientRequest);
             when(clientRequest.retrieve()).thenReturn(clientResponse);
-            when(clientResponse.body(any(xyz.juandiii.ark.TypeRef.class))).thenReturn("Juan");
+            when(clientResponse.body(any(TypeRef.class))).thenReturn("Juan");
 
             UserApi proxy = ArkProxy.create(UserApi.class, ark);
             String result = proxy.findByName("Juan");
@@ -307,7 +308,7 @@ class ArkJaxRsProxyTest {
             when(clientRequest.contentType(anyString())).thenReturn(clientRequest);
             when(clientRequest.body(any())).thenReturn(clientRequest);
             when(clientRequest.retrieve()).thenReturn(clientResponse);
-            when(clientResponse.body(any(xyz.juandiii.ark.TypeRef.class))).thenReturn("updated");
+            when(clientResponse.body(any(TypeRef.class))).thenReturn("updated");
 
             FullApi proxy = ArkProxy.create(FullApi.class, ark);
             assertEquals("updated", proxy.update(1L, "payload"));
@@ -321,7 +322,7 @@ class ArkJaxRsProxyTest {
             when(clientRequest.contentType(anyString())).thenReturn(clientRequest);
             when(clientRequest.body(any())).thenReturn(clientRequest);
             when(clientRequest.retrieve()).thenReturn(clientResponse);
-            when(clientResponse.body(any(xyz.juandiii.ark.TypeRef.class))).thenReturn("patched");
+            when(clientResponse.body(any(TypeRef.class))).thenReturn("patched");
 
             FullApi proxy = ArkProxy.create(FullApi.class, ark);
             assertEquals("patched", proxy.patch(1L, "payload"));
@@ -352,7 +353,7 @@ class ArkJaxRsProxyTest {
             when(clientRequest.accept(anyString())).thenReturn(clientRequest);
             when(clientRequest.contentType(anyString())).thenReturn(clientRequest);
             when(clientRequest.retrieve()).thenReturn(clientResponse);
-            when(clientResponse.toEntity(any(xyz.juandiii.ark.TypeRef.class)))
+            when(clientResponse.toEntity(any(TypeRef.class)))
                     .thenReturn(new ArkResponse<>(200, Map.of(), "Juan"));
 
             FullApi proxy = ArkProxy.create(FullApi.class, ark);
@@ -360,7 +361,7 @@ class ArkJaxRsProxyTest {
 
             assertEquals(200, result.statusCode());
             assertEquals("Juan", result.body());
-            verify(clientResponse).toEntity(any(xyz.juandiii.ark.TypeRef.class));
+            verify(clientResponse).toEntity(any(TypeRef.class));
         }
     }
 
@@ -469,7 +470,7 @@ class ArkJaxRsProxyTest {
             when(clientRequest.contentType("application/json")).thenReturn(clientRequest);
             when(clientRequest.accept("application/json")).thenReturn(clientRequest);
             when(clientRequest.retrieve()).thenReturn(clientResponse);
-            when(clientResponse.body(any(xyz.juandiii.ark.TypeRef.class))).thenReturn("Juan");
+            when(clientResponse.body(any(TypeRef.class))).thenReturn("Juan");
 
             UserApi proxy = ArkProxy.create(UserApi.class, ark);
             proxy.findById(1L);
@@ -485,7 +486,7 @@ class ArkJaxRsProxyTest {
             when(clientRequest.accept("text/xml")).thenReturn(clientRequest);
             when(clientRequest.body(any())).thenReturn(clientRequest);
             when(clientRequest.retrieve()).thenReturn(clientResponse);
-            when(clientResponse.body(any(xyz.juandiii.ark.TypeRef.class))).thenReturn("result");
+            when(clientResponse.body(any(TypeRef.class))).thenReturn("result");
 
             FullApi proxy = ArkProxy.create(FullApi.class, ark);
             proxy.overrideContentType("data");
@@ -504,7 +505,7 @@ class ArkJaxRsProxyTest {
             when(clientRequest.accept(anyString())).thenReturn(clientRequest);
             when(clientRequest.contentType(anyString())).thenReturn(clientRequest);
             when(clientRequest.retrieve()).thenReturn(clientResponse);
-            when(clientResponse.body(any(xyz.juandiii.ark.TypeRef.class))).thenReturn("found");
+            when(clientResponse.body(any(TypeRef.class))).thenReturn("found");
 
             FullApi proxy = ArkProxy.create(FullApi.class, ark);
             String result = proxy.findByRegexPath(42L);
@@ -521,7 +522,7 @@ class ArkJaxRsProxyTest {
         void givenNoPathOnInterface_whenInvoked_thenUsesMethodPath() {
             when(ark.get("/health")).thenReturn(clientRequest);
             when(clientRequest.retrieve()).thenReturn(clientResponse);
-            when(clientResponse.body(any(xyz.juandiii.ark.TypeRef.class))).thenReturn("ok");
+            when(clientResponse.body(any(TypeRef.class))).thenReturn("ok");
 
             NoPathApi proxy = ArkProxy.create(NoPathApi.class, ark);
             String result = proxy.health();
@@ -548,7 +549,7 @@ class ArkJaxRsProxyTest {
             CompletableFuture<String> expected = CompletableFuture.completedFuture("Juan");
             when(asyncArk.get("/async-users/1")).thenReturn(asyncClientRequest);
             when(asyncClientRequest.retrieve()).thenReturn(asyncClientResponse);
-            when(asyncClientResponse.body(any(xyz.juandiii.ark.TypeRef.class))).thenReturn(expected);
+            when(asyncClientResponse.body(any(TypeRef.class))).thenReturn(expected);
 
             AsyncUserApi proxy = ArkProxy.create(AsyncUserApi.class, asyncArk);
             CompletableFuture<String> result = proxy.findById(1L);
@@ -578,7 +579,7 @@ class ArkJaxRsProxyTest {
             when(asyncArk.put("/async-users/1")).thenReturn(asyncClientRequest);
             when(asyncClientRequest.body(any())).thenReturn(asyncClientRequest);
             when(asyncClientRequest.retrieve()).thenReturn(asyncClientResponse);
-            when(asyncClientResponse.body(any(xyz.juandiii.ark.TypeRef.class))).thenReturn(expected);
+            when(asyncClientResponse.body(any(TypeRef.class))).thenReturn(expected);
 
             AsyncUserApi proxy = ArkProxy.create(AsyncUserApi.class, asyncArk);
             proxy.update(1L, "body");
@@ -591,7 +592,7 @@ class ArkJaxRsProxyTest {
             when(asyncArk.patch("/async-users/1")).thenReturn(asyncClientRequest);
             when(asyncClientRequest.body(any())).thenReturn(asyncClientRequest);
             when(asyncClientRequest.retrieve()).thenReturn(asyncClientResponse);
-            when(asyncClientResponse.body(any(xyz.juandiii.ark.TypeRef.class))).thenReturn(expected);
+            when(asyncClientResponse.body(any(TypeRef.class))).thenReturn(expected);
 
             AsyncUserApi proxy = ArkProxy.create(AsyncUserApi.class, asyncArk);
             proxy.patch(1L, "body");
@@ -620,7 +621,7 @@ class ArkJaxRsProxyTest {
             Uni<String> expected = Uni.createFrom().item("Juan");
             when(mutinyArk.get("/mutiny-users/1")).thenReturn(mutinyClientRequest);
             when(mutinyClientRequest.retrieve()).thenReturn(mutinyClientResponse);
-            when(mutinyClientResponse.body(any(xyz.juandiii.ark.TypeRef.class))).thenReturn(expected);
+            when(mutinyClientResponse.body(any(TypeRef.class))).thenReturn(expected);
 
             MutinyUserApi proxy = ArkProxy.create(MutinyUserApi.class, mutinyArk);
             Uni<String> result = proxy.findById(1L);
@@ -650,7 +651,7 @@ class ArkJaxRsProxyTest {
             when(mutinyArk.put("/mutiny-users/1")).thenReturn(mutinyClientRequest);
             when(mutinyClientRequest.body(any())).thenReturn(mutinyClientRequest);
             when(mutinyClientRequest.retrieve()).thenReturn(mutinyClientResponse);
-            when(mutinyClientResponse.body(any(xyz.juandiii.ark.TypeRef.class))).thenReturn(expected);
+            when(mutinyClientResponse.body(any(TypeRef.class))).thenReturn(expected);
 
             MutinyUserApi proxy = ArkProxy.create(MutinyUserApi.class, mutinyArk);
             proxy.update(1L, "body");
@@ -663,7 +664,7 @@ class ArkJaxRsProxyTest {
             when(mutinyArk.patch("/mutiny-users/1")).thenReturn(mutinyClientRequest);
             when(mutinyClientRequest.body(any())).thenReturn(mutinyClientRequest);
             when(mutinyClientRequest.retrieve()).thenReturn(mutinyClientResponse);
-            when(mutinyClientResponse.body(any(xyz.juandiii.ark.TypeRef.class))).thenReturn(expected);
+            when(mutinyClientResponse.body(any(TypeRef.class))).thenReturn(expected);
 
             MutinyUserApi proxy = ArkProxy.create(MutinyUserApi.class, mutinyArk);
             proxy.patch(1L, "body");

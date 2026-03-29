@@ -6,6 +6,7 @@ import org.springframework.context.EnvironmentAware;
 import org.springframework.context.annotation.ImportBeanDefinitionRegistrar;
 import org.springframework.core.env.Environment;
 import org.springframework.core.type.AnnotationMetadata;
+import xyz.juandiii.ark.core.proxy.RegisterArkClient;
 
 import java.util.List;
 
@@ -42,7 +43,7 @@ public class ArkClientAutoRegistrar implements ImportBeanDefinitionRegistrar, En
             for (var bd : scanner.findCandidateComponents(basePackage)) {
                 try {
                     Class<?> iface = Class.forName(bd.getBeanClassName());
-                    var annotation = iface.getAnnotation(xyz.juandiii.ark.proxy.RegisterArkClient.class);
+                    var annotation = iface.getAnnotation(RegisterArkClient.class);
                     if (annotation == null) continue;
 
                     if (!registry.containsBeanDefinition(ArkClientScanner.beanName(iface))) {

@@ -1,6 +1,6 @@
 package xyz.juandiii.ark.vertx.http;
 
-import xyz.juandiii.ark.interceptor.RequestContext;
+import xyz.juandiii.ark.core.interceptor.RequestContext;
 
 import java.time.Duration;
 

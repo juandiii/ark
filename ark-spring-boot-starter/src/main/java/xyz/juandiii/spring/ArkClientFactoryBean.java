@@ -10,18 +10,18 @@ import org.springframework.beans.factory.BeanFactoryAware;
 import org.springframework.beans.factory.FactoryBean;
 import org.springframework.core.env.Environment;
 
-import xyz.juandiii.ark.ArkClient;
-import xyz.juandiii.ark.JsonSerializer;
-import xyz.juandiii.ark.http.HttpTransport;
-import xyz.juandiii.ark.interceptor.LoggingInterceptor;
-import xyz.juandiii.ark.proxy.ArkProxy;
-import xyz.juandiii.ark.proxy.HttpVersion;
-import xyz.juandiii.ark.proxy.InterceptorResolver;
-import xyz.juandiii.ark.proxy.RegisterArkClient;
-import xyz.juandiii.ark.proxy.TlsResolver;
-import xyz.juandiii.ark.ssl.InsecureSslContext;
+import xyz.juandiii.ark.core.ArkClient;
+import xyz.juandiii.ark.core.JsonSerializer;
+import xyz.juandiii.ark.core.http.HttpTransport;
+import xyz.juandiii.ark.core.interceptor.LoggingInterceptor;
+import xyz.juandiii.ark.core.proxy.ArkProxy;
+import xyz.juandiii.ark.core.proxy.HttpVersion;
+import xyz.juandiii.ark.core.proxy.InterceptorResolver;
+import xyz.juandiii.ark.core.proxy.RegisterArkClient;
+import xyz.juandiii.ark.core.proxy.TlsResolver;
+import xyz.juandiii.ark.core.ssl.InsecureSslContext;
 import xyz.juandiii.ark.transport.jdk.ArkJdkHttpTransport;
-import xyz.juandiii.ark.util.StringUtils;
+import xyz.juandiii.ark.core.util.StringUtils;
 
 /**
  * Spring FactoryBean that creates an Ark proxy client.
