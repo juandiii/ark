@@ -33,9 +33,10 @@ public interface UserApi {
 |-----------|---------|-------------|
 | `configKey` | `""` | Key for per-client config in `application.properties` |
 | `baseUrl` | `""` | Base URL, supports `${property}` placeholders |
-| `httpVersion` | `HTTP_1_1` | HTTP/1.1 or HTTP/2 |
+| `httpVersion` | `HTTP_2` | HTTP/1.1 or HTTP/2 |
 | `connectTimeout` | `10` | Connection timeout (seconds) |
 | `readTimeout` | `30` | Read timeout (seconds) |
+| `interceptors` | `{}` | Interceptor classes (auto-detects `RequestInterceptor` / `ResponseInterceptor`) |
 
 ## Per-Client Configuration
 
@@ -54,6 +55,8 @@ ark.client.user-api.http-version=HTTP_2
 ark.client.user-api.connect-timeout=5
 ark.client.user-api.read-timeout=15
 ark.client.user-api.tls-configuration-name=my-cert
+ark.client.user-api.trust-all=true
+ark.client.user-api.headers.X-Api-Key=${API_KEY}
 
 # TLS bundle
 spring.ssl.bundle.pem.my-cert.truststore.certificate=classpath:certs/ca.crt
@@ -284,15 +287,43 @@ client.findById("123");     // GET /users/123 (from UserClient)
 
 ---
 
+## Interceptors
+
+Register per-client interceptors via the annotation:
+
+```java
+@RegisterArkClient(configKey = "user-api", interceptors = {AuthInterceptor.class})
+@HttpExchange("/users")
+public interface UserApi { ... }
+```
+
+```java
+@Component
+public class AuthInterceptor implements RequestInterceptor {
+    private final TokenService tokenService;
+
+    public AuthInterceptor(TokenService tokenService) {
+        this.tokenService = tokenService;
+    }
+
+    @Override
+    public void intercept(RequestContext ctx) {
+        ctx.header("Authorization", "Bearer " + tokenService.getToken());
+    }
+}
+```
+
+A class implementing both `RequestInterceptor` and `ResponseInterceptor` is auto-detected and registered for both.
+
+---
+
 ## Logging
 
-Configure request/response logging via `application.properties`:
+See [Logging](logging.md) for full details. Quick setup:
 
 ```properties
 ark.logging.level=BODY
 ```
-
-Levels: `OFF`, `BASIC`, `HEADERS`, `BODY`.
 
 ---
 

@@ -161,7 +161,7 @@ The extension provides type-safe configuration via Quarkus `@ConfigMapping`:
 ```properties
 # application.properties
 
-# Global logging level: OFF, BASIC, HEADERS, BODY
+# Global logging level: NONE, BASIC, HEADERS, BODY
 ark.logging.level=BODY
 
 # Per-client configuration (key matches @RegisterArkClient configKey)
@@ -170,6 +170,8 @@ ark.client."user-api".http-version=HTTP_2
 ark.client."user-api".connect-timeout=5
 ark.client."user-api".read-timeout=15
 ark.client."user-api".tls-configuration-name=my-cert
+ark.client."user-api".trust-all=false
+ark.client."user-api".headers.X-Api-Key=${API_KEY}
 ```
 
 ```java
