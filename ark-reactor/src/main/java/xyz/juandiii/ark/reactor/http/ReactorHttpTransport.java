@@ -1,7 +1,7 @@
 package xyz.juandiii.ark.reactor.http;
 
 import reactor.core.publisher.Mono;
-import xyz.juandiii.ark.http.RawResponse;
+import xyz.juandiii.ark.core.http.RawResponse;
 
 import java.net.URI;
 import java.time.Duration;

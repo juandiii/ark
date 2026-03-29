@@ -6,8 +6,8 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import xyz.juandiii.ark.async.AsyncArk;
 import xyz.juandiii.ark.async.http.AsyncClientRequest;
-import xyz.juandiii.ark.exceptions.ArkException;
-import xyz.juandiii.ark.proxy.RequestDispatcher;
+import xyz.juandiii.ark.core.exceptions.ArkException;
+import xyz.juandiii.ark.core.proxy.RequestDispatcher;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;

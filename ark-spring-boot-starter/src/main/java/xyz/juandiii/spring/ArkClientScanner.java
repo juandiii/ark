@@ -9,6 +9,7 @@ import org.springframework.context.annotation.ClassPathScanningCandidateComponen
 import org.springframework.core.ResolvableType;
 import org.springframework.core.env.Environment;
 import org.springframework.core.type.filter.AnnotationTypeFilter;
+import xyz.juandiii.ark.core.proxy.RegisterArkClient;
 
 /**
  * Shared scanning and registration logic for @RegisterArkClient interfaces.
@@ -33,7 +34,7 @@ final class ArkClientScanner {
                         return beanDefinition.getMetadata().isInterface();
                     }
                 };
-        scanner.addIncludeFilter(new AnnotationTypeFilter(xyz.juandiii.ark.proxy.RegisterArkClient.class));
+        scanner.addIncludeFilter(new AnnotationTypeFilter(RegisterArkClient.class));
         scanner.setEnvironment(environment);
         return scanner;
     }

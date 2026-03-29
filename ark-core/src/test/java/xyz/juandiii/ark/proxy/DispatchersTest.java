@@ -4,9 +4,11 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import xyz.juandiii.ark.Ark;
-import xyz.juandiii.ark.exceptions.ArkException;
-import xyz.juandiii.ark.http.ClientRequest;
+import xyz.juandiii.ark.core.Ark;
+import xyz.juandiii.ark.core.exceptions.ArkException;
+import xyz.juandiii.ark.core.http.ClientRequest;
+import xyz.juandiii.ark.core.proxy.Dispatchers;
+import xyz.juandiii.ark.core.proxy.RequestDispatcher;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;

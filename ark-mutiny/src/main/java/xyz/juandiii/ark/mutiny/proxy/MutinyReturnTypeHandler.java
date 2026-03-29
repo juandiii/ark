@@ -2,12 +2,12 @@ package xyz.juandiii.ark.mutiny.proxy;
 
 import io.smallrye.mutiny.Multi;
 import io.smallrye.mutiny.Uni;
-import xyz.juandiii.ark.TypeRef;
-import xyz.juandiii.ark.http.ArkResponse;
-import xyz.juandiii.ark.interceptor.RequestContext;
+import xyz.juandiii.ark.core.TypeRef;
+import xyz.juandiii.ark.core.http.ArkResponse;
+import xyz.juandiii.ark.core.interceptor.RequestContext;
 import xyz.juandiii.ark.mutiny.http.MutinyClientRequest;
 import xyz.juandiii.ark.mutiny.http.MutinyClientResponse;
-import xyz.juandiii.ark.proxy.ReturnTypeHandler;
+import xyz.juandiii.ark.core.proxy.ReturnTypeHandler;
 
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;

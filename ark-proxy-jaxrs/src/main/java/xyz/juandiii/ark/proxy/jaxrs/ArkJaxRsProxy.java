@@ -1,17 +1,17 @@
 package xyz.juandiii.ark.proxy.jaxrs;
 
-import xyz.juandiii.ark.Ark;
+import xyz.juandiii.ark.core.Ark;
 import xyz.juandiii.ark.async.AsyncArk;
 import xyz.juandiii.ark.async.proxy.AsyncDispatchers;
 import xyz.juandiii.ark.async.proxy.AsyncReturnTypeHandler;
 import xyz.juandiii.ark.mutiny.MutinyArk;
 import xyz.juandiii.ark.mutiny.proxy.MutinyDispatchers;
 import xyz.juandiii.ark.mutiny.proxy.MutinyReturnTypeHandler;
-import xyz.juandiii.ark.proxy.ArkProxy;
-import xyz.juandiii.ark.proxy.Dispatchers;
-import xyz.juandiii.ark.proxy.RequestDispatcher;
-import xyz.juandiii.ark.proxy.ReturnTypeHandler;
-import xyz.juandiii.ark.proxy.SyncReturnTypeHandler;
+import xyz.juandiii.ark.core.proxy.ArkProxy;
+import xyz.juandiii.ark.core.proxy.Dispatchers;
+import xyz.juandiii.ark.core.proxy.RequestDispatcher;
+import xyz.juandiii.ark.core.proxy.ReturnTypeHandler;
+import xyz.juandiii.ark.core.proxy.SyncReturnTypeHandler;
 
 /**
  * Dynamic proxy factory for creating HTTP clients from JAX-RS annotated interfaces.

@@ -4,11 +4,11 @@ import reactor.core.publisher.Mono;
 import reactor.netty.ByteBufMono;
 import reactor.netty.http.client.HttpClient;
 import io.netty.handler.codec.http.HttpMethod;
-import xyz.juandiii.ark.exceptions.ApiException;
-import xyz.juandiii.ark.exceptions.ArkException;
-import xyz.juandiii.ark.http.HeaderUtils;
-import xyz.juandiii.ark.http.RawResponse;
-import xyz.juandiii.ark.http.TransportLogger;
+import xyz.juandiii.ark.core.exceptions.ApiException;
+import xyz.juandiii.ark.core.exceptions.ArkException;
+import xyz.juandiii.ark.core.http.HeaderUtils;
+import xyz.juandiii.ark.core.http.RawResponse;
+import xyz.juandiii.ark.core.http.TransportLogger;
 import xyz.juandiii.ark.reactor.http.ReactorHttpTransport;
 
 import java.net.URI;

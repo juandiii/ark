@@ -5,12 +5,11 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import xyz.juandiii.ark.TypeRef;
+import xyz.juandiii.ark.core.TypeRef;
 import xyz.juandiii.ark.async.http.AsyncClientRequest;
 import xyz.juandiii.ark.async.http.AsyncClientResponse;
-import xyz.juandiii.ark.http.ArkResponse;
+import xyz.juandiii.ark.core.http.ArkResponse;
 
-import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;

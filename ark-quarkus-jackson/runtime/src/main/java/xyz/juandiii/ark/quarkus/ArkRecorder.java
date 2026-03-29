@@ -6,24 +6,25 @@ import io.quarkus.runtime.annotations.Recorder;
 import io.vertx.ext.web.client.WebClientOptions;
 import io.vertx.mutiny.core.Vertx;
 import io.vertx.mutiny.ext.web.client.WebClient;
-import xyz.juandiii.ark.ArkClient;
-import xyz.juandiii.ark.JsonSerializer;
+import xyz.juandiii.ark.core.ArkClient;
+import xyz.juandiii.ark.core.JsonSerializer;
 import xyz.juandiii.ark.async.AsyncArkClient;
-import xyz.juandiii.ark.interceptor.LoggingInterceptor;
-import xyz.juandiii.ark.interceptor.RequestInterceptor;
-import xyz.juandiii.ark.proxy.InterceptorResolver;
+import xyz.juandiii.ark.core.AbstractArkBuilder;
+import xyz.juandiii.ark.core.interceptor.LoggingInterceptor;
+import xyz.juandiii.ark.core.interceptor.RequestInterceptor;
+import xyz.juandiii.ark.core.proxy.InterceptorResolver;
 import xyz.juandiii.ark.mutiny.MutinyArkClient;
-import xyz.juandiii.ark.proxy.HttpVersion;
-import xyz.juandiii.ark.ssl.InsecureSslContext;
-import xyz.juandiii.ark.proxy.PropertyResolver;
-import xyz.juandiii.ark.proxy.RegisterArkClient;
-import xyz.juandiii.ark.proxy.TlsResolver;
+import xyz.juandiii.ark.core.proxy.HttpVersion;
+import xyz.juandiii.ark.core.ssl.InsecureSslContext;
+import xyz.juandiii.ark.core.proxy.PropertyResolver;
+import xyz.juandiii.ark.core.proxy.RegisterArkClient;
+import xyz.juandiii.ark.core.proxy.TlsResolver;
 import xyz.juandiii.ark.proxy.jaxrs.ArkJaxRsProxy;
 import xyz.juandiii.ark.quarkus.config.ArkClientNamedConfig;
 import xyz.juandiii.ark.quarkus.config.ArkClientsConfig;
 import xyz.juandiii.ark.transport.jdk.ArkJdkHttpTransport;
 import xyz.juandiii.ark.transport.vertx.mutiny.ArkVertxMutinyTransport;
-import xyz.juandiii.ark.util.StringUtils;
+import xyz.juandiii.ark.core.util.StringUtils;
 
 import javax.net.ssl.SSLContext;
 import java.lang.reflect.Method;
@@ -127,7 +128,7 @@ public class ArkRecorder {
         return ArkJaxRsProxy.create(iface, builder.build());
     }
 
-    private static <B extends xyz.juandiii.ark.AbstractArkBuilder<B>> void applyInterceptors(
+    private static <B extends AbstractArkBuilder<B>> void applyInterceptors(
             B builder, ResolvedConfig rc) {
         InterceptorResolver.applyHeaders(builder, rc.headers());
         InterceptorResolver.applyInterceptors(builder, rc.interceptorClasses(),

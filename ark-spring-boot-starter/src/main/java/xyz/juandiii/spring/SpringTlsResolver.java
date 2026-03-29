@@ -2,8 +2,8 @@ package xyz.juandiii.spring;
 
 import org.springframework.boot.ssl.SslBundle;
 import org.springframework.boot.ssl.SslBundles;
-import xyz.juandiii.ark.exceptions.ArkException;
-import xyz.juandiii.ark.proxy.TlsResolver;
+import xyz.juandiii.ark.core.exceptions.ArkException;
+import xyz.juandiii.ark.core.proxy.TlsResolver;
 
 import javax.net.ssl.SSLContext;
 

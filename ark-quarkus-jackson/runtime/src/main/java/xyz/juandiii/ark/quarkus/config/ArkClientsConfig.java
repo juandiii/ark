@@ -3,7 +3,7 @@ package xyz.juandiii.ark.quarkus.config;
 import io.quarkus.runtime.annotations.ConfigPhase;
 import io.quarkus.runtime.annotations.ConfigRoot;
 import io.smallrye.config.*;
-import xyz.juandiii.ark.interceptor.LoggingInterceptor;
+import xyz.juandiii.ark.core.interceptor.LoggingInterceptor;
 
 import java.util.Map;
 

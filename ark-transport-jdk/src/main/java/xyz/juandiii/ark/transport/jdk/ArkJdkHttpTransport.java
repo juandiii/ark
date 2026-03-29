@@ -1,12 +1,12 @@
 package xyz.juandiii.ark.transport.jdk;
 
-import xyz.juandiii.ark.exceptions.ApiException;
-import xyz.juandiii.ark.exceptions.ArkException;
-import xyz.juandiii.ark.exceptions.RequestInterruptedException;
+import xyz.juandiii.ark.core.exceptions.ApiException;
+import xyz.juandiii.ark.core.exceptions.ArkException;
+import xyz.juandiii.ark.core.exceptions.RequestInterruptedException;
 import xyz.juandiii.ark.async.http.AsyncHttpTransport;
-import xyz.juandiii.ark.http.HttpTransport;
-import xyz.juandiii.ark.http.RawResponse;
-import xyz.juandiii.ark.http.TransportLogger;
+import xyz.juandiii.ark.core.http.HttpTransport;
+import xyz.juandiii.ark.core.http.RawResponse;
+import xyz.juandiii.ark.core.http.TransportLogger;
 
 import java.io.IOException;
 import java.net.URI;

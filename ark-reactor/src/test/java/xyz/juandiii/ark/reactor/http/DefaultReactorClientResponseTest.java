@@ -7,10 +7,10 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
-import xyz.juandiii.ark.JsonSerializer;
-import xyz.juandiii.ark.TypeRef;
-import xyz.juandiii.ark.http.ArkResponse;
-import xyz.juandiii.ark.http.RawResponse;
+import xyz.juandiii.ark.core.JsonSerializer;
+import xyz.juandiii.ark.core.TypeRef;
+import xyz.juandiii.ark.core.http.ArkResponse;
+import xyz.juandiii.ark.core.http.RawResponse;
 
 import java.util.List;
 import java.util.Map;

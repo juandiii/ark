@@ -3,7 +3,7 @@ package xyz.juandiii.ark.quarkus.config;
 import io.quarkus.runtime.annotations.ConfigGroup;
 import io.smallrye.config.WithDefault;
 import io.smallrye.config.WithName;
-import xyz.juandiii.ark.proxy.HttpVersion;
+import xyz.juandiii.ark.core.proxy.HttpVersion;
 
 import java.util.Map;
 import java.util.Optional;

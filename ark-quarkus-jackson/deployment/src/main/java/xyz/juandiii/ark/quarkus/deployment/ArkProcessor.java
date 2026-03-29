@@ -28,7 +28,7 @@ import java.util.List;
 public class ArkProcessor {
 
     private static final String FEATURE = "ark-jackson";
-    private static final DotName ARK_CLIENT = DotName.createSimple("xyz.juandiii.ark.proxy.RegisterArkClient");
+    private static final DotName ARK_CLIENT = DotName.createSimple("xyz.juandiii.ark.core.proxy.RegisterArkClient");
 
     @BuildStep
     FeatureBuildItem feature() {
@@ -59,10 +59,10 @@ public class ArkProcessor {
     @BuildStep
     ReflectiveClassBuildItem reflectiveClasses() {
         return ReflectiveClassBuildItem.builder(
-                "xyz.juandiii.ark.TypeRef",
-                "xyz.juandiii.ark.exceptions.ApiException",
-                "xyz.juandiii.ark.exceptions.ArkException",
-                "xyz.juandiii.ark.http.RawResponse"
+                "xyz.juandiii.ark.core.TypeRef",
+                "xyz.juandiii.ark.core.exceptions.ApiException",
+                "xyz.juandiii.ark.core.exceptions.ArkException",
+                "xyz.juandiii.ark.core.http.RawResponse"
         ).methods(true).fields(true).build();
     }
 
@@ -85,7 +85,7 @@ public class ArkProcessor {
                 "xyz.juandiii.ark.proxy.SyncExecutionModelProvider",
                 "xyz.juandiii.ark.proxy.jaxrs.JaxRsProxyProvider",
                 "xyz.juandiii.ark.proxy.jaxrs.JaxRsAnnotationResolver",
-                "xyz.juandiii.ark.proxy.jaxrs.JaxRsParameterBinder",
+                "xyz.juandiii.ark.jaxrs.JaxRsParameterBinder",
                 "xyz.juandiii.ark.mutiny.proxy.MutinyExecutionModelProvider",
                 "xyz.juandiii.ark.mutiny.proxy.MutinyDispatchers",
                 "xyz.juandiii.ark.mutiny.proxy.MutinyReturnTypeHandler"

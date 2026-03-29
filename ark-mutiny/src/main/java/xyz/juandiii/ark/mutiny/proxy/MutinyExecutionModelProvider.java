@@ -1,9 +1,9 @@
 package xyz.juandiii.ark.mutiny.proxy;
 
 import xyz.juandiii.ark.mutiny.MutinyArk;
-import xyz.juandiii.ark.proxy.ArkProxy;
-import xyz.juandiii.ark.proxy.RequestDispatcher;
-import xyz.juandiii.ark.proxy.ReturnTypeHandler;
+import xyz.juandiii.ark.core.proxy.ArkProxy;
+import xyz.juandiii.ark.core.proxy.RequestDispatcher;
+import xyz.juandiii.ark.core.proxy.ReturnTypeHandler;
 
 /**
  * Provides Mutiny dispatcher and return type handler for ArkProxy auto-detection.

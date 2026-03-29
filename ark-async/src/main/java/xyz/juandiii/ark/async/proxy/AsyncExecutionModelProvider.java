@@ -1,9 +1,9 @@
 package xyz.juandiii.ark.async.proxy;
 
 import xyz.juandiii.ark.async.AsyncArk;
-import xyz.juandiii.ark.proxy.ArkProxy;
-import xyz.juandiii.ark.proxy.RequestDispatcher;
-import xyz.juandiii.ark.proxy.ReturnTypeHandler;
+import xyz.juandiii.ark.core.proxy.ArkProxy;
+import xyz.juandiii.ark.core.proxy.RequestDispatcher;
+import xyz.juandiii.ark.core.proxy.ReturnTypeHandler;
 
 /**
  * Provides async dispatcher and return type handler for ArkProxy auto-detection.

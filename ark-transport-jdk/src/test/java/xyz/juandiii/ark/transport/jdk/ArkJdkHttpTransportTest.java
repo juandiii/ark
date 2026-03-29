@@ -6,9 +6,9 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import xyz.juandiii.ark.async.http.AsyncHttpTransport;
-import xyz.juandiii.ark.exceptions.*;
-import xyz.juandiii.ark.http.HttpTransport;
-import xyz.juandiii.ark.http.RawResponse;
+import xyz.juandiii.ark.core.exceptions.*;
+import xyz.juandiii.ark.core.http.HttpTransport;
+import xyz.juandiii.ark.core.http.RawResponse;
 
 import java.io.IOException;
 import java.io.OutputStream;

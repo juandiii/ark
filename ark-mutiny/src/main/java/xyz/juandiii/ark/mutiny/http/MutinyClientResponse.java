@@ -2,8 +2,8 @@ package xyz.juandiii.ark.mutiny.http;
 
 import io.smallrye.mutiny.Multi;
 import io.smallrye.mutiny.Uni;
-import xyz.juandiii.ark.TypeRef;
-import xyz.juandiii.ark.http.ArkResponse;
+import xyz.juandiii.ark.core.TypeRef;
+import xyz.juandiii.ark.core.http.ArkResponse;
 
 import java.util.List;
 

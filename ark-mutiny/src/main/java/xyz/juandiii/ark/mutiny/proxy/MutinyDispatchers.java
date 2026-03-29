@@ -1,7 +1,7 @@
 package xyz.juandiii.ark.mutiny.proxy;
 
-import xyz.juandiii.ark.proxy.Dispatchers;
-import xyz.juandiii.ark.proxy.RequestDispatcher;
+import xyz.juandiii.ark.core.proxy.Dispatchers;
+import xyz.juandiii.ark.core.proxy.RequestDispatcher;
 import xyz.juandiii.ark.mutiny.MutinyArk;
 
 /**

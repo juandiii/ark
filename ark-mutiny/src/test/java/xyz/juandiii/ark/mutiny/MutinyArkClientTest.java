@@ -6,8 +6,8 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import xyz.juandiii.ark.JsonSerializer;
-import xyz.juandiii.ark.http.RawResponse;
+import xyz.juandiii.ark.core.JsonSerializer;
+import xyz.juandiii.ark.core.http.RawResponse;
 import xyz.juandiii.ark.mutiny.http.MutinyClientRequest;
 import xyz.juandiii.ark.mutiny.http.MutinyHttpTransport;
 

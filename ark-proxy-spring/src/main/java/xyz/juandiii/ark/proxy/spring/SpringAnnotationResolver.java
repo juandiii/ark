@@ -7,8 +7,8 @@ import org.springframework.web.service.annotation.HttpExchange;
 import org.springframework.web.service.annotation.PatchExchange;
 import org.springframework.web.service.annotation.PostExchange;
 import org.springframework.web.service.annotation.PutExchange;
-import xyz.juandiii.ark.exceptions.ArkException;
-import xyz.juandiii.ark.proxy.AnnotationResolver;
+import xyz.juandiii.ark.core.exceptions.ArkException;
+import xyz.juandiii.ark.core.proxy.AnnotationResolver;
 
 import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;

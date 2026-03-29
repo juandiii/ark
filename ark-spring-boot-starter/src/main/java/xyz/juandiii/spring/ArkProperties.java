@@ -5,9 +5,9 @@ import java.util.Map;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
-import xyz.juandiii.ark.interceptor.LoggingInterceptor;
-import xyz.juandiii.ark.proxy.HttpVersion;
-import xyz.juandiii.ark.proxy.RegisterArkClient;
+import xyz.juandiii.ark.core.interceptor.LoggingInterceptor;
+import xyz.juandiii.ark.core.proxy.HttpVersion;
+import xyz.juandiii.ark.core.proxy.RegisterArkClient;
 
 /**
  * Type-safe configuration properties for Ark HTTP clients.
