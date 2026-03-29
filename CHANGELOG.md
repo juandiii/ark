@@ -1,3 +1,19 @@
+## [v1.0.10](https://github.com/juandiii/ark/releases/tag/v1.0.10) — 2026-03-29
+
+### ✨ Features
+
+- Add trust-all for SSL and type-safe config and fix YAML logging. (#33) @juandiii
+- feat: add per-client interceptors and config headers support (#34) @juandiii
+- feature: Add Retry Policy and Retry transport wrap (#37) @juandiii
+
+### 📦 Other Changes
+
+- refactor: move base package to xyz.juandiii.ark.core (#35) @juandiii
+- docs: update docs (#36) @juandiii
+- docs: add retry.md  (#38) @juandiii
+
+---
+
 ## [v1.0.9](https://github.com/juandiii/ark/releases/tag/v1.0.9) — 2026-03-28
 
 ### 🐛 Bug Fixes
