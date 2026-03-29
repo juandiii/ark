@@ -5,7 +5,7 @@
   <parent>
     <groupId>xyz.juandiii</groupId>
     <artifactId>ark</artifactId>
-    <version>1.0.10</version>
+    <version>1.0.11-SNAPSHOT</version>
   </parent>
   <artifactId>ark-transport-apache</artifactId>
   <name>ark-transport-apache</name>

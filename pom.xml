@@ -3,7 +3,7 @@
   <groupId>xyz.juandiii</groupId>
   <artifactId>ark</artifactId>
   <packaging>pom</packaging>
-  <version>1.0.10</version>
+  <version>1.0.11-SNAPSHOT</version>
   <name>ark-client</name>
   <properties>
     <java.version>17</java.version>
