@@ -6,6 +6,7 @@ import io.quarkus.runtime.annotations.Recorder;
 import io.vertx.ext.web.client.WebClientOptions;
 import io.vertx.mutiny.core.Vertx;
 import io.vertx.mutiny.ext.web.client.WebClient;
+import xyz.juandiii.ark.async.http.RetryAsyncTransport;
 import xyz.juandiii.ark.core.ArkClient;
 import xyz.juandiii.ark.core.JsonSerializer;
 import xyz.juandiii.ark.async.AsyncArkClient;
@@ -15,6 +16,8 @@ import xyz.juandiii.ark.core.interceptor.RequestInterceptor;
 import xyz.juandiii.ark.core.proxy.InterceptorResolver;
 import xyz.juandiii.ark.mutiny.MutinyArkClient;
 import xyz.juandiii.ark.core.proxy.HttpVersion;
+import xyz.juandiii.ark.core.http.RetryPolicy;
+import xyz.juandiii.ark.core.http.RetryTransport;
 import xyz.juandiii.ark.core.ssl.InsecureSslContext;
 import xyz.juandiii.ark.core.proxy.PropertyResolver;
 import xyz.juandiii.ark.core.proxy.RegisterArkClient;
@@ -72,6 +75,7 @@ public class ArkRecorder {
                                    int connectTimeout, int readTimeout, String tlsConfigName,
                                    boolean trustAll, Map<String, String> headers,
                                    Class<?>[] interceptorClasses,
+                                   RetryPolicy retryPolicy,
                                    LoggingInterceptor.Level loggingLevel) {}
 
     private static ResolvedConfig resolveConfig(String clientName, ArkClientNamedConfig config,
@@ -87,6 +91,7 @@ public class ArkRecorder {
                 config != null && config.trustAll(),
                 config != null ? config.headers() : Map.of(),
                 annotation != null ? annotation.interceptors() : new Class<?>[0],
+                resolveRetryPolicy(config),
                 loggingLevel
         );
     }
@@ -104,9 +109,12 @@ public class ArkRecorder {
             return ArkJaxRsProxy.create(iface, builder.build());
         } else if (usesAsyncReturnTypes(iface)) {
             SSLContext sslContext = resolveSslContext(rc.clientName(), rc.tlsConfigName(), rc.trustAll());
+            var transport = buildJdkTransport(rc.httpVersion(), rc.connectTimeout(), sslContext);
             AsyncArkClient.Builder builder = AsyncArkClient.builder()
                     .serializer(serializer)
-                    .transport(buildJdkTransport(rc.httpVersion(), rc.connectTimeout(), sslContext))
+                    .transport(rc.retryPolicy() != null
+                            ? new RetryAsyncTransport(transport, rc.retryPolicy())
+                            : transport)
                     .baseUrl(rc.baseUrl())
                     .httpVersion(rc.httpVersion())
                     .connectTimeout(rc.connectTimeout())
@@ -116,9 +124,12 @@ public class ArkRecorder {
             return ArkJaxRsProxy.create(iface, builder.build());
         }
         SSLContext sslContext = resolveSslContext(rc.clientName(), rc.tlsConfigName(), rc.trustAll());
+        var jdkTransport = buildJdkTransport(rc.httpVersion(), rc.connectTimeout(), sslContext);
         ArkClient.Builder builder = ArkClient.builder()
                 .serializer(serializer)
-                .transport(buildJdkTransport(rc.httpVersion(), rc.connectTimeout(), sslContext))
+                .transport(rc.retryPolicy() != null
+                        ? new RetryTransport(jdkTransport, rc.retryPolicy())
+                        : jdkTransport)
                 .baseUrl(rc.baseUrl())
                 .httpVersion(rc.httpVersion())
                 .connectTimeout(rc.connectTimeout())
@@ -144,6 +155,20 @@ public class ArkRecorder {
         return PropertyResolver.resolve(annotation.baseUrl(),
                 key -> org.eclipse.microprofile.config.ConfigProvider.getConfig()
                         .getOptionalValue(key, String.class).orElse(null));
+    }
+
+    private static RetryPolicy resolveRetryPolicy(ArkClientNamedConfig config) {
+        if (config == null || config.retry().maxAttempts() <= 1) return null;
+        ArkClientNamedConfig.RetryConfig r = config.retry();
+        return RetryPolicy.builder()
+                .maxAttempts(r.maxAttempts())
+                .delay(Duration.ofMillis(r.delay()))
+                .multiplier(r.multiplier())
+                .maxDelay(Duration.ofMillis(r.maxDelay()))
+                .retryOn(r.retryOn())
+                .retryOnException(r.retryOnException())
+                .retryPost(r.retryPost())
+                .build();
     }
 
     private static SSLContext resolveSslContext(String clientName, String tlsConfigName, boolean trustAll) {

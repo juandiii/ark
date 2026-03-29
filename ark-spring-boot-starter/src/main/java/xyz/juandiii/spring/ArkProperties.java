@@ -1,10 +1,14 @@
 package xyz.juandiii.spring;
 
+import java.time.Duration;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.Map;
+import java.util.Set;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
+import xyz.juandiii.ark.core.http.RetryPolicy;
 import xyz.juandiii.ark.core.interceptor.LoggingInterceptor;
 import xyz.juandiii.ark.core.proxy.HttpVersion;
 import xyz.juandiii.ark.core.proxy.RegisterArkClient;
@@ -64,6 +68,7 @@ public class ArkProperties {
         private String tlsConfigurationName;
         private boolean trustAll;
         private Map<String, String> headers = new LinkedHashMap<>();
+        private RetryProperties retry;
 
         public String getBaseUrl() {
             return baseUrl;
@@ -120,5 +125,51 @@ public class ArkProperties {
         public void setHeaders(Map<String, String> headers) {
             this.headers = headers;
         }
+
+        public RetryProperties getRetry() {
+            return retry;
+        }
+
+        public void setRetry(RetryProperties retry) {
+            this.retry = retry;
+        }
+    }
+
+    public static class RetryProperties {
+
+        private int maxAttempts = RetryPolicy.DEFAULT_MAX_ATTEMPTS;
+        private long delay = RetryPolicy.DEFAULT_DELAY.toMillis();
+        private double multiplier = RetryPolicy.DEFAULT_MULTIPLIER;
+        private long maxDelay = RetryPolicy.DEFAULT_MAX_DELAY.toMillis();
+        private Set<Integer> retryOn = new LinkedHashSet<>(RetryPolicy.DEFAULT_RETRY_ON);
+        private boolean retryOnException = RetryPolicy.DEFAULT_RETRY_ON_EXCEPTION;
+        private boolean retryPost = RetryPolicy.DEFAULT_RETRY_POST;
+
+        public RetryPolicy toRetryPolicy() {
+            return RetryPolicy.builder()
+                    .maxAttempts(maxAttempts)
+                    .delay(Duration.ofMillis(delay))
+                    .multiplier(multiplier)
+                    .maxDelay(Duration.ofMillis(maxDelay))
+                    .retryOn(retryOn)
+                    .retryOnException(retryOnException)
+                    .retryPost(retryPost)
+                    .build();
+        }
+
+        public int getMaxAttempts() { return maxAttempts; }
+        public void setMaxAttempts(int maxAttempts) { this.maxAttempts = maxAttempts; }
+        public long getDelay() { return delay; }
+        public void setDelay(long delay) { this.delay = delay; }
+        public double getMultiplier() { return multiplier; }
+        public void setMultiplier(double multiplier) { this.multiplier = multiplier; }
+        public long getMaxDelay() { return maxDelay; }
+        public void setMaxDelay(long maxDelay) { this.maxDelay = maxDelay; }
+        public Set<Integer> getRetryOn() { return retryOn; }
+        public void setRetryOn(Set<Integer> retryOn) { this.retryOn = retryOn; }
+        public boolean isRetryOnException() { return retryOnException; }
+        public void setRetryOnException(boolean retryOnException) { this.retryOnException = retryOnException; }
+        public boolean isRetryPost() { return retryPost; }
+        public void setRetryPost(boolean retryPost) { this.retryPost = retryPost; }
     }
 }
