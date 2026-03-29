@@ -153,7 +153,11 @@ ark.client.user-api.read-timeout=15
 ark.client.user-api.tls-configuration-name=my-cert
 ark.client.user-api.trust-all=false
 ark.client.user-api.headers.X-Api-Key=${API_KEY}
+ark.client.user-api.retry.max-attempts=3
+ark.client.user-api.retry.delay=500
 ```
+
+See [Retry & Backoff](retry.md) for full retry configuration.
 
 ```java
 @RegisterArkClient(configKey = "user-api")
