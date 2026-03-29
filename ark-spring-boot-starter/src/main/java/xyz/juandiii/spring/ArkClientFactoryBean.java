@@ -13,6 +13,7 @@ import org.springframework.core.env.Environment;
 import xyz.juandiii.ark.core.ArkClient;
 import xyz.juandiii.ark.core.JsonSerializer;
 import xyz.juandiii.ark.core.http.HttpTransport;
+import xyz.juandiii.ark.core.http.RetryTransport;
 import xyz.juandiii.ark.core.interceptor.LoggingInterceptor;
 import xyz.juandiii.ark.core.proxy.ArkProxy;
 import xyz.juandiii.ark.core.proxy.HttpVersion;
@@ -77,6 +78,9 @@ public class ArkClientFactoryBean<T> implements FactoryBean<T>, BeanFactoryAware
         boolean trustAll = config != null && config.isTrustAll();
 
         HttpTransport transport = resolveTransport(httpVersion, connectTimeout, tlsConfigName, trustAll, configKey);
+        if (config != null && config.getRetry() != null) {
+            transport = new RetryTransport(transport, config.getRetry().toRetryPolicy());
+        }
 
         ArkClient.Builder builder = ArkClient.builder()
                 .serializer(serializer)
