@@ -162,7 +162,7 @@ LoggingInterceptor.apply(builder, LoggingInterceptor.Level.BODY);
 
 | Level | Logs |
 |-------|------|
-| `OFF` | Nothing |
+| `NONE` | Nothing |
 | `BASIC` | Method, URL, status, duration |
 | `HEADERS` | BASIC + request/response headers |
 | `BODY` | HEADERS + request/response body |

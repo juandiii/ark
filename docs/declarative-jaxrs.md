@@ -37,9 +37,10 @@ public interface UserApi {
 |-----------|---------|-------------|
 | `configKey` | `""` | Key for per-client config in `application.properties` |
 | `baseUrl` | `""` | Base URL, supports `${property}` placeholders |
-| `httpVersion` | `HTTP_1_1` | HTTP/1.1 or HTTP/2 |
+| `httpVersion` | `HTTP_2` | HTTP/1.1 or HTTP/2 |
 | `connectTimeout` | `10` | Connection timeout (seconds) |
 | `readTimeout` | `30` | Read timeout (seconds) |
+| `interceptors` | `{}` | Interceptor classes (auto-detects `RequestInterceptor` / `ResponseInterceptor`) |
 
 ## Per-Client Configuration
 
@@ -58,6 +59,8 @@ ark.client."user-api".http-version=HTTP_2
 ark.client."user-api".connect-timeout=5
 ark.client."user-api".read-timeout=15
 ark.client."user-api".tls-configuration-name=my-cert
+ark.client."user-api".trust-all=true
+ark.client."user-api".headers.X-Api-Key=${API_KEY}
 ```
 
 Properties take precedence over annotation values. If no `configKey` is set, the fully qualified interface name is used.
@@ -292,6 +295,32 @@ No additional configuration needed. The extension auto-discovers `@RegisterArkCl
 
 ---
 
+## Interceptors
+
+Register per-client interceptors via the annotation:
+
+```java
+@RegisterArkClient(configKey = "user-api", interceptors = {AuthInterceptor.class})
+@Path("/users")
+public interface UserApi { ... }
+```
+
+```java
+@ApplicationScoped
+public class AuthInterceptor implements RequestInterceptor {
+    @Inject TokenService tokenService;
+
+    @Override
+    public void intercept(RequestContext ctx) {
+        ctx.header("Authorization", "Bearer " + tokenService.getToken());
+    }
+}
+```
+
+A class implementing both `RequestInterceptor` and `ResponseInterceptor` is auto-detected and registered for both.
+
+---
+
 ## Logging
 
 Configure request/response logging via `application.properties`:
@@ -300,7 +329,7 @@ Configure request/response logging via `application.properties`:
 ark.logging.level=BODY
 ```
 
-Levels: `OFF`, `BASIC`, `HEADERS`, `BODY`.
+Levels: `NONE`, `BASIC`, `HEADERS`, `BODY`.
 
 ---
 

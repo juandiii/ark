@@ -221,7 +221,7 @@ Or configure via `application.properties` (Spring Boot / Quarkus):
 ark.logging.level=BODY
 ```
 
-Levels: `OFF`, `BASIC`, `HEADERS`, `BODY`.
+Levels: `NONE`, `BASIC`, `HEADERS`, `BODY`.
 
 ---
 
