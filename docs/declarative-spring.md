@@ -329,21 +329,17 @@ ark.logging.level=BODY
 
 ## Error Handling
 
-Same typed exceptions as fluent clients:
+Same typed exceptions as fluent clients. See [Error Handling](error-handling.md) for the full hierarchy.
 
 ```java
 try {
     User user = userApi.getUser("123");
 } catch (NotFoundException e) {
     // 404
-} catch (UnauthorizedException e) {
-    // 401
 } catch (TimeoutException e) {
     // request timed out
 }
 ```
-
-See [Sync Client — Error Handling](sync.md#error-handling) for the full exception hierarchy.
 
 ---
 

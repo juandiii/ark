@@ -181,7 +181,7 @@ public class UserController {
 
 ## Error Handling
 
-Errors propagate through the `Mono`. Use typed exceptions:
+See [Error Handling](error-handling.md) for the full exception hierarchy. Errors propagate through the `Mono`:
 
 ```java
 client.get("/users/1")

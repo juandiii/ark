@@ -258,7 +258,8 @@ Future<User> future          = vertxClient.get("/users/1").retrieve().body(User.
 
 ## Next Steps
 
-- [Sync Client](sync.md) — error handling, exception hierarchy
+- [Sync Client](sync.md)
+- [Error Handling](error-handling.md) — typed exception hierarchy
 - [Reactor Client](reactor.md) — Spring WebFlux
 - [Mutiny Client](mutiny.md) — Quarkus
 - [Transport Model](transports.md) — built-in and custom transports

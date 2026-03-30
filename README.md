@@ -1,34 +1,43 @@
-# Ark 🛳️
+# Ark 🛳
 
-**A modular HTTP client toolkit for Java 17+ with fluent and declarative APIs, pluggable transports, pluggable serialization, and first-class support for sync, async, and reactive applications.**
-
-> Fluent when you want control. Declarative when you want contracts.
-
-Ark lets you build HTTP clients in the style that fits your application:
-
-- **Fluent API** for explicit request composition
-- **Declarative clients** with Spring `@HttpExchange` or JAX-RS `@Path`/`@GET`/`@POST` annotations
-- **Auto-registration** with `@RegisterArkClient` — zero boilerplate injection
-
-All while keeping transport, serialization, and execution model explicit and reusable.
+**A lightweight, modular HTTP client for Java 17+.**
 
 ---
 
+## The Problem
+
+Java has no shortage of HTTP clients. But each one forces a trade-off:
+
+- **JDK HttpClient** — low-level, no serialization, no interceptors, no declarative API
+- **Spring WebClient / RestClient** — locked to Spring, tightly coupled to the framework
+- **Quarkus REST Client** — locked to Quarkus, JAX-RS only
+- **OkHttp / Apache HttpClient** — transport only, you build everything else yourself
+- **Feign** — declarative only, no fluent API, limited reactive support
+
+You end up choosing based on your framework, not your needs. Switching frameworks means rewriting your HTTP layer.
+
+## The Solution
+
+Ark separates the concerns that other clients bundle together:
+
+| Concern | Ark's approach |
+|---------|---------------|
+| **How to build requests** | Fluent API or declarative interfaces — your choice |
+| **How to send them** | Pluggable transports — JDK, Reactor Netty, Vert.x, Apache |
+| **How to serialize** | Pluggable serializers — Jackson, JSON-B, or your own |
+| **How to execute** | Sync, async, Reactor, Mutiny, Vert.x Future — same API |
+| **Where to run** | Spring Boot, Quarkus, or standalone — same code |
+
+One mental model. Any stack. No lock-in.
+
 ## Why Ark?
 
-Java HTTP clients often force you into one specific style, one framework, or one transport model.
-
-Ark takes a different approach:
-
-- Use a **fluent API** when you want explicit request control
-- Use **declarative interfaces** when you want contract-first clients
-- Keep your **HTTP transport pluggable**
-- Keep your **serializer replaceable**
-- Choose the **execution model** that matches your stack
-- Reuse the same mental model across Spring, Quarkus, and plain Java
-
-Ark is not just an HTTP engine.  
-It is a **client toolkit** for building HTTP clients in a consistent, framework-friendly, and transport-agnostic way.
+- **Write once, run anywhere** — same client code works in Spring, Quarkus, and plain Java
+- **Fluent when you want control** — explicit request composition with full access to headers, params, body
+- **Declarative when you want contracts** — `@RegisterArkClient` with `@HttpExchange` or JAX-RS annotations
+- **Zero overhead** — 2ms framework overhead measured in production
+- **Production ready** — TLS, retry with backoff, per-client config, typed exceptions, logging
+- **Native image** — GraalVM native support for both Spring and Quarkus
 
 ---
 
@@ -100,10 +109,12 @@ public interface UserApi {
 
 | Attribute | Default | Description |
 |-----------|---------|-------------|
+| `configKey` | `""` | Key for per-client config in `application.properties` |
 | `baseUrl` | `""` | Base URL, supports `${property}` placeholders |
-| `httpVersion` | `HTTP_1_1` | HTTP/1.1 or HTTP/2 |
+| `httpVersion` | `HTTP_2` | HTTP/1.1 or HTTP/2 |
 | `connectTimeout` | `10` | Connection timeout (seconds) |
 | `readTimeout` | `30` | Read timeout (seconds) |
+| `interceptors` | `{}` | Interceptor classes (auto-detects Request/Response) |
 
 ---
 
@@ -113,14 +124,22 @@ public interface UserApi {
 - Fluent HTTP API
 - Declarative HTTP clients with **Spring `@HttpExchange`** or **JAX-RS `@Path`/`@GET`**
 - `@RegisterArkClient` for zero-boilerplate auto-registration and injection
-- Pluggable transports
-- Pluggable serializers
+- Pluggable transports (JDK, Reactor Netty, Vert.x, Apache HttpClient 5)
+- Pluggable serializers (Jackson, Jackson Classic, JSON-B)
 - Dedicated sync, async, Reactor, Mutiny, and Vert.x APIs
-- Request and response interceptors
+- Type-safe per-client configuration (`ArkProperties` / `@ConfigMapping`)
+- Per-client interceptors and default headers via config
+- Retry with exponential backoff and jitter
+- TLS/SSL support (Spring SSL Bundles, Quarkus TLS Registry)
+- Trust-all SSL for development
+- Request/response logging (`NONE`, `BASIC`, `HEADERS`, `BODY`)
+- Typed exception hierarchy (400-504 mapped to specific exceptions)
 - Per-request timeout support
-- Spring Boot and Quarkus integration
+- HTTP/2 by default
+- Spring Boot (sync + WebFlux) and Quarkus integration
+- GraalVM native image support
 - Easy to test and mock
-- Modular Maven structure
+- Modular Maven structure (16 modules)
 
 ---
 
@@ -354,15 +373,18 @@ User user = client.get("/users/1")
 ## Documentation
 
 - [Getting Started](docs/getting-started.md)
-- [Transport Model](docs/transports.md)
-- [Declarative Spring Clients](docs/declarative-spring.md)
-- [Declarative JAX-RS Clients](docs/declarative-jaxrs.md)
 - [Sync Client](docs/sync.md)
+- [Error Handling](docs/error-handling.md) — typed exception hierarchy
 - [Async Client](docs/async.md)
 - [Reactor Client](docs/reactor.md)
 - [Mutiny Client](docs/mutiny.md)
 - [Vert.x Client](docs/vertx.md)
-- [Spring Boot Integration](docs/spring-boot.md)
+- [Transport Model](docs/transports.md) — built-in and custom transports
+- [Logging](docs/logging.md) — LoggingInterceptor + TransportLogger
+- [Retry & Backoff](docs/retry.md) — automatic retry with exponential backoff
+- [Declarative Spring Clients](docs/declarative-spring.md)
+- [Declarative JAX-RS Clients](docs/declarative-jaxrs.md)
+- [Spring Boot Integration](docs/spring-boot.md) — sync + WebFlux, config, TLS
 - [Quarkus Integration](docs/quarkus.md)
 - [Quarkus Jackson Extension](docs/quarkus-jackson.md)
 - [Testing](docs/testing.md)
