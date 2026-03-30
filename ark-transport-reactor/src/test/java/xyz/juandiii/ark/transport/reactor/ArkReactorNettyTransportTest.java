@@ -485,6 +485,51 @@ class ArkReactorNettyTransportTest {
     }
 
     @Nested
+    class SendBinary {
+
+        @Test
+        void givenBinaryBody_whenSendBinary_thenServerReceivesBytes() {
+            byte[] body = "{\"binary\":true}".getBytes();
+            Mono<RawResponse> result = transport().sendBinary("POST", baseUri.resolve("/echo-body"),
+                    Map.of(), body, null);
+
+            StepVerifier.create(result)
+                    .assertNext(response -> assertEquals("{\"binary\":true}", response.body()))
+                    .verifyComplete();
+        }
+
+        @Test
+        void givenNullBinaryBody_whenSendBinary_thenSucceeds() {
+            Mono<RawResponse> result = transport().sendBinary("GET", baseUri.resolve("/ok"),
+                    Map.of(), null, null);
+
+            StepVerifier.create(result)
+                    .assertNext(response -> assertEquals(200, response.statusCode()))
+                    .verifyComplete();
+        }
+
+        @Test
+        void given404_whenSendBinary_thenEmitsNotFoundException() {
+            Mono<RawResponse> result = transport().sendBinary("GET", baseUri.resolve("/not-found"),
+                    Map.of(), null, null);
+
+            StepVerifier.create(result)
+                    .expectErrorSatisfies(error -> assertInstanceOf(NotFoundException.class, error))
+                    .verify();
+        }
+
+        @Test
+        void givenTimeout_whenSendBinarySlowEndpoint_thenEmitsTimeoutException() {
+            Mono<RawResponse> result = transport().sendBinary("GET", baseUri.resolve("/slow"),
+                    Map.of(), null, Duration.ofMillis(100));
+
+            StepVerifier.create(result)
+                    .expectErrorSatisfies(error -> assertInstanceOf(TimeoutException.class, error))
+                    .verify(Duration.ofSeconds(5));
+        }
+    }
+
+    @Nested
     class ImplementsInterface {
 
         @Test

@@ -17,4 +17,9 @@ public interface VertxHttpTransport {
 
     Future<RawResponse> send(String method, URI uri, Map<String, String> headers,
                              String body, Duration timeout);
+
+    default Future<RawResponse> sendBinary(String method, URI uri, Map<String, String> headers,
+                                            byte[] body, Duration timeout) {
+        return send(method, uri, headers, body != null ? new String(body, java.nio.charset.StandardCharsets.UTF_8) : null, timeout);
+    }
 }

@@ -199,4 +199,39 @@ class RetryTransportTest {
         assertTrue(delays.get(1) >= 1000 && delays.get(1) <= 2000,
                 "Second delay should be in [1000, 2000] but was " + delays.get(1));
     }
+
+    @Test
+    void givenSendBinary_thenRetriesOnServerError() {
+        when(delegate.sendBinary(anyString(), any(), any(), any(), any()))
+                .thenThrow(new ServiceUnavailableException("unavailable"))
+                .thenReturn(SUCCESS);
+
+        var result = transport(RetryPolicy.defaults()).sendBinary("GET", TEST_URI, HEADERS, new byte[]{1, 2, 3}, null);
+
+        assertEquals(200, result.statusCode());
+        verify(delegate, times(2)).sendBinary(anyString(), any(), any(), any(), any());
+    }
+
+    @Test
+    void givenSendBinary_thenExhaustsRetries() {
+        when(delegate.sendBinary(anyString(), any(), any(), any(), any()))
+                .thenThrow(new ServiceUnavailableException("unavailable"));
+
+        var policy = RetryPolicy.builder().maxAttempts(2).build();
+        assertThrows(ServiceUnavailableException.class, () ->
+                transport(policy).sendBinary("GET", TEST_URI, HEADERS, new byte[]{1}, null));
+
+        verify(delegate, times(2)).sendBinary(anyString(), any(), any(), any(), any());
+    }
+
+    @Test
+    void givenSendBinaryPost_thenNoRetryByDefault() {
+        when(delegate.sendBinary(anyString(), any(), any(), any(), any()))
+                .thenThrow(new ServiceUnavailableException("unavailable"));
+
+        assertThrows(ServiceUnavailableException.class, () ->
+                transport(RetryPolicy.defaults()).sendBinary("POST", TEST_URI, HEADERS, new byte[]{1}, null));
+
+        verify(delegate, times(1)).sendBinary(anyString(), any(), any(), any(), any());
+    }
 }

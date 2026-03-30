@@ -328,6 +328,42 @@ class ArkApacheTransportTest {
     }
 
     @Nested
+    class SyncSendBinary {
+
+        @Test
+        void givenBinaryBody_whenSendBinary_thenServerReceivesBytes() {
+            byte[] body = "{\"binary\":true}".getBytes();
+            RawResponse response = transport().sendBinary("POST", baseUri.resolve("/echo-body"),
+                    Map.of("Content-Type", "application/octet-stream"), body, null);
+
+            assertEquals(200, response.statusCode());
+            assertEquals("{\"binary\":true}", response.body());
+        }
+
+        @Test
+        void givenNullBinaryBody_whenSendBinary_thenSucceeds() {
+            RawResponse response = transport().sendBinary("GET", baseUri.resolve("/ok"),
+                    Map.of(), null, null);
+
+            assertEquals(200, response.statusCode());
+        }
+
+        @Test
+        void given404_whenSendBinary_thenThrowsNotFoundException() {
+            assertThrows(xyz.juandiii.ark.core.exceptions.NotFoundException.class, () ->
+                    transport().sendBinary("GET", baseUri.resolve("/not-found"),
+                            Map.of(), null, null));
+        }
+
+        @Test
+        void givenTimeout_whenSendBinary_thenThrowsArkException() {
+            assertThrows(xyz.juandiii.ark.core.exceptions.ArkException.class, () ->
+                    transport().sendBinary("GET", baseUri.resolve("/slow"),
+                            Map.of(), null, Duration.ofMillis(100)));
+        }
+    }
+
+    @Nested
     class ImplementsInterface {
 
         @Test

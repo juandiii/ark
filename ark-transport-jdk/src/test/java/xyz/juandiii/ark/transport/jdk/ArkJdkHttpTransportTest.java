@@ -489,6 +489,73 @@ class ArkJdkHttpTransportTest {
     }
 
     @Nested
+    class SyncSendBinary {
+
+        @Test
+        void givenBinaryBody_whenSendBinary_thenServerReceivesBytes() {
+            byte[] body = "{\"binary\":true}".getBytes();
+            RawResponse response = transport().sendBinary("POST", baseUri.resolve("/echo-body"),
+                    Map.of(), body, null);
+
+            assertEquals(200, response.statusCode());
+            assertEquals("{\"binary\":true}", response.body());
+        }
+
+        @Test
+        void givenNullBinaryBody_whenSendBinary_thenSucceeds() {
+            RawResponse response = transport().sendBinary("GET", baseUri.resolve("/ok"),
+                    Map.of(), null, null);
+
+            assertEquals(200, response.statusCode());
+        }
+
+        @Test
+        void given404_whenSendBinary_thenThrowsApiException() {
+            assertThrows(NotFoundException.class, () ->
+                    transport().sendBinary("GET", baseUri.resolve("/not-found"),
+                            Map.of(), null, null));
+        }
+
+        @Test
+        void givenTimeout_whenSendBinarySlowEndpoint_thenThrowsTimeoutException() {
+            assertThrows(TimeoutException.class, () ->
+                    transport().sendBinary("GET", baseUri.resolve("/slow"),
+                            Map.of(), null, Duration.ofMillis(100)));
+        }
+    }
+
+    @Nested
+    class AsyncSendBinaryAsync {
+
+        @Test
+        void givenBinaryBody_whenSendBinaryAsync_thenServerReceivesBytes() throws Exception {
+            byte[] body = "{\"async-binary\":true}".getBytes();
+            CompletableFuture<RawResponse> future = transport().sendBinaryAsync("POST",
+                    baseUri.resolve("/echo-body"), Map.of(), body, null);
+
+            assertEquals("{\"async-binary\":true}", future.get().body());
+        }
+
+        @Test
+        void givenNullBinaryBody_whenSendBinaryAsync_thenSucceeds() throws Exception {
+            CompletableFuture<RawResponse> future = transport().sendBinaryAsync("GET",
+                    baseUri.resolve("/ok"), Map.of(), null, null);
+
+            assertEquals(200, future.get().statusCode());
+        }
+
+        @Test
+        void given404_whenSendBinaryAsync_thenCompletesExceptionally() {
+            CompletableFuture<RawResponse> future = transport().sendBinaryAsync("GET",
+                    baseUri.resolve("/not-found"), Map.of(), null, null);
+
+            ExecutionException ex = assertThrows(ExecutionException.class, future::get);
+            assertNotNull(ex.getCause());
+            assertInstanceOf(ApiException.class, ex.getCause());
+        }
+    }
+
+    @Nested
     class ImplementsInterfaces {
 
         @Test

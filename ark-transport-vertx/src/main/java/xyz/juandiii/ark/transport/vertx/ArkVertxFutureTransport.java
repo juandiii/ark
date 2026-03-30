@@ -37,21 +37,37 @@ public final class ArkVertxFutureTransport implements VertxHttpTransport {
     public Future<RawResponse> send(String method, URI uri, Map<String, String> headers,
                                     String body, Duration timeout) {
         LOGGER.log(System.Logger.Level.DEBUG, () -> TransportLogger.formatRequest(method, uri, headers, body));
-        var request = webClient.requestAbs(HttpMethod.valueOf(method), uri.toString());
+        return execute(method, uri, headers, body != null ? Buffer.buffer(body) : null, timeout);
+    }
 
+    @Override
+    public Future<RawResponse> sendBinary(String method, URI uri, Map<String, String> headers,
+                                           byte[] body, Duration timeout) {
+        LOGGER.log(System.Logger.Level.DEBUG, () ->
+                TransportLogger.formatRequest(method, uri, headers, body != null ? "[binary: " + body.length + " bytes]" : null));
+        return execute(method, uri, headers, body != null ? Buffer.buffer(body) : null, timeout);
+    }
+
+    private Future<RawResponse> execute(String method, URI uri, Map<String, String> headers,
+                                         Buffer buffer, Duration timeout) {
+        var request = webClient.requestAbs(HttpMethod.valueOf(method), uri.toString());
         headers.forEach(request::putHeader);
 
         if (timeout != null) {
             request.timeout(timeout.toMillis());
         }
 
-        Future<HttpResponse<Buffer>> response = body != null
-                ? request.sendBuffer(Buffer.buffer(body))
+        Future<HttpResponse<Buffer>> response = buffer != null
+                ? request.sendBuffer(buffer)
                 : request.send();
 
         return response
                 .map(this::handleResponse)
-                .otherwise(e -> { throw (e instanceof ArkException || e instanceof ApiException) ? (RuntimeException) e : ArkException.fromThrowable(method, uri, e); });
+                .otherwise(e -> {
+                    throw (e instanceof ArkException || e instanceof ApiException)
+                            ? (RuntimeException) e
+                            : ArkException.fromThrowable(method, uri, e);
+                });
     }
 
     private RawResponse handleResponse(HttpResponse<Buffer> r) {

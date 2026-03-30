@@ -37,23 +37,34 @@ public final class ArkVertxMutinyTransport implements MutinyHttpTransport {
     public Uni<RawResponse> send(String method, URI uri, Map<String, String> headers,
                                  String body, Duration timeout) {
         LOGGER.log(System.Logger.Level.DEBUG, () -> TransportLogger.formatRequest(method, uri, headers, body));
-        var request = webClient.requestAbs(HttpMethod.valueOf(method), uri.toString());
+        return execute(method, uri, headers, body != null ? Buffer.buffer(body) : null, timeout);
+    }
 
+    @Override
+    public Uni<RawResponse> sendBinary(String method, URI uri, Map<String, String> headers,
+                                        byte[] body, Duration timeout) {
+        LOGGER.log(System.Logger.Level.DEBUG, () ->
+                TransportLogger.formatRequest(method, uri, headers, body != null ? "[binary: " + body.length + " bytes]" : null));
+        return execute(method, uri, headers, body != null ? Buffer.buffer(body) : null, timeout);
+    }
+
+    private Uni<RawResponse> execute(String method, URI uri, Map<String, String> headers,
+                                      Buffer buffer, Duration timeout) {
+        var request = webClient.requestAbs(HttpMethod.valueOf(method), uri.toString());
         headers.forEach(request::putHeader);
 
         if (timeout != null) {
             request.timeout(timeout.toMillis());
         }
 
-        Uni<HttpResponse<Buffer>> response = body != null
-                ? request.sendBuffer(Buffer.buffer(body))
+        Uni<HttpResponse<Buffer>> response = buffer != null
+                ? request.sendBuffer(buffer)
                 : request.send();
 
         return response.onItem()
                 .transform(r -> {
                     int statusCode = r.statusCode();
                     String responseBody = r.bodyAsString();
-                    // Unwrap Mutiny MultiMap to Vert.x core MultiMap for header conversion
                     var responseHeaders = HeaderUtils.toHeaderMap(r.headers().getDelegate());
                     LOGGER.log(System.Logger.Level.DEBUG, () -> TransportLogger.formatResponse(statusCode, responseHeaders, responseBody));
                     if (RawResponse.isErrorStatus(statusCode)) {

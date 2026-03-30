@@ -26,8 +26,10 @@ public final class DefaultClientRequest extends AbstractClientRequest<DefaultCli
     @Override
     public ClientResponse retrieve() {
         applyInterceptors();
-        String serializedBody = serializeBody();
-        RawResponse raw = transport.send(method, buildUri(), headers, serializedBody, timeout);
+        SerializedBody body = prepareBody();
+        RawResponse raw = body.isBinary()
+                ? transport.sendBinary(method, buildUri(), headers, body.binary(), timeout)
+                : transport.send(method, buildUri(), headers, body.text(), timeout);
         for (ResponseInterceptor interceptor : responseInterceptors) {
             raw = interceptor.intercept(raw);
         }

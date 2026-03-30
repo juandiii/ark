@@ -4,9 +4,11 @@ import jakarta.ws.rs.FormParam;
 import jakarta.ws.rs.HeaderParam;
 import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.QueryParam;
+import xyz.juandiii.ark.core.http.MultipartBody;
 import xyz.juandiii.ark.core.interceptor.RequestContext;
 import xyz.juandiii.ark.core.proxy.FormEncoder;
 import xyz.juandiii.ark.core.proxy.ParameterBinder;
+import xyz.juandiii.ark.core.proxy.RequestPart;
 import xyz.juandiii.ark.core.type.MediaType;
 
 import java.lang.reflect.Method;
@@ -27,6 +29,7 @@ final class JaxRsParameterBinder implements ParameterBinder {
         Parameter[] params = method.getParameters();
 
         Map<String, String> formParams = new LinkedHashMap<>();
+        MultipartBody multipart = null;
         Object implicitBody = null;
 
         for (int i = 0; i < params.length; i++) {
@@ -34,12 +37,22 @@ final class JaxRsParameterBinder implements ParameterBinder {
             if (applyQueryParam(request, params[i], args[i])) continue;
             if (applyHeader(request, params[i], args[i])) continue;
             if (collectFormParam(params[i], args[i], formParams)) continue;
+
+            RequestPart rp = params[i].getAnnotation(RequestPart.class);
+            if (rp != null && args[i] != null) {
+                if (multipart == null) multipart = MultipartBody.builder();
+                multipart.addPart(rp.value(), args[i]);
+                continue;
+            }
+
             if (isImplicitBodyParam(params[i])) {
                 implicitBody = args[i];
             }
         }
 
-        if (!formParams.isEmpty()) {
+        if (multipart != null) {
+            request.body(multipart.build());
+        } else if (!formParams.isEmpty()) {
             request.contentType(MediaType.APPLICATION_FORM_URLENCODED);
             request.body(FormEncoder.encode(formParams));
         } else if (implicitBody != null) {
@@ -72,6 +85,8 @@ final class JaxRsParameterBinder implements ParameterBinder {
         return !param.isAnnotationPresent(PathParam.class)
                 && !param.isAnnotationPresent(QueryParam.class)
                 && !param.isAnnotationPresent(HeaderParam.class)
-                && !param.isAnnotationPresent(FormParam.class);
+                && !param.isAnnotationPresent(FormParam.class)
+                && !param.isAnnotationPresent(RequestPart.class);
     }
+
 }

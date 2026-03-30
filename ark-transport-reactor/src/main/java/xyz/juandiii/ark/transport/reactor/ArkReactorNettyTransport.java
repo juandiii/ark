@@ -1,5 +1,8 @@
 package xyz.juandiii.ark.transport.reactor;
 
+import io.netty.buffer.ByteBuf;
+import io.netty.buffer.Unpooled;
+import org.reactivestreams.Publisher;
 import reactor.core.publisher.Mono;
 import reactor.netty.ByteBufMono;
 import reactor.netty.http.client.HttpClient;
@@ -36,16 +39,34 @@ public final class ArkReactorNettyTransport implements ReactorHttpTransport {
     public Mono<RawResponse> send(String method, URI uri, Map<String, String> headers,
                                   String body, Duration timeout) {
         LOGGER.log(System.Logger.Level.DEBUG, () -> TransportLogger.formatRequest(method, uri, headers, body));
+        return execute(method, uri, headers,
+                body != null ? ByteBufMono.fromString(Mono.just(body)) : Mono.empty(),
+                timeout);
+    }
+
+    @Override
+    public Mono<RawResponse> sendBinary(String method, URI uri, Map<String, String> headers,
+                                         byte[] body, Duration timeout) {
+        LOGGER.log(System.Logger.Level.DEBUG, () ->
+                TransportLogger.formatRequest(method, uri, headers, body != null ? "[binary: " + body.length + " bytes]" : null));
+        return execute(method, uri, headers,
+                body != null ? Mono.just(Unpooled.wrappedBuffer(body)) : Mono.empty(),
+                timeout);
+    }
+
+    private Mono<RawResponse> execute(String method, URI uri, Map<String, String> headers,
+                                       Publisher<? extends ByteBuf> bodyPublisher, Duration timeout) {
         Mono<RawResponse> result = httpClient
                 .headers(h -> headers.forEach(h::set))
                 .request(HttpMethod.valueOf(method))
                 .uri(uri)
-                .send(body != null ? ByteBufMono.fromString(Mono.just(body)) : Mono.empty())
+                .send(bodyPublisher)
                 .responseSingle((response, content) ->
                         content.asString().defaultIfEmpty("").map(responseBody -> {
                             int statusCode = response.status().code();
                             var responseHeaders = HeaderUtils.toHeaderMap(response.responseHeaders());
-                            LOGGER.log(System.Logger.Level.DEBUG, () -> TransportLogger.formatResponse(statusCode, responseHeaders, responseBody));
+                            LOGGER.log(System.Logger.Level.DEBUG, () ->
+                                    TransportLogger.formatResponse(statusCode, responseHeaders, responseBody));
                             if (RawResponse.isErrorStatus(statusCode)) {
                                 throw ApiException.of(statusCode, responseBody);
                             }

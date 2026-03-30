@@ -5,9 +5,11 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestParam;
+import xyz.juandiii.ark.core.http.MultipartBody;
 import xyz.juandiii.ark.core.interceptor.RequestContext;
 import xyz.juandiii.ark.core.proxy.FormEncoder;
 import xyz.juandiii.ark.core.proxy.ParameterBinder;
+import xyz.juandiii.ark.core.proxy.RequestPart;
 import xyz.juandiii.ark.core.type.MediaType;
 
 import java.lang.reflect.Method;
@@ -25,15 +27,28 @@ final class SpringParameterBinder implements ParameterBinder {
     public void apply(RequestContext request, Method method, Object[] args) {
         if (args == null) return;
         Parameter[] params = method.getParameters();
+
+        MultipartBody multipart = null;
+
         for (int i = 0; i < params.length; i++) {
-            if (params[i].isAnnotationPresent(PathVariable.class)) {
-                continue;
-            }
+            if (params[i].isAnnotationPresent(PathVariable.class)) continue;
             if (applyQueryParam(request, params[i], args[i])) continue;
             if (applyHeader(request, params[i], args[i])) continue;
+
+            RequestPart rp = params[i].getAnnotation(RequestPart.class);
+            if (rp != null && args[i] != null) {
+                if (multipart == null) multipart = MultipartBody.builder();
+                multipart.addPart(rp.value(), args[i]);
+                continue;
+            }
+
             if (params[i].isAnnotationPresent(RequestBody.class) || isImplicitBodyParam(params[i])) {
                 applyBody(request, args[i]);
             }
+        }
+
+        if (multipart != null) {
+            request.body(multipart.build());
         }
     }
 
@@ -66,8 +81,10 @@ final class SpringParameterBinder implements ParameterBinder {
         return !param.isAnnotationPresent(PathVariable.class)
                 && !param.isAnnotationPresent(RequestParam.class)
                 && !param.isAnnotationPresent(RequestHeader.class)
-                && !param.isAnnotationPresent(RequestBody.class);
+                && !param.isAnnotationPresent(RequestBody.class)
+                && !param.isAnnotationPresent(RequestPart.class);
     }
+
 
     private String encodeMultiValueMap(MultiValueMap<?, ?> formData) {
         StringJoiner joiner = new StringJoiner("&");

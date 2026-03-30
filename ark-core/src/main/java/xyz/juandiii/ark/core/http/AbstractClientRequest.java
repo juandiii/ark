@@ -131,6 +131,19 @@ public abstract class AbstractClientRequest<T extends AbstractClientRequest<T>>
         return needsBody() ? serializer.serialize(body) : null;
     }
 
+    public record SerializedBody(String text, byte[] binary) {
+        public boolean isBinary() { return binary != null; }
+    }
+
+    protected SerializedBody prepareBody() {
+        if (!needsBody()) return new SerializedBody(null, null);
+        if (body instanceof MultipartBody mp) {
+            headers.put("Content-Type", MultipartEncoder.contentType(mp));
+            return new SerializedBody(null, MultipartEncoder.encode(mp));
+        }
+        return new SerializedBody(serializer.serialize(body), null);
+    }
+
     protected void validateResponse(RawResponse raw) {
         if (raw.isError()) {
             throw ApiException.of(raw.statusCode(), raw.body());

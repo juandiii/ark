@@ -11,6 +11,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.function.LongConsumer;
+import java.util.function.Supplier;
 
 /**
  * Transport decorator that retries failed requests with exponential backoff and jitter.
@@ -40,30 +41,40 @@ public final class RetryTransport implements HttpTransport {
     @Override
     public RawResponse send(String method, URI uri, Map<String, String> headers,
                             String body, Duration timeout) {
-        for (int attempt = 1; attempt <= policy.maxAttempts(); attempt++) {
+        return retryLoop(method, uri, () -> delegate.send(method, uri, headers, body, timeout));
+    }
+
+    @Override
+    public RawResponse sendBinary(String method, URI uri, Map<String, String> headers,
+                                   byte[] body, Duration timeout) {
+        return retryLoop(method, uri, () -> delegate.sendBinary(method, uri, headers, body, timeout));
+    }
+
+    private RawResponse retryLoop(String method, URI uri, Supplier<RawResponse> attempt) {
+        for (int i = 1; i <= policy.maxAttempts(); i++) {
             try {
-                return delegate.send(method, uri, headers, body, timeout);
+                return attempt.get();
             } catch (ApiException e) {
-                if (attempt == policy.maxAttempts()) {
-                    logExhausted(attempt, method, uri, e.statusCode());
+                if (i == policy.maxAttempts()) {
+                    logExhausted(i, method, uri, e.statusCode());
                     throw e;
                 }
                 if (!policy.retryOn().contains(e.statusCode()) || !isRetryableMethod(method)) {
                     throw e;
                 }
-                long delayMs = computeDelayMillis(attempt);
-                logRetry(attempt, method, uri, e.statusCode(), delayMs);
+                long delayMs = computeDelayMillis(i);
+                logRetry(i, method, uri, e.statusCode(), delayMs);
                 sleeper.accept(delayMs);
             } catch (TimeoutException | ConnectionException e) {
-                if (attempt == policy.maxAttempts()) {
-                    logExhausted(attempt, method, uri, -1);
+                if (i == policy.maxAttempts()) {
+                    logExhausted(i, method, uri, -1);
                     throw e;
                 }
                 if (!policy.retryOnException() || !isRetryableMethod(method)) {
                     throw e;
                 }
-                long delayMs = computeDelayMillis(attempt);
-                logRetry(attempt, method, uri, -1, delayMs);
+                long delayMs = computeDelayMillis(i);
+                logRetry(i, method, uri, -1, delayMs);
                 sleeper.accept(delayMs);
             }
         }
