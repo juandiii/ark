@@ -30,8 +30,10 @@ public final class DefaultMutinyClientRequest extends AbstractClientRequest<Defa
     @Override
     public MutinyClientResponse retrieve() {
         applyInterceptors();
-        String serializedBody = serializeBody();
-        Uni<RawResponse> uni = transport.send(method, buildUri(), headers, serializedBody, timeout);
+        SerializedBody body = prepareBody();
+        Uni<RawResponse> uni = body.isBinary()
+                ? transport.sendBinary(method, buildUri(), headers, body.binary(), timeout)
+                : transport.send(method, buildUri(), headers, body.text(), timeout);
         for (ResponseInterceptor interceptor : responseInterceptors) {
             uni = uni.onItem().transform(interceptor::intercept);
         }

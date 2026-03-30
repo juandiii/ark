@@ -30,8 +30,10 @@ public final class DefaultVertxClientRequest extends AbstractClientRequest<Defau
     @Override
     public VertxClientResponse retrieve() {
         applyInterceptors();
-        String serializedBody = serializeBody();
-        Future<RawResponse> future = transport.send(method, buildUri(), headers, serializedBody, timeout);
+        SerializedBody body = prepareBody();
+        Future<RawResponse> future = body.isBinary()
+                ? transport.sendBinary(method, buildUri(), headers, body.binary(), timeout)
+                : transport.send(method, buildUri(), headers, body.text(), timeout);
         for (ResponseInterceptor interceptor : responseInterceptors) {
             future = future.map(interceptor::intercept);
         }

@@ -29,9 +29,10 @@ public final class DefaultAsyncClientRequest extends AbstractClientRequest<Defau
     @Override
     public AsyncClientResponse retrieve() {
         applyInterceptors();
-        String serializedBody = serializeBody();
-        CompletableFuture<RawResponse> future = transport.sendAsync(
-                method, buildUri(), headers, serializedBody, timeout);
+        SerializedBody body = prepareBody();
+        CompletableFuture<RawResponse> future = body.isBinary()
+                ? transport.sendBinaryAsync(method, buildUri(), headers, body.binary(), timeout)
+                : transport.sendAsync(method, buildUri(), headers, body.text(), timeout);
         for (ResponseInterceptor interceptor : responseInterceptors) {
             future = future.thenApply(interceptor::intercept);
         }

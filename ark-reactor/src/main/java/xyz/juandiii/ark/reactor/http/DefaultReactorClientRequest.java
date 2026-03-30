@@ -30,8 +30,10 @@ public final class DefaultReactorClientRequest extends AbstractClientRequest<Def
     @Override
     public ReactorClientResponse retrieve() {
         applyInterceptors();
-        String serializedBody = serializeBody();
-        Mono<RawResponse> mono = transport.send(method, buildUri(), headers, serializedBody, timeout);
+        SerializedBody body = prepareBody();
+        Mono<RawResponse> mono = body.isBinary()
+                ? transport.sendBinary(method, buildUri(), headers, body.binary(), timeout)
+                : transport.send(method, buildUri(), headers, body.text(), timeout);
         for (ResponseInterceptor interceptor : responseInterceptors) {
             mono = mono.map(interceptor::intercept);
         }

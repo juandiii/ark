@@ -4,6 +4,8 @@ import org.apache.hc.client5.http.config.RequestConfig;
 import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
 import org.apache.hc.client5.http.protocol.HttpClientContext;
 import org.apache.hc.core5.http.ContentType;
+import org.apache.hc.core5.http.HttpEntity;
+import org.apache.hc.core5.http.io.entity.ByteArrayEntity;
 import org.apache.hc.core5.http.io.entity.EntityUtils;
 import org.apache.hc.core5.http.io.entity.StringEntity;
 import org.apache.hc.core5.http.io.support.ClassicRequestBuilder;
@@ -42,13 +44,28 @@ public final class ArkApacheTransport implements HttpTransport {
     public RawResponse send(String method, URI uri, Map<String, String> headers,
                             String body, Duration timeout) {
         LOGGER.log(System.Logger.Level.DEBUG, () -> TransportLogger.formatRequest(method, uri, headers, body));
-        ClassicRequestBuilder builder = ClassicRequestBuilder.create(method).setUri(uri);
+        String ct = headers.getOrDefault("Content-Type", "application/json");
+        HttpEntity entity = body != null ? new StringEntity(body, ContentType.create(ct)) : null;
+        return execute(method, uri, headers, entity, timeout);
+    }
 
+    @Override
+    public RawResponse sendBinary(String method, URI uri, Map<String, String> headers,
+                                   byte[] body, Duration timeout) {
+        LOGGER.log(System.Logger.Level.DEBUG, () ->
+                TransportLogger.formatRequest(method, uri, headers, body != null ? "[binary: " + body.length + " bytes]" : null));
+        String ct = headers.getOrDefault("Content-Type", "application/octet-stream");
+        HttpEntity entity = body != null ? new ByteArrayEntity(body, ContentType.create(ct)) : null;
+        return execute(method, uri, headers, entity, timeout);
+    }
+
+    private RawResponse execute(String method, URI uri, Map<String, String> headers,
+                                 HttpEntity entity, Duration timeout) {
+        ClassicRequestBuilder builder = ClassicRequestBuilder.create(method).setUri(uri);
         headers.forEach(builder::addHeader);
 
-        if (body != null) {
-            String ct = headers.getOrDefault("Content-Type", "application/json");
-            builder.setEntity(new StringEntity(body, ContentType.create(ct)));
+        if (entity != null) {
+            builder.setEntity(entity);
         }
 
         HttpClientContext context = HttpClientContext.create();

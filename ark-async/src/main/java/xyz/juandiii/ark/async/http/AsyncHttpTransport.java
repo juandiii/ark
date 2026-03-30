@@ -3,6 +3,7 @@ package xyz.juandiii.ark.async.http;
 import xyz.juandiii.ark.core.http.RawResponse;
 
 import java.net.URI;
+import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
@@ -17,4 +18,9 @@ public interface AsyncHttpTransport {
 
     CompletableFuture<RawResponse> sendAsync(String method, URI uri, Map<String, String> headers,
                                              String body, Duration timeout);
+
+    default CompletableFuture<RawResponse> sendBinaryAsync(String method, URI uri, Map<String, String> headers,
+                                                            byte[] body, Duration timeout) {
+        return sendAsync(method, uri, headers, body != null ? new String(body, StandardCharsets.UTF_8) : null, timeout);
+    }
 }
