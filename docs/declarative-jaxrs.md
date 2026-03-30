@@ -71,7 +71,7 @@ Properties take precedence over annotation values. If no `configKey` is set, the
 
 ### Automatic (recommended)
 
-With `@RegisterArkClient`, the bean is auto-created — just inject it:
+With `@RegisterArkClient`, the bean is auto-created - just inject it:
 
 ```java
 @ApplicationScoped
@@ -116,8 +116,9 @@ UserApi userApi = ArkProxy.create(UserApi.class, ark);
 | `@FormParam` | Form field (URL-encoded) |
 | `@Consumes` | Request content type (class or method level) |
 | `@Produces` | Response accept type (class or method level) |
+| `@RequestPart` | Multipart file or field (see [Multipart Upload](multipart.md)) |
 
-No `@RequestBody` needed — unannotated parameters are treated as the request body (JAX-RS convention).
+No `@RequestBody` needed - unannotated parameters are treated as the request body (JAX-RS convention).
 
 ---
 
@@ -199,7 +200,7 @@ Parameters without any annotation are treated as the request body:
 public interface UserApi {
 
     @POST
-    User create(User user);  // 'user' is the body — no annotation needed
+    User create(User user);  // 'user' is the body - no annotation needed
 }
 ```
 
@@ -278,7 +279,7 @@ public class UserService {
 
 ## GraalVM Native Image (Quarkus)
 
-Annotate interfaces with `@RegisterArkClient` — the `ark-quarkus-jackson` extension auto-registers them as JDK proxy definitions at build time:
+Annotate interfaces with `@RegisterArkClient` - the `ark-quarkus-jackson` extension auto-registers them as JDK proxy definitions at build time:
 
 ```java
 @RegisterArkClient(baseUrl = "${api.users.url}")

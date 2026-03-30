@@ -22,11 +22,11 @@ Ark provides a Quarkus extension that auto-configures HTTP clients as CDI beans.
 ```
 
 This auto-configures:
-- `JsonSerializer` — using Quarkus-managed `ObjectMapper`
-- `HttpTransport` — `ArkJdkHttpTransport` (sync)
-- `MutinyHttpTransport` — `ArkVertxMutinyTransport` (reactive)
-- `ArkClient.Builder` — sync, `@Dependent` scope
-- `MutinyArkClient.Builder` — reactive, `@Dependent` scope
+- `JsonSerializer` - using Quarkus-managed `ObjectMapper`
+- `HttpTransport` - `ArkJdkHttpTransport` (sync)
+- `MutinyHttpTransport` - `ArkVertxMutinyTransport` (reactive)
+- `ArkClient.Builder` - sync, `@Dependent` scope
+- `MutinyArkClient.Builder` - reactive, `@Dependent` scope
 
 ---
 
@@ -125,7 +125,7 @@ Supported out of the box. No additional configuration needed.
 
 ## More Details
 
-- [Quarkus Jackson Extension](quarkus-jackson.md) — full configuration, overrides, TLS, logging
-- [Declarative JAX-RS Clients](declarative-jaxrs.md) — `@RegisterArkClient` proxy clients
-- [Mutiny Client](mutiny.md) — Mutiny-specific usage
+- [Quarkus Jackson Extension](quarkus-jackson.md) - full configuration, overrides, TLS, logging
+- [Declarative JAX-RS Clients](declarative-jaxrs.md) - `@RegisterArkClient` proxy clients
+- [Mutiny Client](mutiny.md) - Mutiny-specific usage
 - [Getting Started](getting-started.md)

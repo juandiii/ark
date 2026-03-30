@@ -1,6 +1,6 @@
 # Transport Model
 
-Ark uses a **bridge pattern** — the transport is a thin adapter around an already configured HTTP client. Timeouts, SSL, connection pools, and HTTP version are configured on the client itself, not on Ark.
+Ark uses a **bridge pattern** - the transport is a thin adapter around an already configured HTTP client. Timeouts, SSL, connection pools, and HTTP version are configured on the client itself, not on Ark.
 
 ---
 
@@ -159,5 +159,5 @@ All built-in transports include DEBUG-level logging via `TransportLogger`. See [
 - [Sync Client](sync.md)
 - [Reactor Client](reactor.md)
 - [Mutiny Client](mutiny.md)
-- [Retry & Backoff](retry.md) — transport decorator for automatic retry
+- [Retry & Backoff](retry.md) - transport decorator for automatic retry
 - [Design Principles](design.md)

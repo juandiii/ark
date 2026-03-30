@@ -1,6 +1,6 @@
 # Retry & Backoff
 
-Ark provides automatic retry with exponential backoff for transient failures. Implemented as a transport decorator — transparent to the client code.
+Ark provides automatic retry with exponential backoff for transient failures. Implemented as a transport decorator - transparent to the client code.
 
 ---
 
@@ -30,7 +30,7 @@ ark.client."user-api".retry.retry-on-exception=true
 ark.client."user-api".retry.retry-post=false
 ```
 
-If `max-attempts` is 0 or 1 (default), retry is disabled — no overhead.
+If `max-attempts` is 0 or 1 (default), retry is disabled - no overhead.
 
 ---
 
@@ -65,18 +65,18 @@ Formula: `delay * multiplier^(attempt-1)`, capped at `max-delay`, then randomize
 ### What Gets Retried
 
 **By status code** (configurable via `retry-on`):
-- `429` — Too Many Requests (rate limiting)
-- `502` — Bad Gateway
-- `503` — Service Unavailable
-- `504` — Gateway Timeout
+- `429` - Too Many Requests (rate limiting)
+- `502` - Bad Gateway
+- `503` - Service Unavailable
+- `504` - Gateway Timeout
 
 **By exception** (when `retry-on-exception=true`):
-- `TimeoutException` — request timed out
-- `ConnectionException` — connection refused, DNS failure
+- `TimeoutException` - request timed out
+- `ConnectionException` - connection refused, DNS failure
 
 **Never retried:**
-- `400`, `401`, `403`, `404`, `409`, `422` — client errors
-- `RequestInterruptedException` — thread interrupted
+- `400`, `401`, `403`, `404`, `409`, `422` - client errors
+- `RequestInterruptedException` - thread interrupted
 
 ### Method Safety
 
@@ -89,9 +89,9 @@ Only idempotent methods are retried by default: `GET`, `HEAD`, `PUT`, `DELETE`, 
 ## Log Output
 
 ```
-WARN  Retry 1/3 for GET https://api.example.com/users (HTTP 503) — waiting 398ms
-WARN  Retry 2/3 for GET https://api.example.com/users (HTTP 503) — waiting 872ms
-ERROR Retry exhausted 3/3 for GET https://api.example.com/users (HTTP 503) — giving up
+WARN  Retry 1/3 for GET https://api.example.com/users (HTTP 503) - waiting 398ms
+WARN  Retry 2/3 for GET https://api.example.com/users (HTTP 503) - waiting 872ms
+ERROR Retry exhausted 3/3 for GET https://api.example.com/users (HTTP 503) - giving up
 ```
 
 Logger name: `xyz.juandiii.ark.retry`
@@ -133,7 +133,7 @@ AsyncHttpTransport transport = new RetryAsyncTransport(
 
 ## Reactive (Reactor / Mutiny)
 
-Retry is **not applied** for reactive transports — use the built-in retry operators instead:
+Retry is **not applied** for reactive transports - use the built-in retry operators instead:
 
 **Reactor:**
 ```java
@@ -159,7 +159,7 @@ client.get("/users/1")
 
 ## Related
 
-- [Logging](logging.md) — request/response logging
+- [Logging](logging.md) - request/response logging
 - [Getting Started](getting-started.md)
-- [Sync Client](sync.md) — error handling, exception hierarchy
+- [Sync Client](sync.md) - error handling, exception hierarchy
 - [Transport Model](transports.md)

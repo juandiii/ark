@@ -145,13 +145,13 @@ ark-bom                        Bill of Materials
 
 ## Code Guidelines
 
-- **Interfaces over concrete types** — `ClientRequest`/`ClientResponse` are interfaces, `Default*` are implementations
-- **CRTP for fluent chaining** — `AbstractClientRequest<T>` uses self-referencing generics
-- **Template Method** — `AbstractArkClient.createRequest()` defined once, subclasses implement
-- **Bridge pattern** — transports wrap pre-configured HTTP clients, don't configure them
-- **No duplication** — shared logic in `AbstractClientRequest`, `AbstractArkClient`, `AbstractArkBuilder`
-- **Error handling** — `ApiException` for HTTP errors, `ArkException` for transport/config errors, validation in `validateResponse()`
-- **Null safety** — validate null keys in `header()`, null types in `TypeRef.of()`
+- **Interfaces over concrete types** - `ClientRequest`/`ClientResponse` are interfaces, `Default*` are implementations
+- **CRTP for fluent chaining** - `AbstractClientRequest<T>` uses self-referencing generics
+- **Template Method** - `AbstractArkClient.createRequest()` defined once, subclasses implement
+- **Bridge pattern** - transports wrap pre-configured HTTP clients, don't configure them
+- **No duplication** - shared logic in `AbstractClientRequest`, `AbstractArkClient`, `AbstractArkBuilder`
+- **Error handling** - `ApiException` for HTTP errors, `ArkException` for transport/config errors, validation in `validateResponse()`
+- **Null safety** - validate null keys in `header()`, null types in `TypeRef.of()`
 
 ---
 

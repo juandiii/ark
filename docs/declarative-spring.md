@@ -70,7 +70,7 @@ Properties take precedence over annotation values. If no `configKey` is set, the
 
 ### Automatic (recommended)
 
-With `@RegisterArkClient`, the bean is auto-created — just inject it:
+With `@RegisterArkClient`, the bean is auto-created - just inject it:
 
 ```java
 @RestController
@@ -117,6 +117,7 @@ UserApi userApi = ArkProxy.create(UserApi.class, ark);
 | `@RequestParam` | Query parameter |
 | `@RequestHeader` | HTTP header |
 | `@RequestBody` | Request body (serialized) |
+| `@RequestPart` | Multipart file or field (see [Multipart Upload](multipart.md)) |
 
 Both `value` and `url` work: `@GetExchange("/users")` and `@GetExchange(url = "/users")`.
 
@@ -345,7 +346,7 @@ try {
 
 ## GraalVM Native Image
 
-Annotate interfaces with `@RegisterArkClient` — the `ark-spring-boot-starter` auto-registers them as JDK proxy definitions at AOT build time:
+Annotate interfaces with `@RegisterArkClient` - the `ark-spring-boot-starter` auto-registers them as JDK proxy definitions at AOT build time:
 
 ```java
 @RegisterArkClient(baseUrl = "${api.users.url}")

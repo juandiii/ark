@@ -339,7 +339,7 @@ class ArkReactorNettyTransportTest {
                 int port = ss.getLocalPort();
                 Thread serverThread = new Thread(() -> {
                     try (Socket client = ss.accept()) {
-                        // Accept and close immediately — connection reset
+                        // Accept and close immediately - connection reset
                     } catch (IOException ignored) {}
                 });
                 serverThread.setDaemon(true);

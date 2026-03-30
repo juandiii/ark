@@ -27,7 +27,7 @@ The extension registers the following CDI beans:
 | `ArkClient.Builder` | `@Dependent` | Pre-configured sync builder |
 | `MutinyArkClient.Builder` | `@Dependent` | Pre-configured Mutiny builder |
 
-All beans use `@DefaultBean` — define your own to override any of them.
+All beans use `@DefaultBean` - define your own to override any of them.
 
 ---
 
@@ -83,7 +83,7 @@ public class ReactiveUserService {
 
 ## Multiple Clients
 
-Builders are `@Dependent` scope — each injection gets a fresh instance:
+Builders are `@Dependent` scope - each injection gets a fresh instance:
 
 ```java
 @ApplicationScoped
@@ -201,7 +201,7 @@ quarkus.tls."my-cert".trust-store.pem.certs=certs/ca.crt
 ark.client."user-api".tls-configuration-name=my-cert
 ```
 
-For Vert.x Mutiny transports, the extension uses `VertxTlsResolver` which converts TLS Registry entries to native Vert.x `TrustOptions`/`KeyCertOptions` — no SSLContext conversion needed.
+For Vert.x Mutiny transports, the extension uses `VertxTlsResolver` which converts TLS Registry entries to native Vert.x `TrustOptions`/`KeyCertOptions` - no SSLContext conversion needed.
 
 ---
 

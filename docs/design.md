@@ -211,7 +211,11 @@ Applied via `LoggingInterceptor.apply(builder, level)` or `ark.logging.level` in
 
 ### Retry
 
-`RetryTransport` / `RetryAsyncTransport` — transport decorators with exponential backoff + jitter. Configured per-client via `ark.client.*.retry.*` properties. Only retries idempotent methods by default. Does not apply to reactive transports (Reactor/Mutiny have built-in retry).
+`RetryTransport` / `RetryAsyncTransport` - transport decorators with exponential backoff + jitter. Configured per-client via `ark.client.*.retry.*` properties. Only retries idempotent methods by default. Does not apply to reactive transports (Reactor/Mutiny have built-in retry).
+
+### Multipart Upload
+
+`MultipartBody` builder with sealed `Part` hierarchy (`FilePart`, `FieldPart`). `MultipartEncoder` encodes to `byte[]` with RFC 2046 MIME boundaries. All 5 transports override `sendBinary` natively. `ContentTypeDetector` uses magic bytes + `MimeType` enum for content type detection. `@RequestPart` annotation for declarative proxy support.
 
 ---
 

@@ -24,11 +24,11 @@ Both starters support `@RegisterArkClient` declarative clients, per-client confi
 
 ### What It Provides
 
-- `JsonSerializer` — `JacksonSerializer` using Spring's `ObjectMapper`
-- `HttpTransport` — `ArkJdkHttpTransport` with default `HttpClient`
-- `ArkClient.Builder` — prototype-scoped, pre-configured with serializer + transport
+- `JsonSerializer` - `JacksonSerializer` using Spring's `ObjectMapper`
+- `HttpTransport` - `ArkJdkHttpTransport` with default `HttpClient`
+- `ArkClient.Builder` - prototype-scoped, pre-configured with serializer + transport
 
-All beans use `@ConditionalOnMissingBean` — define your own to override.
+All beans use `@ConditionalOnMissingBean` - define your own to override.
 
 ### Usage
 
@@ -101,14 +101,14 @@ public HttpTransport httpTransport() {
 
 ### What It Provides
 
-- `JsonSerializer` — `JacksonSerializer` using Spring's `ObjectMapper`
-- `ReactorHttpTransport` — `ArkReactorNettyTransport` with default Reactor Netty `HttpClient`
-- `ReactorArkClient.Builder` — prototype-scoped, pre-configured with serializer + transport
-- `ArkWebFluxProperties` — type-safe configuration (`@ConfigurationProperties`)
-- `TlsResolver` — SSL bundle resolution (auto-detects `SslBundles`)
+- `JsonSerializer` - `JacksonSerializer` using Spring's `ObjectMapper`
+- `ReactorHttpTransport` - `ArkReactorNettyTransport` with default Reactor Netty `HttpClient`
+- `ReactorArkClient.Builder` - prototype-scoped, pre-configured with serializer + transport
+- `ArkWebFluxProperties` - type-safe configuration (`@ConfigurationProperties`)
+- `TlsResolver` - SSL bundle resolution (auto-detects `SslBundles`)
 - Auto-discovery of `@RegisterArkClient` interfaces with reactive proxy creation
 
-All beans use `@ConditionalOnMissingBean` — define your own to override.
+All beans use `@ConditionalOnMissingBean` - define your own to override.
 
 ### Fluent Usage
 
@@ -194,7 +194,7 @@ spring.ssl.bundle.pem.my-cert.truststore.certificate=classpath:certs/ca.crt
 
 Same configuration structure as the sync starter. See [Declarative Spring Clients](declarative-spring.md) for full annotation details.
 
-> **Note:** Retry is not configured via properties for reactive clients — use Reactor's built-in `.retryWhen()` instead. See [Retry & Backoff](retry.md#reactive-reactor--mutiny).
+> **Note:** Retry is not configured via properties for reactive clients - use Reactor's built-in `.retryWhen()` instead. See [Retry & Backoff](retry.md#reactive-reactor--mutiny).
 
 ### Custom @EnableArkWebFluxClients
 

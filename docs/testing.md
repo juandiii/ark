@@ -28,7 +28,7 @@ assertEquals("Juan", user.name());
 
 ## Mocking with Mockito
 
-`Ark`, `ClientRequest`, and `ClientResponse` are interfaces — fully mockeable:
+`Ark`, `ClientRequest`, and `ClientResponse` are interfaces - fully mockeable:
 
 ```java
 @ExtendWith(MockitoExtension.class)
@@ -88,7 +88,7 @@ Ark client = ArkClient.builder()
     .baseUrl("https://api.example.com")
     .build();
 
-// Typed exception — catches exact HTTP status
+// Typed exception - catches exact HTTP status
 assertThrows(NotFoundException.class, () ->
     client.get("/users/999").retrieve().body(User.class));
 
@@ -107,7 +107,7 @@ ServiceUnavailableException ex = assertThrows(ServiceUnavailableException.class,
 assertEquals(503, ex.statusCode());
 ```
 
-See [Sync Client — Error Handling](sync.md#error-handling) for the full exception hierarchy.
+See [Sync Client - Error Handling](sync.md#error-handling) for the full exception hierarchy.
 
 ---
 
