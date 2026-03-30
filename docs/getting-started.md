@@ -263,6 +263,7 @@ Future<User> future          = vertxClient.get("/users/1").retrieve().body(User.
 - [Reactor Client](reactor.md) — Spring WebFlux
 - [Mutiny Client](mutiny.md) — Quarkus
 - [Transport Model](transports.md) — built-in and custom transports
+- [Serialization](serialization.md) — Jackson, JSON-B, custom
 - [Logging](logging.md) — LoggingInterceptor + TransportLogger
 - [Retry & Backoff](retry.md) — automatic retry with exponential backoff
 - [Declarative JAX-RS](declarative-jaxrs.md) — `@RegisterArkClient` with JAX-RS

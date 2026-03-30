@@ -1,6 +1,6 @@
 # Ark 🛳
 
-**A lightweight, modular HTTP client for Java 17+.**
+**A modular HTTP client toolkit for Java 17+ with fluent and declarative APIs, pluggable transports, and support for sync, async, and reactive applications.**
 
 ---
 
@@ -9,12 +9,12 @@
 Java has no shortage of HTTP clients. But each one forces a trade-off:
 
 - **JDK HttpClient** — low-level, no serialization, no interceptors, no declarative API
-- **Spring WebClient / RestClient** — locked to Spring, tightly coupled to the framework
-- **Quarkus REST Client** — locked to Quarkus, JAX-RS only
+- **Spring WebClient / RestClient** — optimized for Spring applications and programming models
+- **Quarkus REST Client** — tightly aligned with Quarkus and JAX-RS-style declarative clients
 - **OkHttp / Apache HttpClient** — transport only, you build everything else yourself
 - **Feign** — declarative only, no fluent API, limited reactive support
 
-You end up choosing based on your framework, not your needs. Switching frameworks means rewriting your HTTP layer.
+Ark gives you one client model that survives framework changes, transport changes, and execution-model changes.
 
 ## The Solution
 
@@ -32,12 +32,13 @@ One mental model. Any stack. No lock-in.
 
 ## Why Ark?
 
-- **Write once, run anywhere** — same client code works in Spring, Quarkus, and plain Java
-- **Fluent when you want control** — explicit request composition with full access to headers, params, body
-- **Declarative when you want contracts** — `@RegisterArkClient` with `@HttpExchange` or JAX-RS annotations
-- **Zero overhead** — 2ms framework overhead measured in production
-- **Production ready** — TLS, retry with backoff, per-client config, typed exceptions, logging
-- **Native image** — GraalVM native support for both Spring and Quarkus
+- **One client model across stacks** — use Ark in Spring, Quarkus, and plain Java
+- **Fluent when you want control** — explicit request composition with full access to headers, params, and body
+- **Declarative when you want contracts** — `@RegisterArkClient` with Spring `@HttpExchange` or JAX-RS annotations
+- **Transport-agnostic** — plug in JDK, Reactor Netty, Vert.x, or Apache HttpClient
+- **Execution-model aware** — sync, async, Reactor, Mutiny, and Vert.x Future
+- **Production-ready features** — TLS, retry, logging, typed exceptions, and per-client config
+- **Native-image friendly** — designed to work well in GraalVM-based deployments
 
 ---
 
@@ -139,8 +140,6 @@ public interface UserApi {
 - Spring Boot (sync + WebFlux) and Quarkus integration
 - GraalVM native image support
 - Easy to test and mock
-- Modular Maven structure (16 modules)
-
 ---
 
 ## Execution Models
@@ -327,49 +326,6 @@ You can also provide your own transport implementation.
 
 ---
 
-## Serialization
-
-Serialization is explicit and replaceable.
-
-Use Jackson, Gson, or your own serializer implementation without changing the shape of your clients.
-
-```java
-Ark client = ArkClient.builder()
-    .serializer(new JacksonSerializer(new ObjectMapper()))
-    .transport(new ArkJdkHttpTransport(HttpClient.newBuilder().build()))
-    .baseUrl("https://api.example.com")
-    .build();
-```
-
----
-
-## Testing
-
-Ark is easy to test because transport is an explicit dependency.
-
-You can plug in a fake transport without starting a server or mocking a concrete HTTP client.
-
-```java
-HttpTransport transport = (method, uri, headers, body, timeout) ->
-    new RawResponse(
-        200,
-        Map.of("Content-Type", List.of("application/json")),
-        "{\"id\":1,\"name\":\"Juan\"}"
-    );
-
-Ark client = ArkClient.builder()
-    .serializer(new JacksonSerializer(new ObjectMapper()))
-    .transport(transport)
-    .baseUrl("https://api.example.com")
-    .build();
-
-User user = client.get("/users/1")
-    .retrieve()
-    .body(User.class);
-```
-
----
-
 ## Documentation
 
 - [Getting Started](docs/getting-started.md)
@@ -380,6 +336,7 @@ User user = client.get("/users/1")
 - [Mutiny Client](docs/mutiny.md)
 - [Vert.x Client](docs/vertx.md)
 - [Transport Model](docs/transports.md) — built-in and custom transports
+- [Serialization](docs/serialization.md) — Jackson, JSON-B, custom
 - [Logging](docs/logging.md) — LoggingInterceptor + TransportLogger
 - [Retry & Backoff](docs/retry.md) — automatic retry with exponential backoff
 - [Declarative Spring Clients](docs/declarative-spring.md)
