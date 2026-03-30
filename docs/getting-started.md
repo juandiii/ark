@@ -39,11 +39,11 @@ Add the modules you need:
 
 Or use a starter:
 
-| Starter | Stack |
-|---------|-------|
-| `ark-spring-boot-starter` | Spring MVC (sync) |
-| `ark-spring-boot-starter-webflux` | Spring WebFlux (reactive) |
-| `ark-quarkus-jackson` | Quarkus (sync + Mutiny) |
+| Starter | Stack | Features |
+|---------|-------|----------|
+| `ark-spring-boot-starter` | Spring MVC (sync) | Config, TLS, retry, interceptors, headers, native |
+| `ark-spring-boot-starter-webflux` | Spring WebFlux (reactive) | Config, TLS, interceptors, headers, native |
+| `ark-quarkus-jackson` | Quarkus (sync + Mutiny) | Config, TLS, retry, interceptors, headers, native |
 
 ---
 

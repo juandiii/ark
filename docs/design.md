@@ -219,7 +219,7 @@ Applied via `LoggingInterceptor.apply(builder, level)` or `ark.logging.level` in
 
 - Java 17+
 - Jackson for `ark-jackson`
-- Spring Boot 4.0+ for `ark-spring-boot-starter`
+- Spring Boot 4.0+ for `ark-spring-boot-starter` and `ark-spring-boot-starter-webflux`
 - Reactor Core for `ark-reactor`
 - Reactor Netty for `ark-transport-reactor`
 - Vert.x Core for `ark-vertx`

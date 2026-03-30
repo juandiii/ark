@@ -4,8 +4,10 @@ Ark provides two starters for Spring Boot:
 
 | Starter | Stack | Auto-configures |
 |---------|-------|-----------------|
-| `ark-spring-boot-starter` | Spring MVC (sync) | `JsonSerializer` + `HttpTransport` + `ArkClient.Builder` |
-| `ark-spring-boot-starter-webflux` | Spring WebFlux (reactive) | `JsonSerializer` + `ReactorHttpTransport` + `ReactorArkClient.Builder` |
+| `ark-spring-boot-starter` | Spring MVC (sync) | `JsonSerializer` + `HttpTransport` + `ArkClient.Builder` + `ArkProperties` + `TlsResolver` |
+| `ark-spring-boot-starter-webflux` | Spring WebFlux (reactive) | `JsonSerializer` + `ReactorHttpTransport` + `ReactorArkClient.Builder` + `ArkWebFluxProperties` + `TlsResolver` |
+
+Both starters support `@RegisterArkClient` declarative clients, per-client configuration, TLS/SSL, trust-all, headers, interceptors, and GraalVM native image.
 
 ---
 
@@ -102,8 +104,13 @@ public HttpTransport httpTransport() {
 - `JsonSerializer` — `JacksonSerializer` using Spring's `ObjectMapper`
 - `ReactorHttpTransport` — `ArkReactorNettyTransport` with default Reactor Netty `HttpClient`
 - `ReactorArkClient.Builder` — prototype-scoped, pre-configured with serializer + transport
+- `ArkWebFluxProperties` — type-safe configuration (`@ConfigurationProperties`)
+- `TlsResolver` — SSL bundle resolution (auto-detects `SslBundles`)
+- Auto-discovery of `@RegisterArkClient` interfaces with reactive proxy creation
 
-### Usage
+All beans use `@ConditionalOnMissingBean` — define your own to override.
+
+### Fluent Usage
 
 ```java
 @Configuration
@@ -131,6 +138,72 @@ public class UserController {
             .body(User.class);
     }
 }
+```
+
+### Declarative Usage
+
+```java
+@RegisterArkClient(configKey = "user-api")
+@HttpExchange("/users")
+public interface UserApi {
+    @GetExchange("/{id}")
+    Mono<User> getUser(@PathVariable String id);
+
+    @GetExchange
+    Flux<User> listUsers();
+
+    @PostExchange
+    Mono<User> createUser(@RequestBody User user);
+}
+```
+
+```java
+@RestController
+public class UserController {
+
+    private final UserApi userApi;
+
+    public UserController(UserApi userApi) {
+        this.userApi = userApi;
+    }
+
+    @GetMapping("/users/{id}")
+    public Mono<User> getUser(@PathVariable String id) {
+        return userApi.getUser(id);
+    }
+}
+```
+
+### WebFlux Configuration
+
+```properties
+# application.properties
+ark.logging.level=BODY
+
+ark.client.user-api.base-url=https://api.example.com
+ark.client.user-api.http-version=HTTP_2
+ark.client.user-api.connect-timeout=5
+ark.client.user-api.read-timeout=15
+ark.client.user-api.trust-all=false
+ark.client.user-api.headers.Authorization=Bearer ${TOKEN}
+ark.client.user-api.tls-configuration-name=my-cert
+
+# TLS bundle
+spring.ssl.bundle.pem.my-cert.truststore.certificate=classpath:certs/ca.crt
+```
+
+Same configuration structure as the sync starter. See [Declarative Spring Clients](declarative-spring.md) for full annotation details.
+
+> **Note:** Retry is not configured via properties for reactive clients — use Reactor's built-in `.retryWhen()` instead. See [Retry & Backoff](retry.md#reactive-reactor--mutiny).
+
+### Custom @EnableArkWebFluxClients
+
+For manual package scanning (instead of auto-discovery):
+
+```java
+@SpringBootApplication
+@EnableArkWebFluxClients(basePackages = "com.example.clients")
+public class MyApplication { }
 ```
 
 ---

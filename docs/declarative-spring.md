@@ -130,7 +130,7 @@ Both `value` and `url` work: `@GetExchange("/users")` and `@GetExchange(url = "/
 | `void` | Calls `toBodilessEntity()` |
 | `ArkResponse<T>` | Full response (status + headers + body) |
 | `String` | Raw response body |
-| `Mono<T>` | Reactor reactive (requires `ReactorArk`) |
+| `Mono<T>` | Reactor reactive (requires `ark-spring-boot-starter-webflux`) |
 | `Mono<ArkResponse<T>>` | Reactor full response |
 | `Flux<T>` | Reactor stream from JSON array |
 
