@@ -339,6 +339,7 @@ You can also provide your own transport implementation.
 - [Serialization](docs/serialization.md) — Jackson, JSON-B, custom
 - [Logging](docs/logging.md) — LoggingInterceptor + TransportLogger
 - [Retry & Backoff](docs/retry.md) — automatic retry with exponential backoff
+- [Multipart Upload](docs/multipart.md) — file upload with binary fidelity
 - [Declarative Spring Clients](docs/declarative-spring.md)
 - [Declarative JAX-RS Clients](docs/declarative-jaxrs.md)
 - [Spring Boot Integration](docs/spring-boot.md) — sync + WebFlux, config, TLS

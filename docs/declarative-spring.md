@@ -117,6 +117,7 @@ UserApi userApi = ArkProxy.create(UserApi.class, ark);
 | `@RequestParam` | Query parameter |
 | `@RequestHeader` | HTTP header |
 | `@RequestBody` | Request body (serialized) |
+| `@RequestPart` | Multipart file or field (see [Multipart Upload](multipart.md)) |
 
 Both `value` and `url` work: `@GetExchange("/users")` and `@GetExchange(url = "/users")`.
 

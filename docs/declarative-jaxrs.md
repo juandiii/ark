@@ -116,6 +116,7 @@ UserApi userApi = ArkProxy.create(UserApi.class, ark);
 | `@FormParam` | Form field (URL-encoded) |
 | `@Consumes` | Request content type (class or method level) |
 | `@Produces` | Response accept type (class or method level) |
+| `@RequestPart` | Multipart file or field (see [Multipart Upload](multipart.md)) |
 
 No `@RequestBody` needed — unannotated parameters are treated as the request body (JAX-RS convention).
 
