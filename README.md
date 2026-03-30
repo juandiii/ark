@@ -195,7 +195,7 @@ Import the BOM first:
         <dependency>
             <groupId>xyz.juandiii</groupId>
             <artifactId>ark-bom</artifactId>
-            <version>1.0.10</version> <!-- ark-bom -->
+            <version>1.0.11-SNAPSHOT</version> <!-- ark-bom -->
             <type>pom</type>
             <scope>import</scope>
         </dependency>
