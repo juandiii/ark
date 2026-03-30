@@ -1,6 +1,6 @@
 # Sync Client
 
-The `Ark` client executes requests synchronously — blocking until the response is received.
+The `Ark` client executes requests synchronously - blocking until the response is received.
 
 ---
 
@@ -32,8 +32,8 @@ Or use the Spring Boot starter:
 
 ### Transport
 
-- **Interface:** `HttpTransport` — returns `RawResponse`
-- **Implementation:** `ArkJdkHttpTransport` — backed by Java's `HttpClient`
+- **Interface:** `HttpTransport` - returns `RawResponse`
+- **Implementation:** `ArkJdkHttpTransport` - backed by Java's `HttpClient`
 
 ---
 
@@ -178,7 +178,7 @@ try {
 
 ## Related
 
-- [Error Handling](error-handling.md) — full exception hierarchy
+- [Error Handling](error-handling.md) - full exception hierarchy
 - [Spring Boot Integration](spring-boot.md)
 - [Async Client](async.md)
 - [Transport Model](transports.md)

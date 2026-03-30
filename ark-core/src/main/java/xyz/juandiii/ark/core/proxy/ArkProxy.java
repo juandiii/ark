@@ -53,7 +53,7 @@ public final class ArkProxy {
     }
 
     /**
-     * Creates a proxy with explicit collaborators — for advanced use or custom execution models.
+     * Creates a proxy with explicit collaborators - for advanced use or custom execution models.
      */
     @SuppressWarnings("unchecked")
     public static <T> T create(Class<T> clientInterface,

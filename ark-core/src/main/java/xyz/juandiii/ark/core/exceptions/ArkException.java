@@ -32,7 +32,7 @@ public class ArkException extends RuntimeException {
     }
 
     public ArkException(String method, URI uri, String message, Throwable cause) {
-        super(method + " " + uri + " — " + message, cause);
+        super(method + " " + uri + " - " + message, cause);
         this.method = method;
         this.uri = uri;
     }

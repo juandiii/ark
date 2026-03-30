@@ -104,7 +104,7 @@ public final class RetryAsyncTransport implements AsyncHttpTransport {
                 ? "(HTTP " + api.statusCode() + ")"
                 : "(exception)";
         LOGGER.log(System.Logger.Level.WARNING,
-                "Retry {0}/{1} for {2} {3} {4} — waiting {5}ms",
+                "Retry {0}/{1} for {2} {3} {4} - waiting {5}ms",
                 attempt, policy.maxAttempts(), method, uri, detail, delayMs);
     }
 

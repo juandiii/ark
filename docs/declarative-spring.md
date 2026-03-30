@@ -70,7 +70,7 @@ Properties take precedence over annotation values. If no `configKey` is set, the
 
 ### Automatic (recommended)
 
-With `@RegisterArkClient`, the bean is auto-created — just inject it:
+With `@RegisterArkClient`, the bean is auto-created - just inject it:
 
 ```java
 @RestController
@@ -346,7 +346,7 @@ try {
 
 ## GraalVM Native Image
 
-Annotate interfaces with `@RegisterArkClient` — the `ark-spring-boot-starter` auto-registers them as JDK proxy definitions at AOT build time:
+Annotate interfaces with `@RegisterArkClient` - the `ark-spring-boot-starter` auto-registers them as JDK proxy definitions at AOT build time:
 
 ```java
 @RegisterArkClient(baseUrl = "${api.users.url}")

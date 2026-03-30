@@ -211,7 +211,7 @@ Applied via `LoggingInterceptor.apply(builder, level)` or `ark.logging.level` in
 
 ### Retry
 
-`RetryTransport` / `RetryAsyncTransport` — transport decorators with exponential backoff + jitter. Configured per-client via `ark.client.*.retry.*` properties. Only retries idempotent methods by default. Does not apply to reactive transports (Reactor/Mutiny have built-in retry).
+`RetryTransport` / `RetryAsyncTransport` - transport decorators with exponential backoff + jitter. Configured per-client via `ark.client.*.retry.*` properties. Only retries idempotent methods by default. Does not apply to reactive transports (Reactor/Mutiny have built-in retry).
 
 ### Multipart Upload
 

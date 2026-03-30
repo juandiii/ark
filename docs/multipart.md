@@ -83,7 +83,7 @@ public interface FileApi {
 |---------------|-----------|-------------|
 | `Path` | File part (reads bytes from disk) | Detected by magic bytes + extension |
 | `byte[]` | File part | Detected by magic bytes |
-| Any other type | Text field (`String.valueOf()`) | — |
+| Any other type | Text field (`String.valueOf()`) | - |
 
 ---
 
@@ -91,12 +91,12 @@ public interface FileApi {
 
 File content types are detected automatically by `ContentTypeDetector`:
 
-1. **Magic bytes** (priority) — inspects first 12 bytes of the file:
+1. **Magic bytes** (priority) - inspects first 12 bytes of the file:
    - JPEG, PNG, GIF, WEBP, PDF, ZIP, GZIP, XML, JSON
 
-2. **Extension** (fallback) — 25+ extensions mapped via `MimeType` enum
+2. **Extension** (fallback) - 25+ extensions mapped via `MimeType` enum
 
-3. **Default** — `application/octet-stream` if unrecognized
+3. **Default** - `application/octet-stream` if unrecognized
 
 You can also specify the content type explicitly:
 
@@ -110,8 +110,8 @@ MultipartBody.builder()
 
 ## Security
 
-- **Magic bytes detection** — does not trust file extensions alone
-- **Header sanitization** — filenames and part names are sanitized to prevent MIME header injection (`"`, `\r`, `\n` escaped)
+- **Magic bytes detection** - does not trust file extensions alone
+- **Header sanitization** - filenames and part names are sanitized to prevent MIME header injection (`"`, `\r`, `\n` escaped)
 
 ---
 

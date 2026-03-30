@@ -85,7 +85,7 @@ public abstract class AbstractArkBuilder<B extends AbstractArkBuilder<B>> {
 
     protected String formatConfiguration(String clientType, String transportType) {
         StringBuilder sb = new StringBuilder();
-        sb.append("Ark ").append(ArkVersion.VERSION).append(" — Client Configuration");
+        sb.append("Ark ").append(ArkVersion.VERSION).append(" - Client Configuration");
         sb.append("\n    Client: ").append(clientType);
         sb.append("\n    Transport: ").append(transportType);
         sb.append("\n    HTTP Version: ").append(httpVersion != null ? httpVersion : "(not set)");

@@ -126,11 +126,11 @@ Future<User> user = client.get("/users/1")
 ### Response extraction
 
 ```java
-// Class<T> — simple types
+// Class<T> - simple types
 User user = client.get("/users/1").retrieve().body(User.class);
 String html = client.get("/health").retrieve().body(String.class);
 
-// TypeRef<T> — generic types
+// TypeRef<T> - generic types
 List<User> users = client.get("/users").retrieve().body(new TypeRef<List<User>>() {});
 ```
 
@@ -221,7 +221,7 @@ Levels: `NONE`, `BASIC`, `HEADERS`, `BODY`. See [Logging](logging.md) for full d
 
 ## Declarative Clients
 
-Define an interface — Ark creates the implementation:
+Define an interface - Ark creates the implementation:
 
 ```java
 @RegisterArkClient(configKey = "user-api", baseUrl = "${api.users.url}")
@@ -259,16 +259,16 @@ Future<User> future          = vertxClient.get("/users/1").retrieve().body(User.
 ## Next Steps
 
 - [Sync Client](sync.md)
-- [Error Handling](error-handling.md) — typed exception hierarchy
-- [Reactor Client](reactor.md) — Spring WebFlux
-- [Mutiny Client](mutiny.md) — Quarkus
-- [Transport Model](transports.md) — built-in and custom transports
-- [Serialization](serialization.md) — Jackson, JSON-B, custom
-- [Logging](logging.md) — LoggingInterceptor + TransportLogger
-- [Retry & Backoff](retry.md) — automatic retry with exponential backoff
-- [Multipart Upload](multipart.md) — file upload with `@RequestPart`
-- [Declarative JAX-RS](declarative-jaxrs.md) — `@RegisterArkClient` with JAX-RS
-- [Declarative Spring](declarative-spring.md) — `@RegisterArkClient` with `@HttpExchange`
-- [Spring Boot Integration](spring-boot.md) — auto-config, ArkProperties, TLS
-- [Quarkus Integration](quarkus.md) — @ConfigMapping, TLS
+- [Error Handling](error-handling.md) - typed exception hierarchy
+- [Reactor Client](reactor.md) - Spring WebFlux
+- [Mutiny Client](mutiny.md) - Quarkus
+- [Transport Model](transports.md) - built-in and custom transports
+- [Serialization](serialization.md) - Jackson, JSON-B, custom
+- [Logging](logging.md) - LoggingInterceptor + TransportLogger
+- [Retry & Backoff](retry.md) - automatic retry with exponential backoff
+- [Multipart Upload](multipart.md) - file upload with `@RequestPart`
+- [Declarative JAX-RS](declarative-jaxrs.md) - `@RegisterArkClient` with JAX-RS
+- [Declarative Spring](declarative-spring.md) - `@RegisterArkClient` with `@HttpExchange`
+- [Spring Boot Integration](spring-boot.md) - auto-config, ArkProperties, TLS
+- [Quarkus Integration](quarkus.md) - @ConfigMapping, TLS
 - [Testing](testing.md)

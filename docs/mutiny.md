@@ -1,6 +1,6 @@
 # Mutiny Client
 
-The `MutinyArk` client returns `Uni<T>` from SmallRye Mutiny — ideal for Quarkus and reactive Vert.x applications.
+The `MutinyArk` client returns `Uni<T>` from SmallRye Mutiny - ideal for Quarkus and reactive Vert.x applications.
 
 ---
 

@@ -95,14 +95,14 @@ public final class RetryTransport implements HttpTransport {
 
     private void logExhausted(int attempt, String method, URI uri, int statusCode) {
         LOGGER.log(System.Logger.Level.ERROR,
-                "Retry exhausted {0}/{1} for {2} {3}{4} — giving up",
+                "Retry exhausted {0}/{1} for {2} {3}{4} - giving up",
                 attempt, policy.maxAttempts(), method, uri,
                 statusCode > 0 ? " (HTTP " + statusCode + ")" : " (exception)");
     }
 
     private void logRetry(int attempt, String method, URI uri, int statusCode, long delayMs) {
         LOGGER.log(System.Logger.Level.WARNING,
-                "Retry {0}/{1} for {2} {3}{4} — waiting {5}ms",
+                "Retry {0}/{1} for {2} {3}{4} - waiting {5}ms",
                 attempt, policy.maxAttempts(), method, uri,
                 statusCode > 0 ? " (HTTP " + statusCode + ")" : " (exception)",
                 delayMs);

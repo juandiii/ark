@@ -1,6 +1,6 @@
 # Serialization
 
-Ark keeps serialization explicit and replaceable. The `JsonSerializer` interface is the only contract — swap implementations without changing client code.
+Ark keeps serialization explicit and replaceable. The `JsonSerializer` interface is the only contract - swap implementations without changing client code.
 
 ---
 
@@ -30,7 +30,7 @@ Ark client = ArkClient.builder()
 
 ### Spring Boot
 
-Auto-configured — uses Spring's `ObjectMapper`:
+Auto-configured - uses Spring's `ObjectMapper`:
 
 ```java
 // JacksonSerializer is auto-registered as a bean
@@ -43,7 +43,7 @@ public JsonSerializer jsonSerializer(ObjectMapper objectMapper) {
 
 ### Quarkus
 
-Auto-configured — uses Quarkus-managed `ObjectMapper`:
+Auto-configured - uses Quarkus-managed `ObjectMapper`:
 
 ```java
 // JacksonClassicSerializer is auto-registered as a CDI bean
@@ -79,10 +79,10 @@ All methods throw `ArkException` on serialization/deserialization failure.
 Use `TypeRef<T>` for generic types that lose type information at runtime:
 
 ```java
-// Class<T> — simple types
+// Class<T> - simple types
 User user = client.get("/users/1").retrieve().body(User.class);
 
-// TypeRef<T> — generic types
+// TypeRef<T> - generic types
 List<User> users = client.get("/users").retrieve().body(new TypeRef<List<User>>() {});
 Map<String, Object> data = client.get("/data").retrieve().body(new TypeRef<>() {});
 ```

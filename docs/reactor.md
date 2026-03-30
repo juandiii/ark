@@ -1,6 +1,6 @@
 # Reactor Client
 
-The `ReactorArk` client returns `Mono<T>` from Project Reactor — ideal for Spring WebFlux applications.
+The `ReactorArk` client returns `Mono<T>` from Project Reactor - ideal for Spring WebFlux applications.
 
 ---
 
@@ -29,7 +29,7 @@ Or use the Spring Boot WebFlux starter which auto-configures everything:
 
 ## Transport
 
-- **Implementation:** `ArkReactorNettyTransport` — backed by Reactor Netty `HttpClient`
+- **Implementation:** `ArkReactorNettyTransport` - backed by Reactor Netty `HttpClient`
 
 ```java
 reactor.netty.http.client.HttpClient httpClient = HttpClient.create()
@@ -41,7 +41,7 @@ reactor.netty.http.client.HttpClient httpClient = HttpClient.create()
 ArkReactorNettyTransport transport = new ArkReactorNettyTransport(httpClient);
 ```
 
-Timeouts, SSL, connection pooling — all configured on the Reactor Netty client, not on Ark.
+Timeouts, SSL, connection pooling - all configured on the Reactor Netty client, not on Ark.
 
 ---
 

@@ -1,6 +1,6 @@
 # Vert.x Client
 
-The `VertxArk` client returns `io.vertx.core.Future<T>` — Vert.x native async without Mutiny or CompletableFuture.
+The `VertxArk` client returns `io.vertx.core.Future<T>` - Vert.x native async without Mutiny or CompletableFuture.
 
 ---
 
@@ -19,8 +19,8 @@ The `VertxArk` client returns `io.vertx.core.Future<T>` — Vert.x native async 
 
 ### Transport
 
-- **Interface:** `VertxHttpTransport` — returns `Future<RawResponse>`
-- **Implementation:** `ArkVertxFutureTransport` — backed by Vert.x `WebClient`
+- **Interface:** `VertxHttpTransport` - returns `Future<RawResponse>`
+- **Implementation:** `ArkVertxFutureTransport` - backed by Vert.x `WebClient`
 
 ---
 

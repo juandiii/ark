@@ -1,6 +1,6 @@
 # Async Client
 
-The `AsyncArk` client returns `CompletableFuture<T>` — non-blocking execution using Java's built-in async primitives.
+The `AsyncArk` client returns `CompletableFuture<T>` - non-blocking execution using Java's built-in async primitives.
 
 ---
 

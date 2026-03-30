@@ -8,11 +8,11 @@
 
 Java has no shortage of HTTP clients. But each one forces a trade-off:
 
-- **JDK HttpClient** — low-level, no serialization, no interceptors, no declarative API
-- **Spring WebClient / RestClient** — optimized for Spring applications and programming models
-- **Quarkus REST Client** — tightly aligned with Quarkus and JAX-RS-style declarative clients
-- **OkHttp / Apache HttpClient** — transport only, you build everything else yourself
-- **Feign** — declarative only, no fluent API, limited reactive support
+- **JDK HttpClient** - low-level, no serialization, no interceptors, no declarative API
+- **Spring WebClient / RestClient** - optimized for Spring applications and programming models
+- **Quarkus REST Client** - tightly aligned with Quarkus and JAX-RS-style declarative clients
+- **OkHttp / Apache HttpClient** - transport only, you build everything else yourself
+- **Feign** - declarative only, no fluent API, limited reactive support
 
 Ark gives you one client model that survives framework changes, transport changes, and execution-model changes.
 
@@ -22,23 +22,23 @@ Ark separates the concerns that other clients bundle together:
 
 | Concern | Ark's approach |
 |---------|---------------|
-| **How to build requests** | Fluent API or declarative interfaces — your choice |
-| **How to send them** | Pluggable transports — JDK, Reactor Netty, Vert.x, Apache |
-| **How to serialize** | Pluggable serializers — Jackson, JSON-B, or your own |
-| **How to execute** | Sync, async, Reactor, Mutiny, Vert.x Future — same API |
-| **Where to run** | Spring Boot, Quarkus, or standalone — same code |
+| **How to build requests** | Fluent API or declarative interfaces - your choice |
+| **How to send them** | Pluggable transports - JDK, Reactor Netty, Vert.x, Apache |
+| **How to serialize** | Pluggable serializers - Jackson, JSON-B, or your own |
+| **How to execute** | Sync, async, Reactor, Mutiny, Vert.x Future - same API |
+| **Where to run** | Spring Boot, Quarkus, or standalone - same code |
 
 One mental model. Any stack. No lock-in.
 
 ## Why Ark?
 
-- **One client model across stacks** — use Ark in Spring, Quarkus, and plain Java
-- **Fluent when you want control** — explicit request composition with full access to headers, params, and body
-- **Declarative when you want contracts** — `@RegisterArkClient` with Spring `@HttpExchange` or JAX-RS annotations
-- **Transport-agnostic** — plug in JDK, Reactor Netty, Vert.x, or Apache HttpClient
-- **Execution-model aware** — sync, async, Reactor, Mutiny, and Vert.x Future
-- **Production-ready features** — TLS, retry, logging, typed exceptions, and per-client config
-- **Native-image friendly** — designed to work well in GraalVM-based deployments
+- **One client model across stacks** - use Ark in Spring, Quarkus, and plain Java
+- **Fluent when you want control** - explicit request composition with full access to headers, params, and body
+- **Declarative when you want contracts** - `@RegisterArkClient` with Spring `@HttpExchange` or JAX-RS annotations
+- **Transport-agnostic** - plug in JDK, Reactor Netty, Vert.x, or Apache HttpClient
+- **Execution-model aware** - sync, async, Reactor, Mutiny, and Vert.x Future
+- **Production-ready features** - TLS, retry, logging, typed exceptions, and per-client config
+- **Native-image friendly** - designed to work well in GraalVM-based deployments
 
 ---
 
@@ -154,7 +154,7 @@ Ark provides dedicated entry points for different execution models while preserv
 | Mutiny | `MutinyArkClient` | `Uni<T>` |
 | Vert.x | `VertxArkClient` | `Future<T>` |
 
-Same fluent API — only the return type changes:
+Same fluent API - only the return type changes:
 
 ```java
 User user = client
@@ -330,19 +330,19 @@ You can also provide your own transport implementation.
 
 - [Getting Started](docs/getting-started.md)
 - [Sync Client](docs/sync.md)
-- [Error Handling](docs/error-handling.md) — typed exception hierarchy
+- [Error Handling](docs/error-handling.md) - typed exception hierarchy
 - [Async Client](docs/async.md)
 - [Reactor Client](docs/reactor.md)
 - [Mutiny Client](docs/mutiny.md)
 - [Vert.x Client](docs/vertx.md)
-- [Transport Model](docs/transports.md) — built-in and custom transports
-- [Serialization](docs/serialization.md) — Jackson, JSON-B, custom
-- [Logging](docs/logging.md) — LoggingInterceptor + TransportLogger
-- [Retry & Backoff](docs/retry.md) — automatic retry with exponential backoff
-- [Multipart Upload](docs/multipart.md) — file upload with binary fidelity
+- [Transport Model](docs/transports.md) - built-in and custom transports
+- [Serialization](docs/serialization.md) - Jackson, JSON-B, custom
+- [Logging](docs/logging.md) - LoggingInterceptor + TransportLogger
+- [Retry & Backoff](docs/retry.md) - automatic retry with exponential backoff
+- [Multipart Upload](docs/multipart.md) - file upload with binary fidelity
 - [Declarative Spring Clients](docs/declarative-spring.md)
 - [Declarative JAX-RS Clients](docs/declarative-jaxrs.md)
-- [Spring Boot Integration](docs/spring-boot.md) — sync + WebFlux, config, TLS
+- [Spring Boot Integration](docs/spring-boot.md) - sync + WebFlux, config, TLS
 - [Quarkus Integration](docs/quarkus.md)
 - [Quarkus Jackson Extension](docs/quarkus-jackson.md)
 - [Testing](docs/testing.md)
