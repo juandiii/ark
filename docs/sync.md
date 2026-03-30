@@ -160,47 +160,17 @@ Levels: `NONE`, `BASIC`, `HEADERS`, `BODY`.
 
 ## Error Handling
 
-Ark provides typed exceptions for common HTTP errors:
-
-| Exception | Status | Parent |
-|-----------|--------|--------|
-| `BadRequestException` | 400 | `ClientException` |
-| `UnauthorizedException` | 401 | `ClientException` |
-| `ForbiddenException` | 403 | `ClientException` |
-| `NotFoundException` | 404 | `ClientException` |
-| `ConflictException` | 409 | `ClientException` |
-| `UnprocessableEntityException` | 422 | `ClientException` |
-| `TooManyRequestsException` | 429 | `ClientException` |
-| `InternalServerErrorException` | 500 | `ServerException` |
-| `BadGatewayException` | 502 | `ServerException` |
-| `ServiceUnavailableException` | 503 | `ServerException` |
-| `GatewayTimeoutException` | 504 | `ServerException` |
-
-Transport errors:
-
-| Exception | When | Parent |
-|-----------|------|--------|
-| `TimeoutException` | Request timed out | `ArkException` |
-| `ConnectionException` | Connection failed | `ArkException` |
-| `RequestInterruptedException` | Thread interrupted | `ArkException` |
+See [Error Handling](error-handling.md) for the full exception hierarchy and examples per execution model.
 
 ```java
 try {
-    User user = client.get("/users/1")
-        .retrieve()
-        .body(User.class);
+    User user = client.get("/users/1").retrieve().body(User.class);
 } catch (NotFoundException e) {
     // 404
-} catch (UnauthorizedException e) {
-    // 401
-} catch (ClientException e) {
-    // other 4xx
 } catch (ServerException e) {
     // 5xx
 } catch (TimeoutException e) {
     // request timed out
-} catch (ConnectionException e) {
-    // connection failed
 }
 ```
 
@@ -208,6 +178,7 @@ try {
 
 ## Related
 
+- [Error Handling](error-handling.md) — full exception hierarchy
 - [Spring Boot Integration](spring-boot.md)
 - [Async Client](async.md)
 - [Transport Model](transports.md)

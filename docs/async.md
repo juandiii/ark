@@ -92,7 +92,7 @@ CompletableFuture<User> user = client.get("/slow-endpoint")
 
 ## Error Handling
 
-Errors propagate through the `CompletableFuture`:
+See [Error Handling](error-handling.md) for the full exception hierarchy. Errors propagate through the `CompletableFuture`:
 
 ```java
 client.get("/users/1")
@@ -110,6 +110,6 @@ client.get("/users/1")
 
 ## Related
 
-- [Sync Client](sync.md) — full error hierarchy reference
+- [Error Handling](error-handling.md)
 - [Getting Started](getting-started.md)
 - [Transport Model](transports.md)

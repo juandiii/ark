@@ -39,11 +39,11 @@ Add the modules you need:
 
 Or use a starter:
 
-| Starter | Stack |
-|---------|-------|
-| `ark-spring-boot-starter` | Spring MVC (sync) |
-| `ark-spring-boot-starter-webflux` | Spring WebFlux (reactive) |
-| `ark-quarkus-jackson` | Quarkus (sync + Mutiny) |
+| Starter | Stack | Features |
+|---------|-------|----------|
+| `ark-spring-boot-starter` | Spring MVC (sync) | Config, TLS, retry, interceptors, headers, native |
+| `ark-spring-boot-starter-webflux` | Spring WebFlux (reactive) | Config, TLS, interceptors, headers, native |
+| `ark-quarkus-jackson` | Quarkus (sync + Mutiny) | Config, TLS, retry, interceptors, headers, native |
 
 ---
 
@@ -258,10 +258,12 @@ Future<User> future          = vertxClient.get("/users/1").retrieve().body(User.
 
 ## Next Steps
 
-- [Sync Client](sync.md) — error handling, exception hierarchy
+- [Sync Client](sync.md)
+- [Error Handling](error-handling.md) — typed exception hierarchy
 - [Reactor Client](reactor.md) — Spring WebFlux
 - [Mutiny Client](mutiny.md) — Quarkus
 - [Transport Model](transports.md) — built-in and custom transports
+- [Serialization](serialization.md) — Jackson, JSON-B, custom
 - [Logging](logging.md) — LoggingInterceptor + TransportLogger
 - [Retry & Backoff](retry.md) — automatic retry with exponential backoff
 - [Declarative JAX-RS](declarative-jaxrs.md) — `@RegisterArkClient` with JAX-RS

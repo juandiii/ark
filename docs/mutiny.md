@@ -157,7 +157,7 @@ public class UserResource {
 
 ## Error Handling
 
-Errors propagate through the `Uni`. Use typed exceptions:
+See [Error Handling](error-handling.md) for the full exception hierarchy. Errors propagate through the `Uni`:
 
 ```java
 client.get("/users/1")

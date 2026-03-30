@@ -103,7 +103,7 @@ client.get("/users/1")
 
 ## Error Handling
 
-Errors propagate through the `Future`. Use typed exceptions:
+See [Error Handling](error-handling.md) for the full exception hierarchy. Errors propagate through the `Future`:
 
 ```java
 client.get("/users/1")
