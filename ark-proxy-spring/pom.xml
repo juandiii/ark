@@ -9,6 +9,7 @@
   </parent>
   <artifactId>ark-proxy-spring</artifactId>
   <name>ark-proxy-spring</name>
+  <description>Declarative proxy for Spring HttpExchange annotations</description>
 
   <dependencies>
     <dependency>

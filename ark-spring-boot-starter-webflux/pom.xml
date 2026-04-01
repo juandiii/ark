@@ -9,6 +9,7 @@
   </parent>
   <artifactId>ark-spring-boot-starter-webflux</artifactId>
   <name>ark-spring-boot-starter-webflux</name>
+  <description>Spring Boot auto-configuration for reactive Ark HTTP client</description>
 
   <dependencies>
     <dependency>

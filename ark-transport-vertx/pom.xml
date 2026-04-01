@@ -9,6 +9,7 @@
   </parent>
   <artifactId>ark-transport-vertx</artifactId>
   <name>ark-transport-vertx</name>
+  <description>HTTP transport using Vert.x WebClient with Future</description>
 
   <dependencies>
     <dependency>

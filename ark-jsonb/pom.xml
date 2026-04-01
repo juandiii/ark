@@ -9,6 +9,7 @@
   </parent>
   <artifactId>ark-jsonb</artifactId>
   <name>ark-jsonb</name>
+  <description>Jakarta JSON-B serializer</description>
 
   <dependencies>
     <dependency>

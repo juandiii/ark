@@ -9,6 +9,7 @@
   </parent>
   <artifactId>ark-vertx</artifactId>
   <name>ark-vertx</name>
+  <description>Vert.x Future execution model for Vert.x-native async</description>
 
   <dependencies>
     <dependency>

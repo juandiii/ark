@@ -9,6 +9,7 @@
   </parent>
   <artifactId>ark-transport-jdk</artifactId>
   <name>ark-transport-jdk</name>
+  <description>HTTP transport using Java native HttpClient</description>
 
   <dependencies>
     <dependency>
