@@ -15,4 +15,9 @@
     <module>runtime</module>
     <module>deployment</module>
   </modules>
+
+  <properties>
+    <central.publishing.skip>true</central.publishing.skip>
+    <maven.deploy.skip>true</maven.deploy.skip>
+  </properties>
 </project>
