@@ -5,7 +5,7 @@
   <parent>
     <groupId>xyz.juandiii</groupId>
     <artifactId>ark-quarkus-jackson-parent</artifactId>
-    <version>1.0.1</version>
+    <version>1.0.2-SNAPSHOT</version>
   </parent>
   <artifactId>ark-quarkus-jackson</artifactId>
   <name>ark-quarkus-jackson - Runtime</name>
