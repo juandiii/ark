@@ -1,15 +1,9 @@
 name: Deploy Snapshot
 
+# Disabled — Maven Central does not accept SNAPSHOT versions.
+# Re-enable when a snapshot repository (Nexus mirror) is configured.
 on:
-  push:
-    branches: [main]
-    paths-ignore:
-      - '**.md'
-      - 'docs/**'
-      - '.github/workflows/**'
-      - '.github/scripts/**'
-      - 'LICENSE'
-      - '.gitignore'
+  workflow_dispatch:
 
 jobs:
   test:
