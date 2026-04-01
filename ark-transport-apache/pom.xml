@@ -10,6 +10,28 @@
   <artifactId>ark-transport-apache</artifactId>
   <name>ark-transport-apache</name>
   <description>HTTP transport using Apache HttpClient 5</description>
+  <url>https://github.com/juandiii/ark</url>
+
+  <licenses>
+    <license>
+      <name>Apache License, Version 2.0</name>
+      <url>https://www.apache.org/licenses/LICENSE-2.0.txt</url>
+      <distribution>repo</distribution>
+    </license>
+  </licenses>
+
+  <developers>
+    <developer>
+      <name>Juan Diego</name>
+      <url>https://github.com/juandiii</url>
+    </developer>
+  </developers>
+
+  <scm>
+    <connection>scm:git:git://github.com/juandiii/ark.git</connection>
+    <developerConnection>scm:git:ssh://github.com:juandiii/ark.git</developerConnection>
+    <url>https://github.com/juandiii/ark</url>
+  </scm>
 
   <dependencies>
     <dependency>
