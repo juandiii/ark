@@ -32,17 +32,20 @@ jobs:
           java-version: 25
           cache: maven
 
-      - name: Set version and deploy
+      - name: Import GPG key
+        run: |
+          echo "${{ secrets.GPG_PRIVATE_KEY }}" | gpg --batch --import
+        env:
+          GPG_PRIVATE_KEY: ${{ secrets.GPG_PRIVATE_KEY }}
+
+      - name: Set version and deploy to Maven Central
         run: |
           ./mvnw versions:set -DnewVersion=${{ needs.extract-version.outputs.release }} -DgenerateBackupPoms=false
-          ./mvnw clean deploy -DskipTests
+          ./mvnw clean deploy -Prelease -DskipTests
         env:
-          NEXUS_MIRROR_URL: ${{ secrets.NEXUS_MIRROR_URL }}
-          NEXUS_MIRROR_SNAPSHOT_URL: ${{ secrets.NEXUS_MIRROR_SNAPSHOT_URL }}
-          NEXUS_RELEASES_URL: ${{ secrets.NEXUS_RELEASES_URL }}
-          NEXUS_SNAPSHOTS_URL: ${{ secrets.NEXUS_SNAPSHOTS_URL }}
-          NEXUS_USERNAME: ${{ secrets.NEXUS_USERNAME }}
-          NEXUS_PASSWORD: ${{ secrets.NEXUS_PASSWORD }}
+          CENTRAL_USERNAME: ${{ secrets.CENTRAL_USERNAME }}
+          CENTRAL_PASSWORD: ${{ secrets.CENTRAL_PASSWORD }}
+          MAVEN_GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
 
   tag:
     needs: [extract-version, deploy]
@@ -95,9 +98,6 @@ jobs:
           cache: maven
 
       - name: Bump to next SNAPSHOT
-        env:
-          NEXUS_MIRROR_URL: ${{ secrets.NEXUS_MIRROR_URL }}
-          NEXUS_MIRROR_SNAPSHOT_URL: ${{ secrets.NEXUS_MIRROR_SNAPSHOT_URL }}
         run: .github/scripts/bump-snapshot.sh "${{ needs.extract-version.outputs.release }}"
 
   cleanup:

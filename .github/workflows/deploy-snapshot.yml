@@ -29,12 +29,15 @@ jobs:
           java-version: 25
           cache: maven
 
-      - name: Deploy SNAPSHOT to Nexus
-        run: ./mvnw clean deploy -DskipTests
+      - name: Import GPG key
+        run: |
+          echo "${{ secrets.GPG_PRIVATE_KEY }}" | gpg --batch --import
         env:
-          NEXUS_MIRROR_URL: ${{ secrets.NEXUS_MIRROR_URL }}
-          NEXUS_MIRROR_SNAPSHOT_URL: ${{ secrets.NEXUS_MIRROR_SNAPSHOT_URL }}
-          NEXUS_RELEASES_URL: ${{ secrets.NEXUS_RELEASES_URL }}
-          NEXUS_SNAPSHOTS_URL: ${{ secrets.NEXUS_SNAPSHOTS_URL }}
-          NEXUS_USERNAME: ${{ secrets.NEXUS_USERNAME }}
-          NEXUS_PASSWORD: ${{ secrets.NEXUS_PASSWORD }}
+          GPG_PRIVATE_KEY: ${{ secrets.GPG_PRIVATE_KEY }}
+
+      - name: Deploy SNAPSHOT to Maven Central
+        run: ./mvnw clean deploy -Prelease -DskipTests
+        env:
+          CENTRAL_USERNAME: ${{ secrets.CENTRAL_USERNAME }}
+          CENTRAL_PASSWORD: ${{ secrets.CENTRAL_PASSWORD }}
+          MAVEN_GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
