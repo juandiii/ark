@@ -11,7 +11,6 @@
   <name>ark-quarkus-jackson - Runtime</name>
   <description>Quarkus extension runtime for Ark HTTP client with Jackson</description>
   <url>https://github.com/juandiii/ark</url>
-
   <licenses>
     <license>
       <name>Apache License, Version 2.0</name>
