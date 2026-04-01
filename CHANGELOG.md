@@ -1,3 +1,11 @@
+## [v1.0.2](https://github.com/juandiii/ark/releases/tag/v1.0.2) — 2026-04-01
+
+### 🐛 Bug Fixes
+
+- fix: maven ark-quarkus-jackson (#53) @juandiii
+
+---
+
 ## [v1.0.1](https://github.com/juandiii/ark/releases/tag/v1.0.1) — 2026-04-01
 
 ### 📦 Other Changes
