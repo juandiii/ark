@@ -9,6 +9,7 @@
   </parent>
   <artifactId>ark-transport-reactor</artifactId>
   <name>ark-transport-reactor</name>
+  <description>HTTP transport using Reactor Netty</description>
 
   <dependencies>
     <dependency>

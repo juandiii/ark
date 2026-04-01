@@ -9,6 +9,7 @@
   </parent>
   <artifactId>ark-jackson-classic</artifactId>
   <name>ark-jackson-classic</name>
+  <description>Jackson 2.x JSON serializer</description>
 
   <dependencies>
     <dependency>

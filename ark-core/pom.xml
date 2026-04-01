@@ -9,7 +9,7 @@
   </parent>
   <artifactId>ark-core</artifactId>
   <name>ark-core</name>
-  <url>http://maven.apache.org</url>
+  <description>Core module with fluent API, abstractions, and zero external dependencies</description>
   <build>
     <resources>
       <resource>

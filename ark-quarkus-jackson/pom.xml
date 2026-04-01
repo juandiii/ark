@@ -9,6 +9,7 @@
   </parent>
   <artifactId>ark-quarkus-jackson-parent</artifactId>
   <name>ark-quarkus-jackson</name>
+  <description>Quarkus extension parent for Ark HTTP client with Jackson</description>
   <packaging>pom</packaging>
 
   <modules>

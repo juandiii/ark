@@ -9,6 +9,7 @@
   </parent>
   <artifactId>ark-quarkus-jackson</artifactId>
   <name>ark-quarkus-jackson - Runtime</name>
+  <description>Quarkus extension runtime for Ark HTTP client with Jackson</description>
 
   <dependencies>
     <dependency>

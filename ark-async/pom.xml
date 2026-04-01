@@ -9,6 +9,7 @@
   </parent>
   <artifactId>ark-async</artifactId>
   <name>ark-async</name>
+  <description>CompletableFuture execution model for async HTTP clients</description>
 
   <dependencies>
     <dependency>

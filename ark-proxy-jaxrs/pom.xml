@@ -9,6 +9,7 @@
   </parent>
   <artifactId>ark-proxy-jaxrs</artifactId>
   <name>ark-proxy-jaxrs</name>
+  <description>Declarative proxy for JAX-RS annotations</description>
 
   <dependencies>
     <dependency>

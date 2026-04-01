@@ -9,6 +9,7 @@
   </parent>
   <artifactId>ark-jackson</artifactId>
   <name>ark-jackson</name>
+  <description>Jackson 3.x JSON serializer</description>
 
 
   <dependencies>

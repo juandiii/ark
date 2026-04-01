@@ -9,6 +9,7 @@
   </parent>
   <artifactId>ark-transport-apache</artifactId>
   <name>ark-transport-apache</name>
+  <description>HTTP transport using Apache HttpClient 5</description>
 
   <dependencies>
     <dependency>

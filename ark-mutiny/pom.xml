@@ -9,6 +9,7 @@
   </parent>
   <artifactId>ark-mutiny</artifactId>
   <name>ark-mutiny</name>
+  <description>SmallRye Mutiny Uni/Multi execution model for Quarkus</description>
 
   <dependencies>
     <dependency>

@@ -9,6 +9,8 @@
         <version>1.0.0</version>
     </parent>
     <artifactId>ark-bom</artifactId>
+    <name>ark-bom</name>
+    <description>Bill of Materials for Ark dependency management</description>
     <packaging>pom</packaging>
 
     <dependencyManagement>

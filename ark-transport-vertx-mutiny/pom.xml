@@ -9,6 +9,7 @@
   </parent>
   <artifactId>ark-transport-vertx-mutiny</artifactId>
   <name>ark-transport-vertx-mutiny</name>
+  <description>HTTP transport using Vert.x Mutiny WebClient</description>
 
   <dependencies>
     <dependency>

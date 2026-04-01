@@ -9,6 +9,7 @@
   </parent>
   <artifactId>ark-reactor</artifactId>
   <name>ark-reactor</name>
+  <description>Reactor Mono/Flux execution model for reactive HTTP clients</description>
 
   <dependencies>
     <dependency>

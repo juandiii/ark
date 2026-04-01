@@ -9,6 +9,7 @@
   </parent>
   <artifactId>ark-quarkus-jackson-deployment</artifactId>
   <name>ark-quarkus-jackson - Deployment</name>
+  <description>Quarkus extension deployment for Ark HTTP client with Jackson</description>
 
   <dependencies>
     <dependency>
