@@ -5,6 +5,22 @@
   <packaging>pom</packaging>
   <version>1.0.11-SNAPSHOT</version>
   <name>ark-client</name>
+  <description>A lightweight, fluent Java HTTP client library with pluggable transport and serialization layers</description>
+  <url>https://github.com/juandiii/ark</url>
+
+  <developers>
+    <developer>
+      <name>Juan Diego</name>
+      <url>https://github.com/juandiii</url>
+    </developer>
+  </developers>
+
+  <scm>
+    <connection>scm:git:git://github.com/juandiii/ark.git</connection>
+    <developerConnection>scm:git:ssh://github.com:juandiii/ark.git</developerConnection>
+    <url>https://github.com/juandiii/ark</url>
+  </scm>
+
   <properties>
     <java.version>17</java.version>
     <maven.compiler.source>${java.version}</maven.compiler.source>
@@ -22,6 +38,17 @@
       <distribution>repo</distribution>
     </license>
   </licenses>
+
+  <distributionManagement>
+    <repository>
+      <id>central</id>
+      <url>https://central.sonatype.com</url>
+    </repository>
+    <snapshotRepository>
+      <id>central</id>
+      <url>https://central.sonatype.com</url>
+    </snapshotRepository>
+  </distributionManagement>
 
   <dependencyManagement>
     <dependencies>
@@ -88,16 +115,65 @@
     <module>ark-spring-boot-starter-webflux</module>
     <module>ark-quarkus-jackson</module>
   </modules>
-  <distributionManagement>
-    <repository>
-      <id>maven-releases</id>
-      <url>${env.NEXUS_RELEASES_URL}</url>
-    </repository>
-    <snapshotRepository>
-      <id>maven-snapshots</id>
-      <url>${env.NEXUS_SNAPSHOTS_URL}</url>
-    </snapshotRepository>
-  </distributionManagement>
+  <profiles>
+    <profile>
+      <id>release</id>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-source-plugin</artifactId>
+            <version>3.3.1</version>
+            <executions>
+              <execution>
+                <id>attach-sources</id>
+                <goals>
+                  <goal>jar-no-fork</goal>
+                </goals>
+              </execution>
+            </executions>
+          </plugin>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-javadoc-plugin</artifactId>
+            <version>3.11.2</version>
+            <executions>
+              <execution>
+                <id>attach-javadocs</id>
+                <goals>
+                  <goal>jar</goal>
+                </goals>
+              </execution>
+            </executions>
+          </plugin>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-gpg-plugin</artifactId>
+            <version>3.2.7</version>
+            <executions>
+              <execution>
+                <id>sign-artifacts</id>
+                <phase>verify</phase>
+                <goals>
+                  <goal>sign</goal>
+                </goals>
+              </execution>
+            </executions>
+          </plugin>
+          <plugin>
+            <groupId>org.sonatype.central</groupId>
+            <artifactId>central-publishing-maven-plugin</artifactId>
+            <version>0.7.0</version>
+            <extensions>true</extensions>
+            <configuration>
+              <publishingServerId>central</publishingServerId>
+              <autoPublish>true</autoPublish>
+            </configuration>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+  </profiles>
   <build>
     <plugins>
       <plugin>
