@@ -37,3 +37,5 @@ build/
 .claude/
 
 CLAUDE.md
+
+.flattened-pom.xml
