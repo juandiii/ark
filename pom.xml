@@ -3,7 +3,7 @@
   <groupId>xyz.juandiii</groupId>
   <artifactId>ark</artifactId>
   <packaging>pom</packaging>
-  <version>1.0.2-SNAPSHOT</version>
+  <version>1.0.3-SNAPSHOT</version>
   <name>ark-client</name>
   <description>A lightweight, fluent Java HTTP client library with pluggable transport and serialization layers</description>
   <url>https://github.com/juandiii/ark</url>
@@ -171,7 +171,7 @@
             <configuration>
               <publishingServerId>central</publishingServerId>
               <autoPublish>true</autoPublish>
-              <excludeArtifacts>ark,ark-quarkus-jackson-parent</excludeArtifacts>
+              <excludeArtifacts>ark-quarkus-jackson-parent</excludeArtifacts>
             </configuration>
           </plugin>
         </plugins>

@@ -5,7 +5,7 @@
   <parent>
     <groupId>xyz.juandiii</groupId>
     <artifactId>ark</artifactId>
-    <version>1.0.2-SNAPSHOT</version>
+    <version>1.0.3-SNAPSHOT</version>
   </parent>
   <artifactId>ark-quarkus-jackson-parent</artifactId>
   <name>ark-quarkus-jackson</name>
@@ -18,7 +18,6 @@
   </modules>
 
   <properties>
-    <central.publishing.skip>true</central.publishing.skip>
     <maven.deploy.skip>true</maven.deploy.skip>
   </properties>
 </project>
