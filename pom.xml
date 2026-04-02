@@ -3,7 +3,7 @@
   <groupId>xyz.juandiii</groupId>
   <artifactId>ark</artifactId>
   <packaging>pom</packaging>
-  <version>1.0.3</version>
+  <version>1.0.4-SNAPSHOT</version>
   <name>ark-client</name>
   <description>A lightweight, fluent Java HTTP client library with pluggable transport and serialization layers</description>
   <url>https://github.com/juandiii/ark</url>
