@@ -1,3 +1,7 @@
+## [v1.0.3](https://github.com/juandiii/ark/releases/tag/v1.0.3) — 2026-04-02
+
+---
+
 ## [v1.0.2](https://github.com/juandiii/ark/releases/tag/v1.0.2) — 2026-04-01
 
 ### 🐛 Bug Fixes
