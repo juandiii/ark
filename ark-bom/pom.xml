@@ -3,46 +3,63 @@
          xmlns="http://maven.apache.org/POM/4.0.0"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
     <modelVersion>4.0.0</modelVersion>
-    <parent>
-        <groupId>xyz.juandiii</groupId>
-        <artifactId>ark</artifactId>
-        <version>1.0.4-SNAPSHOT</version>
-    </parent>
+    <groupId>xyz.juandiii</groupId>
     <artifactId>ark-bom</artifactId>
+    <version>1.0.4-SNAPSHOT</version>
+    <packaging>pom</packaging>
     <name>ark-bom</name>
     <description>Bill of Materials for Ark dependency management</description>
-  <url>https://github.com/juandiii/ark</url>
-
-  <licenses>
-    <license>
-      <name>Apache License, Version 2.0</name>
-      <url>https://www.apache.org/licenses/LICENSE-2.0.txt</url>
-      <distribution>repo</distribution>
-    </license>
-  </licenses>
-
-  <developers>
-    <developer>
-      <name>Juan Diego</name>
-      <url>https://github.com/juandiii</url>
-    </developer>
-  </developers>
-
-  <scm>
-    <connection>scm:git:git://github.com/juandiii/ark.git</connection>
-    <developerConnection>scm:git:ssh://github.com:juandiii/ark.git</developerConnection>
     <url>https://github.com/juandiii/ark</url>
-  </scm>
-    <packaging>pom</packaging>
+
+    <licenses>
+        <license>
+            <name>Apache License, Version 2.0</name>
+            <url>https://www.apache.org/licenses/LICENSE-2.0.txt</url>
+            <distribution>repo</distribution>
+        </license>
+    </licenses>
+
+    <developers>
+        <developer>
+            <name>Juan Diego</name>
+            <url>https://github.com/juandiii</url>
+        </developer>
+    </developers>
+
+    <scm>
+        <connection>scm:git:git://github.com/juandiii/ark.git</connection>
+        <developerConnection>scm:git:ssh://github.com:juandiii/ark.git</developerConnection>
+        <url>https://github.com/juandiii/ark</url>
+    </scm>
 
     <build>
         <plugins>
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>flatten-maven-plugin</artifactId>
+                <version>1.6.0</version>
                 <configuration>
                     <flattenMode>bom</flattenMode>
+                    <pomElements>
+                        <dependencyManagement>resolve</dependencyManagement>
+                    </pomElements>
                 </configuration>
+                <executions>
+                    <execution>
+                        <id>flatten</id>
+                        <phase>process-resources</phase>
+                        <goals>
+                            <goal>flatten</goal>
+                        </goals>
+                    </execution>
+                    <execution>
+                        <id>flatten.clean</id>
+                        <phase>clean</phase>
+                        <goals>
+                            <goal>clean</goal>
+                        </goals>
+                    </execution>
+                </executions>
             </plugin>
         </plugins>
     </build>
