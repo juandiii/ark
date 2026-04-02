@@ -1,3 +1,11 @@
+## [v1.0.5](https://github.com/juandiii/ark/releases/tag/v1.0.5) — 2026-04-02
+
+### 🐛 Bug Fixes
+
+- Fix Ark-BOM (#64) @juandiii
+
+---
+
 ## [v1.0.3](https://github.com/juandiii/ark/releases/tag/v1.0.3) — 2026-04-02
 
 ---
