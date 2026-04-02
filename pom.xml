@@ -171,7 +171,7 @@
             <configuration>
               <publishingServerId>central</publishingServerId>
               <autoPublish>true</autoPublish>
-              <excludeArtifacts>ark,ark-quarkus-jackson-parent</excludeArtifacts>
+              <excludeArtifacts>ark-quarkus-jackson-parent</excludeArtifacts>
             </configuration>
           </plugin>
         </plugins>
