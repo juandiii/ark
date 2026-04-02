@@ -4,6 +4,18 @@
 
 - make ark-bom standalone to resolve literal versions in published POM (#57) @juandiii
 
+### 📦 Other Changes
+
+- Release v1.0.4 (#58) @juandiii
+
+---
+
+## [v1.0.4](https://github.com/juandiii/ark/releases/tag/v1.0.4) — 2026-04-02
+
+### 🐛 Bug Fixes
+
+- make ark-bom standalone to resolve literal versions in published POM (#57) @juandiii
+
 ---
 
 ## [v1.0.3](https://github.com/juandiii/ark/releases/tag/v1.0.3) — 2026-04-02
