@@ -9,13 +9,15 @@ REPO=$2
 MILESTONE=${3:-}
 DATE=$(date +%Y-%m-%d)
 
+# Previous tag (for Full Changelog link)
+PREV_TAG=$(git tag --sort=-v:refname | grep '^v' | head -1 || echo "")
+
 # Get merged PRs — filtered by milestone if provided
 if [ -n "$MILESTONE" ]; then
   PRS_JSON=$(gh pr list --state merged --base main --search "milestone:\"$MILESTONE\"" \
     --json number,title,labels,author --limit 200)
   echo "Generating changelog for milestone: $MILESTONE"
 else
-  PREV_TAG=$(git tag --sort=-v:refname | grep '^v' | head -1 || echo "")
   if [ -z "$PREV_TAG" ]; then
     SINCE_DATE="2000-01-01"
   else
@@ -52,6 +54,10 @@ fi
 OTHERS=$(echo "$PRS_JSON" | jq -r '[.[] | select([.labels[].name] | any(. == "fix" or . == "feat" or . == "perf" or . == "breaking change") | not)] | unique_by(.number)[] | "- \(.title) (#\(.number)) @\(.author.login)"' 2>/dev/null || echo "")
 if [ -n "$OTHERS" ]; then
   ENTRY+=$'### 📦 Other Changes\n\n'"$OTHERS"$'\n\n'
+fi
+
+if [ -n "$PREV_TAG" ]; then
+  ENTRY+="**Full Changelog**: https://github.com/${REPO}/compare/${PREV_TAG}...v${VERSION}"$'\n\n'
 fi
 
 ENTRY+="---"$'\n\n'
