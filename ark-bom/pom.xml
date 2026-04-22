@@ -6,7 +6,7 @@
     <parent>
         <groupId>xyz.juandiii</groupId>
         <artifactId>ark</artifactId>
-        <version>1.0.6-SNAPSHOT</version>
+        <version>1.0.6</version>
     </parent>
     <artifactId>ark-bom</artifactId>
     <packaging>pom</packaging>
@@ -98,97 +98,97 @@
             <dependency>
                 <groupId>xyz.juandiii</groupId>
                 <artifactId>ark-core</artifactId>
-                <version>1.0.6-SNAPSHOT</version>
+                <version>1.0.6</version>
             </dependency>
             <dependency>
                 <groupId>xyz.juandiii</groupId>
                 <artifactId>ark-async</artifactId>
-                <version>1.0.6-SNAPSHOT</version>
+                <version>1.0.6</version>
             </dependency>
             <dependency>
                 <groupId>xyz.juandiii</groupId>
                 <artifactId>ark-jackson</artifactId>
-                <version>1.0.6-SNAPSHOT</version>
+                <version>1.0.6</version>
             </dependency>
             <dependency>
                 <groupId>xyz.juandiii</groupId>
                 <artifactId>ark-jackson-classic</artifactId>
-                <version>1.0.6-SNAPSHOT</version>
+                <version>1.0.6</version>
             </dependency>
             <dependency>
                 <groupId>xyz.juandiii</groupId>
                 <artifactId>ark-jsonb</artifactId>
-                <version>1.0.6-SNAPSHOT</version>
+                <version>1.0.6</version>
             </dependency>
             <dependency>
                 <groupId>xyz.juandiii</groupId>
                 <artifactId>ark-reactor</artifactId>
-                <version>1.0.6-SNAPSHOT</version>
+                <version>1.0.6</version>
             </dependency>
             <dependency>
                 <groupId>xyz.juandiii</groupId>
                 <artifactId>ark-transport-jdk</artifactId>
-                <version>1.0.6-SNAPSHOT</version>
+                <version>1.0.6</version>
             </dependency>
             <dependency>
                 <groupId>xyz.juandiii</groupId>
                 <artifactId>ark-transport-reactor</artifactId>
-                <version>1.0.6-SNAPSHOT</version>
+                <version>1.0.6</version>
             </dependency>
             <dependency>
                 <groupId>xyz.juandiii</groupId>
                 <artifactId>ark-vertx</artifactId>
-                <version>1.0.6-SNAPSHOT</version>
+                <version>1.0.6</version>
             </dependency>
             <dependency>
                 <groupId>xyz.juandiii</groupId>
                 <artifactId>ark-mutiny</artifactId>
-                <version>1.0.6-SNAPSHOT</version>
+                <version>1.0.6</version>
             </dependency>
             <dependency>
                 <groupId>xyz.juandiii</groupId>
                 <artifactId>ark-transport-vertx</artifactId>
-                <version>1.0.6-SNAPSHOT</version>
+                <version>1.0.6</version>
             </dependency>
             <dependency>
                 <groupId>xyz.juandiii</groupId>
                 <artifactId>ark-transport-apache</artifactId>
-                <version>1.0.6-SNAPSHOT</version>
+                <version>1.0.6</version>
             </dependency>
             <dependency>
                 <groupId>xyz.juandiii</groupId>
                 <artifactId>ark-transport-vertx-mutiny</artifactId>
-                <version>1.0.6-SNAPSHOT</version>
+                <version>1.0.6</version>
             </dependency>
             <dependency>
                 <groupId>xyz.juandiii</groupId>
                 <artifactId>ark-proxy-spring</artifactId>
-                <version>1.0.6-SNAPSHOT</version>
+                <version>1.0.6</version>
             </dependency>
             <dependency>
                 <groupId>xyz.juandiii</groupId>
                 <artifactId>ark-proxy-jaxrs</artifactId>
-                <version>1.0.6-SNAPSHOT</version>
+                <version>1.0.6</version>
             </dependency>
             <dependency>
                 <groupId>xyz.juandiii</groupId>
                 <artifactId>ark-spring-boot-starter</artifactId>
-                <version>1.0.6-SNAPSHOT</version>
+                <version>1.0.6</version>
             </dependency>
             <dependency>
                 <groupId>xyz.juandiii</groupId>
                 <artifactId>ark-spring-boot-starter-webflux</artifactId>
-                <version>1.0.6-SNAPSHOT</version>
+                <version>1.0.6</version>
             </dependency>
             <dependency>
                 <groupId>xyz.juandiii</groupId>
                 <artifactId>ark-quarkus-jackson</artifactId>
-                <version>1.0.6-SNAPSHOT</version>
+                <version>1.0.6</version>
             </dependency>
             <dependency>
                 <groupId>xyz.juandiii</groupId>
                 <artifactId>ark-quarkus-jackson-deployment</artifactId>
-                <version>1.0.6-SNAPSHOT</version>
+                <version>1.0.6</version>
             </dependency>
         </dependencies>
     </dependencyManagement>
