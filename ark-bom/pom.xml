@@ -52,29 +52,9 @@
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>flatten-maven-plugin</artifactId>
-                <version>1.6.0</version>
                 <configuration>
-                    <flattenMode>bom</flattenMode>
-                    <pomElements>
-                        <dependencyManagement>resolve</dependencyManagement>
-                    </pomElements>
+                    <skip>true</skip>
                 </configuration>
-                <executions>
-                    <execution>
-                        <id>flatten</id>
-                        <phase>process-resources</phase>
-                        <goals>
-                            <goal>flatten</goal>
-                        </goals>
-                    </execution>
-                    <execution>
-                        <id>flatten.clean</id>
-                        <phase>clean</phase>
-                        <goals>
-                            <goal>clean</goal>
-                        </goals>
-                    </execution>
-                </executions>
             </plugin>
         </plugins>
     </build>
@@ -118,97 +98,97 @@
             <dependency>
                 <groupId>xyz.juandiii</groupId>
                 <artifactId>ark-core</artifactId>
-                <version>${project.version}</version>
+                <version>1.0.6-SNAPSHOT</version>
             </dependency>
             <dependency>
                 <groupId>xyz.juandiii</groupId>
                 <artifactId>ark-async</artifactId>
-                <version>${project.version}</version>
+                <version>1.0.6-SNAPSHOT</version>
             </dependency>
             <dependency>
                 <groupId>xyz.juandiii</groupId>
                 <artifactId>ark-jackson</artifactId>
-                <version>${project.version}</version>
+                <version>1.0.6-SNAPSHOT</version>
             </dependency>
             <dependency>
                 <groupId>xyz.juandiii</groupId>
                 <artifactId>ark-jackson-classic</artifactId>
-                <version>${project.version}</version>
+                <version>1.0.6-SNAPSHOT</version>
             </dependency>
             <dependency>
                 <groupId>xyz.juandiii</groupId>
                 <artifactId>ark-jsonb</artifactId>
-                <version>${project.version}</version>
+                <version>1.0.6-SNAPSHOT</version>
             </dependency>
             <dependency>
                 <groupId>xyz.juandiii</groupId>
                 <artifactId>ark-reactor</artifactId>
-                <version>${project.version}</version>
+                <version>1.0.6-SNAPSHOT</version>
             </dependency>
             <dependency>
                 <groupId>xyz.juandiii</groupId>
                 <artifactId>ark-transport-jdk</artifactId>
-                <version>${project.version}</version>
+                <version>1.0.6-SNAPSHOT</version>
             </dependency>
             <dependency>
                 <groupId>xyz.juandiii</groupId>
                 <artifactId>ark-transport-reactor</artifactId>
-                <version>${project.version}</version>
+                <version>1.0.6-SNAPSHOT</version>
             </dependency>
             <dependency>
                 <groupId>xyz.juandiii</groupId>
                 <artifactId>ark-vertx</artifactId>
-                <version>${project.version}</version>
+                <version>1.0.6-SNAPSHOT</version>
             </dependency>
             <dependency>
                 <groupId>xyz.juandiii</groupId>
                 <artifactId>ark-mutiny</artifactId>
-                <version>${project.version}</version>
+                <version>1.0.6-SNAPSHOT</version>
             </dependency>
             <dependency>
                 <groupId>xyz.juandiii</groupId>
                 <artifactId>ark-transport-vertx</artifactId>
-                <version>${project.version}</version>
+                <version>1.0.6-SNAPSHOT</version>
             </dependency>
             <dependency>
                 <groupId>xyz.juandiii</groupId>
                 <artifactId>ark-transport-apache</artifactId>
-                <version>${project.version}</version>
+                <version>1.0.6-SNAPSHOT</version>
             </dependency>
             <dependency>
                 <groupId>xyz.juandiii</groupId>
                 <artifactId>ark-transport-vertx-mutiny</artifactId>
-                <version>${project.version}</version>
+                <version>1.0.6-SNAPSHOT</version>
             </dependency>
             <dependency>
                 <groupId>xyz.juandiii</groupId>
                 <artifactId>ark-proxy-spring</artifactId>
-                <version>${project.version}</version>
+                <version>1.0.6-SNAPSHOT</version>
             </dependency>
             <dependency>
                 <groupId>xyz.juandiii</groupId>
                 <artifactId>ark-proxy-jaxrs</artifactId>
-                <version>${project.version}</version>
+                <version>1.0.6-SNAPSHOT</version>
             </dependency>
             <dependency>
                 <groupId>xyz.juandiii</groupId>
                 <artifactId>ark-spring-boot-starter</artifactId>
-                <version>${project.version}</version>
+                <version>1.0.6-SNAPSHOT</version>
             </dependency>
             <dependency>
                 <groupId>xyz.juandiii</groupId>
                 <artifactId>ark-spring-boot-starter-webflux</artifactId>
-                <version>${project.version}</version>
+                <version>1.0.6-SNAPSHOT</version>
             </dependency>
             <dependency>
                 <groupId>xyz.juandiii</groupId>
                 <artifactId>ark-quarkus-jackson</artifactId>
-                <version>${project.version}</version>
+                <version>1.0.6-SNAPSHOT</version>
             </dependency>
             <dependency>
                 <groupId>xyz.juandiii</groupId>
                 <artifactId>ark-quarkus-jackson-deployment</artifactId>
-                <version>${project.version}</version>
+                <version>1.0.6-SNAPSHOT</version>
             </dependency>
         </dependencies>
     </dependencyManagement>

@@ -1,0 +1,48 @@
+version: 2
+updates:
+  - package-ecosystem: "maven"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    open-pull-requests-limit: 5
+    labels:
+      - "dependencies"
+    commit-message:
+      prefix: "chore"
+      include: "scope"
+    groups:
+      spring-boot:
+        patterns:
+          - "org.springframework.boot:*"
+          - "org.springframework:*"
+      quarkus:
+        patterns:
+          - "io.quarkus:*"
+          - "io.smallrye:*"
+      jackson:
+        patterns:
+          - "tools.jackson.core:*"
+          - "com.fasterxml.jackson*"
+      vertx:
+        patterns:
+          - "io.vertx:*"
+      reactor:
+        patterns:
+          - "io.projectreactor:*"
+          - "io.projectreactor.netty:*"
+      test-dependencies:
+        patterns:
+          - "org.junit.jupiter:*"
+          - "org.mockito:*"
+          - "org.assertj:*"
+
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    labels:
+      - "ci"
+    commit-message:
+      prefix: "ci"

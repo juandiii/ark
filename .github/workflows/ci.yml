@@ -2,9 +2,17 @@ name: CI
 
 on:
   pull_request:
+    branches: [main, develop]
+  push:
     branches: [main]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   test:
     uses: ./.github/workflows/test.yml
     secrets: inherit
+    permissions:
+      contents: read
