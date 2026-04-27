@@ -25,7 +25,7 @@
     <java.version>17</java.version>
     <maven.compiler.source>${java.version}</maven.compiler.source>
     <maven.compiler.target>${java.version}</maven.compiler.target>
-    <spring-boot.version>4.0.5</spring-boot.version>
+    <spring-boot.version>4.0.6</spring-boot.version>
     <spring-framework.version>7.0.7</spring-framework.version>
     <quarkus.version>3.34.5</quarkus.version>
     <httpclient5.version>5.6</httpclient5.version>
