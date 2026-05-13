@@ -67,16 +67,16 @@ public class ArkWebFluxClientFactoryBean<T> implements FactoryBean<T>, BeanFacto
                 ? annotation.configKey()
                 : clientInterface.getName();
 
-        ArkWebFluxProperties.ClientProperties config = arkProperties.getClient().get(configKey);
+        ArkWebFluxProperties.ClientProperties config = arkProperties.client().get(configKey);
 
-        String baseUrl = config != null && StringUtils.isNotEmpty(config.getBaseUrl())
-                ? config.getBaseUrl()
+        String baseUrl = config != null && StringUtils.isNotEmpty(config.baseUrl())
+                ? config.baseUrl()
                 : environment.resolvePlaceholders(annotation.baseUrl());
-        HttpVersion httpVersion = config != null ? config.getHttpVersion() : annotation.httpVersion();
-        int connectTimeout = config != null ? config.getConnectTimeout() : annotation.connectTimeout();
-        int readTimeout = config != null ? config.getReadTimeout() : annotation.readTimeout();
-        String tlsConfigName = config != null ? config.getTlsConfigurationName() : null;
-        boolean trustAll = config != null && config.isTrustAll();
+        HttpVersion httpVersion = config != null ? config.httpVersion() : annotation.httpVersion();
+        int connectTimeout = config != null ? config.connectTimeout() : annotation.connectTimeout();
+        int readTimeout = config != null ? config.readTimeout() : annotation.readTimeout();
+        String tlsConfigName = config != null ? config.tlsConfigurationName() : null;
+        boolean trustAll = config != null && config.trustAll();
 
         ReactorHttpTransport transport = resolveTransport(httpVersion, connectTimeout, readTimeout,
                 tlsConfigName, trustAll, configKey);
@@ -89,9 +89,9 @@ public class ArkWebFluxClientFactoryBean<T> implements FactoryBean<T>, BeanFacto
                 .connectTimeout(connectTimeout)
                 .readTimeout(readTimeout);
 
-        InterceptorResolver.applyHeaders(builder, config != null ? config.getHeaders() : null);
+        InterceptorResolver.applyHeaders(builder, config != null ? config.headers() : null);
         InterceptorResolver.applyInterceptors(builder, annotation.interceptors(), beanFactory::getBean);
-        LoggingInterceptor.apply(builder, arkProperties.getLogging().getLevel());
+        LoggingInterceptor.apply(builder, arkProperties.logging().level());
 
         return (T) ArkProxy.create(clientInterface, builder.build());
     }
