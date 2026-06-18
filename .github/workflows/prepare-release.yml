@@ -93,7 +93,7 @@ jobs:
 
           ./mvnw versions:set -DnewVersion="$VERSION" -DgenerateBackupPoms=false
           .github/scripts/generate-changelog.sh "$VERSION" "${{ github.repository }}" "$MILESTONE"
-          sed -i "s|<version>.*</version> <!-- ark-bom -->|<version>${VERSION}</version> <!-- ark-bom -->|g" README.md docs/design.md
+          sed -i "s|<version>.*</version> <!-- ark-bom -->|<version>${VERSION}</version> <!-- ark-bom -->|g" README.md docs/design.md docs/getting-started.md
 
           git add -A
           git commit -m "chore(release): prepare v${VERSION}"
