@@ -1,9 +1,15 @@
 name: Deploy Snapshot
 
-# Disabled — Maven Central does not accept SNAPSHOT versions.
-# Re-enable when a snapshot repository (Nexus mirror) is configured.
 on:
-  workflow_dispatch:
+  push:
+    branches: [main]
+    paths-ignore:
+      - '**.md'
+      - 'docs/**'
+
+concurrency:
+  group: deploy-snapshot
+  cancel-in-progress: false
 
 jobs:
   test:
@@ -32,9 +38,9 @@ jobs:
         env:
           GPG_PRIVATE_KEY: ${{ secrets.GPG_PRIVATE_KEY }}
 
-      - name: Deploy SNAPSHOT to Maven Central
-        run: ./mvnw clean deploy -Prelease -DskipTests
+      - name: Deploy SNAPSHOT to Nexus
+        run: ./mvnw clean deploy -Psnapshot-nexus -DskipTests
         env:
-          CENTRAL_USERNAME: ${{ secrets.CENTRAL_USERNAME }}
-          CENTRAL_PASSWORD: ${{ secrets.CENTRAL_PASSWORD }}
-          MAVEN_GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
+          NEXUS_SNAPSHOTS_URL: ${{ secrets.NEXUS_SNAPSHOTS_URL }}
+          NEXUS_USERNAME: ${{ secrets.NEXUS_USERNAME }}
+          NEXUS_PASSWORD: ${{ secrets.NEXUS_PASSWORD }}
