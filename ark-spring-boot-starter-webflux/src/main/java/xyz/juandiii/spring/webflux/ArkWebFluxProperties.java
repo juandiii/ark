@@ -1,6 +1,7 @@
 package xyz.juandiii.spring.webflux;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.boot.context.properties.bind.DefaultValue;
 import xyz.juandiii.ark.core.interceptor.LoggingInterceptor;
 import xyz.juandiii.ark.core.proxy.HttpVersion;
 import xyz.juandiii.ark.core.proxy.RegisterArkClient;
@@ -10,63 +11,38 @@ import java.util.Map;
 
 /**
  * Type-safe configuration properties for reactive Ark HTTP clients.
+ * <p>
+ * Uses constructor binding (records) for native image compatibility.
  *
  * @author Juan Diego Lopez V.
  */
 @ConfigurationProperties(prefix = "ark")
-public class ArkWebFluxProperties {
+public record ArkWebFluxProperties(
+        @DefaultValue Logging logging,
+        @DefaultValue Map<String, ClientProperties> client
+) {
 
-    private final Logging logging = new Logging();
-    private Map<String, ClientProperties> client = new LinkedHashMap<>();
-
-    public Logging getLogging() {
-        return logging;
+    public ArkWebFluxProperties {
+        if (logging == null) logging = new Logging(LoggingInterceptor.Level.NONE);
+        if (client == null) client = new LinkedHashMap<>();
     }
 
-    public Map<String, ClientProperties> getClient() {
-        return client;
-    }
+    public record Logging(
+            @DefaultValue("NONE") LoggingInterceptor.Level level
+    ) {}
 
-    public void setClient(Map<String, ClientProperties> client) {
-        this.client = client;
-    }
-
-    public static class Logging {
-
-        private LoggingInterceptor.Level level = LoggingInterceptor.Level.NONE;
-
-        public LoggingInterceptor.Level getLevel() {
-            return level;
+    public record ClientProperties(
+            String baseUrl,
+            @DefaultValue("HTTP_2") HttpVersion httpVersion,
+            @DefaultValue("10") int connectTimeout,
+            @DefaultValue("30") int readTimeout,
+            String tlsConfigurationName,
+            @DefaultValue("false") boolean trustAll,
+            @DefaultValue Map<String, String> headers
+    ) {
+        public ClientProperties {
+            if (httpVersion == null) httpVersion = RegisterArkClient.DEFAULT_HTTP_VERSION;
+            if (headers == null) headers = new LinkedHashMap<>();
         }
-
-        public void setLevel(LoggingInterceptor.Level level) {
-            this.level = level;
-        }
-    }
-
-    public static class ClientProperties {
-
-        private String baseUrl;
-        private HttpVersion httpVersion = RegisterArkClient.DEFAULT_HTTP_VERSION;
-        private int connectTimeout = RegisterArkClient.DEFAULT_CONNECT_TIMEOUT;
-        private int readTimeout = RegisterArkClient.DEFAULT_READ_TIMEOUT;
-        private String tlsConfigurationName;
-        private boolean trustAll;
-        private Map<String, String> headers = new LinkedHashMap<>();
-
-        public String getBaseUrl() { return baseUrl; }
-        public void setBaseUrl(String baseUrl) { this.baseUrl = baseUrl; }
-        public HttpVersion getHttpVersion() { return httpVersion; }
-        public void setHttpVersion(HttpVersion httpVersion) { this.httpVersion = httpVersion; }
-        public int getConnectTimeout() { return connectTimeout; }
-        public void setConnectTimeout(int connectTimeout) { this.connectTimeout = connectTimeout; }
-        public int getReadTimeout() { return readTimeout; }
-        public void setReadTimeout(int readTimeout) { this.readTimeout = readTimeout; }
-        public String getTlsConfigurationName() { return tlsConfigurationName; }
-        public void setTlsConfigurationName(String tlsConfigurationName) { this.tlsConfigurationName = tlsConfigurationName; }
-        public boolean isTrustAll() { return trustAll; }
-        public void setTrustAll(boolean trustAll) { this.trustAll = trustAll; }
-        public Map<String, String> getHeaders() { return headers; }
-        public void setHeaders(Map<String, String> headers) { this.headers = headers; }
     }
 }
