@@ -1,3 +1,23 @@
+## [v1.0.7](https://github.com/juandiii/ark/releases/tag/v1.0.7) — 2026-06-19
+
+### ⚠️ Breaking Changes
+
+- Refactor Structure Modules (#86) @juandiii
+
+### 🐛 Bug Fixes
+
+- Fix Native Config Properties on Runtime (#84) @juandiii
+- Fix GitHub Actions (#85) @juandiii
+
+### 📦 Other Changes
+
+- chore(deps): bump the quarkus group with 3 updates (#78) @app/dependabot
+- Add more GitHub Actions  (#87) @juandiii
+
+**Full Changelog**: https://github.com/juandiii/ark/compare/v1.0.6...v1.0.7
+
+---
+
 ## [Unreleased]
 
 ### Changed
