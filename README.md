@@ -383,6 +383,12 @@ Please read [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines on commit conventi
 
 Found a vulnerability? Please follow the disclosure process in [SECURITY.md](SECURITY.md) — do not open a public issue.
 
+### TLS
+
+Ark validates TLS certificates by default. To use a custom truststore (self-signed CA, mutual TLS), configure your SSL bundle (Spring) or TLS configuration (Quarkus) and reference it via `ark.client.<name>.tls-configuration-name`.
+
+> ⚠️ **`trust-all: true` disables ALL certificate validation.** Use only in local development against ephemeral environments. Setting `ark.client.<name>.trust-all=true` in production exposes your application to man-in-the-middle attacks. Ark logs a runtime WARNING when trust-all is active so accidental production use is visible.
+
 ---
 
 ## License

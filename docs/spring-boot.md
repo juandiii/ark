@@ -192,6 +192,8 @@ ark.client.user-api.tls-configuration-name=my-cert
 spring.ssl.bundle.pem.my-cert.truststore.certificate=classpath:certs/ca.crt
 ```
 
+> ⚠️ `trust-all: true` disables certificate validation. Use only in local development. See [Security & TLS in README](../README.md#tls).
+
 Same configuration structure as the sync starter. See [Declarative Spring Clients](declarative-spring.md) for full annotation details.
 
 > **Note:** Retry is not configured via properties for reactive clients - use Reactor's built-in `.retryWhen()` instead. See [Retry & Backoff](retry.md#reactive-reactor--mutiny).
@@ -229,6 +231,8 @@ ark.client.user-api.headers.X-Api-Key=${API_KEY}
 ark.client.user-api.retry.max-attempts=3
 ark.client.user-api.retry.delay=500
 ```
+
+> ⚠️ `trust-all: true` disables certificate validation. Use only in local development. See [Security & TLS in README](../README.md#tls).
 
 See [Retry & Backoff](retry.md) for full retry configuration.
 

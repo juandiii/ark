@@ -176,6 +176,8 @@ ark.client."user-api".retry.max-attempts=3
 ark.client."user-api".retry.delay=500
 ```
 
+> ⚠️ `trust-all=true` disables certificate validation. Use only in local development. See [Security & TLS in README](../README.md#tls).
+
 See [Retry & Backoff](retry.md) for full retry configuration.
 
 ```java
