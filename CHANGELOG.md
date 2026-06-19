@@ -1,3 +1,29 @@
+## [Unreleased]
+
+### Changed
+
+- **Project structure**: Maven modules are now grouped under semantic
+  subdirectories at the repo root: `core/`, `execution-models/`, `transports/`,
+  `serializers/`, `proxies/`, `starters/`, `extensions/`. Maven coordinates
+  (groupId, artifactId, version) are **unchanged** — users do not need to
+  update dependency declarations.
+
+### Breaking
+
+- **Spring starter packages renamed**:
+  - `xyz.juandiii.spring.*` → `xyz.juandiii.ark.spring.*`
+    (ark-spring-boot-starter)
+  - `xyz.juandiii.spring.webflux.*` → `xyz.juandiii.ark.spring.webflux.*`
+    (ark-spring-boot-starter-webflux)
+
+  This affects users who explicitly import classes such as
+  `EnableArkClients`, `ArkProperties`, `EnableArkWebFluxClients`, or
+  `ArkWebFluxProperties`. Users who only depend on the starter via Maven
+  (the typical case — relying on Spring Boot auto-configuration) are not
+  affected.
+
+---
+
 ## [v1.0.6](https://github.com/juandiii/ark/releases/tag/v1.0.6) — 2026-04-22
 
 ### 🐛 Bug Fixes

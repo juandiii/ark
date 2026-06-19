@@ -121,25 +121,24 @@ These are informational and do not trigger a release:
 
 ---
 
-## Project Structure
+## Module structure
 
-```
-ark-core                       Core interfaces + fluent API
-ark-async                      CompletableFuture execution model
-ark-reactor                    Mono/Flux execution model
-ark-mutiny                     Uni execution model
-ark-vertx                      Vert.x Future execution model
-ark-jackson                    Jackson serializer
-ark-transport-jdk              Java HttpClient transport
-ark-transport-reactor          Reactor Netty transport
-ark-transport-vertx            Vert.x WebClient transport
-ark-transport-vertx-mutiny     Vert.x Mutiny transport
-ark-transport-apache           Apache HttpClient 5 transport
-ark-proxy-spring               Declarative client from @HttpExchange
-ark-spring-boot-starter        Spring MVC auto-config
-ark-spring-boot-starter-webflux Spring WebFlux auto-config
-ark-bom                        Bill of Materials
-```
+Ark groups its 19 Maven modules into semantic subdirectories at the repo
+root:
+
+| Directory          | What lives here                                          |
+|--------------------|----------------------------------------------------------|
+| `core/`            | `ark-core`, `ark-bom` — foundational                     |
+| `execution-models/`| `ark-async`, `ark-reactor`, `ark-mutiny`, `ark-vertx`    |
+| `transports/`      | Bridges to underlying HTTP clients (JDK, Apache, etc.)   |
+| `serializers/`     | JSON serializers (Jackson, Jackson Classic, JSON-B)      |
+| `proxies/`         | Annotation-based proxy resolvers (Spring, JAX-RS)        |
+| `starters/`        | Spring Boot auto-configuration                            |
+| `extensions/`      | Quarkus extensions (runtime + deployment)                 |
+
+When adding a new module, place it in the directory that matches its concern.
+If none fits, prefer creating a new top-level directory over polluting an
+existing one.
 
 ---
 
