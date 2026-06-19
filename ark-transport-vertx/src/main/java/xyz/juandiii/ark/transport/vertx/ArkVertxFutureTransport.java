@@ -8,7 +8,6 @@ import io.vertx.ext.web.client.WebClient;
 import xyz.juandiii.ark.core.exceptions.ArkException;
 import xyz.juandiii.ark.core.http.HeaderUtils;
 import xyz.juandiii.ark.core.http.RawResponse;
-import xyz.juandiii.ark.core.http.TransportLogger;
 import xyz.juandiii.ark.vertx.http.VertxHttpTransport;
 
 import java.net.URI;
@@ -30,20 +29,15 @@ public final class ArkVertxFutureTransport implements VertxHttpTransport {
         this.webClient = webClient;
     }
 
-    private static final System.Logger LOGGER = System.getLogger(ArkVertxFutureTransport.class.getName());
-
     @Override
     public Future<RawResponse> send(String method, URI uri, Map<String, String> headers,
                                     String body, Duration timeout) {
-        LOGGER.log(System.Logger.Level.DEBUG, () -> TransportLogger.formatRequest(method, uri, headers, body));
         return execute(method, uri, headers, body != null ? Buffer.buffer(body) : null, timeout);
     }
 
     @Override
     public Future<RawResponse> sendBinary(String method, URI uri, Map<String, String> headers,
                                            byte[] body, Duration timeout) {
-        LOGGER.log(System.Logger.Level.DEBUG, () ->
-                TransportLogger.formatRequest(method, uri, headers, body != null ? "[binary: " + body.length + " bytes]" : null));
         return execute(method, uri, headers, body != null ? Buffer.buffer(body) : null, timeout);
     }
 
@@ -61,17 +55,13 @@ public final class ArkVertxFutureTransport implements VertxHttpTransport {
                 : request.send();
 
         return response
-                .map(this::handleResponse)
+                .map(this::toRawResponse)
                 .otherwise(e -> {
                     throw ArkException.fromThrowable(method, uri, e);
                 });
     }
 
-    private RawResponse handleResponse(HttpResponse<Buffer> r) {
-        int statusCode = r.statusCode();
-        String responseBody = r.bodyAsString();
-        var responseHeaders = HeaderUtils.toHeaderMap(r.headers());
-        LOGGER.log(System.Logger.Level.DEBUG, () -> TransportLogger.formatResponse(statusCode, responseHeaders, responseBody));
-        return new RawResponse(statusCode, responseHeaders, responseBody);
+    private RawResponse toRawResponse(HttpResponse<Buffer> r) {
+        return new RawResponse(r.statusCode(), HeaderUtils.toHeaderMap(r.headers()), r.bodyAsString());
     }
 }

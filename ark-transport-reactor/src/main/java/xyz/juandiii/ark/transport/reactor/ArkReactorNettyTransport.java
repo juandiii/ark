@@ -10,7 +10,6 @@ import io.netty.handler.codec.http.HttpMethod;
 import xyz.juandiii.ark.core.exceptions.ArkException;
 import xyz.juandiii.ark.core.http.HeaderUtils;
 import xyz.juandiii.ark.core.http.RawResponse;
-import xyz.juandiii.ark.core.http.TransportLogger;
 import xyz.juandiii.ark.reactor.http.ReactorHttpTransport;
 
 import java.net.URI;
@@ -32,12 +31,9 @@ public final class ArkReactorNettyTransport implements ReactorHttpTransport {
         this.httpClient = httpClient;
     }
 
-    private static final System.Logger LOGGER = System.getLogger(ArkReactorNettyTransport.class.getName());
-
     @Override
     public Mono<RawResponse> send(String method, URI uri, Map<String, String> headers,
                                   String body, Duration timeout) {
-        LOGGER.log(System.Logger.Level.DEBUG, () -> TransportLogger.formatRequest(method, uri, headers, body));
         return execute(method, uri, headers,
                 body != null ? ByteBufMono.fromString(Mono.just(body)) : Mono.empty(),
                 timeout);
@@ -46,8 +42,6 @@ public final class ArkReactorNettyTransport implements ReactorHttpTransport {
     @Override
     public Mono<RawResponse> sendBinary(String method, URI uri, Map<String, String> headers,
                                          byte[] body, Duration timeout) {
-        LOGGER.log(System.Logger.Level.DEBUG, () ->
-                TransportLogger.formatRequest(method, uri, headers, body != null ? "[binary: " + body.length + " bytes]" : null));
         return execute(method, uri, headers,
                 body != null ? Mono.just(Unpooled.wrappedBuffer(body)) : Mono.empty(),
                 timeout);
@@ -61,13 +55,11 @@ public final class ArkReactorNettyTransport implements ReactorHttpTransport {
                 .uri(uri)
                 .send(bodyPublisher)
                 .responseSingle((response, content) ->
-                        content.asString().defaultIfEmpty("").map(responseBody -> {
-                            int statusCode = response.status().code();
-                            var responseHeaders = HeaderUtils.toHeaderMap(response.responseHeaders());
-                            LOGGER.log(System.Logger.Level.DEBUG, () ->
-                                    TransportLogger.formatResponse(statusCode, responseHeaders, responseBody));
-                            return new RawResponse(statusCode, responseHeaders, responseBody);
-                        })
+                        content.asString().defaultIfEmpty("").map(responseBody ->
+                                new RawResponse(
+                                        response.status().code(),
+                                        HeaderUtils.toHeaderMap(response.responseHeaders()),
+                                        responseBody))
                 );
 
         if (timeout != null) {

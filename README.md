@@ -379,6 +379,19 @@ Please read [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines on commit conventi
 
 ---
 
+## Logging
+
+Ark logs requests and responses via `LoggingInterceptor` (sensitive headers and known credential body keys are redacted). Enable it per-client with `ark.logging.level=BASIC|HEADERS|BODY` (Spring / Quarkus) or programmatically via `LoggingInterceptor.apply(builder, Level.HEADERS)`.
+
+For raw wire-level transport debugging, enable the underlying client's own logger:
+
+- **JDK HttpClient**: `-Djdk.httpclient.HttpClient.log=all`
+- **Apache HttpClient 5**: set `org.apache.hc.client5.http` to DEBUG
+- **Reactor Netty**: set `reactor.netty.http.client.HttpClient` to DEBUG
+- **Vert.x WebClient**: set `io.vertx.core.http.impl` to DEBUG
+
+---
+
 ## Security
 
 Found a vulnerability? Please follow the disclosure process in [SECURITY.md](SECURITY.md) — do not open a public issue.

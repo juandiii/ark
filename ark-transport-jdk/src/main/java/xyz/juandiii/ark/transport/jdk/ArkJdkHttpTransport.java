@@ -5,7 +5,6 @@ import xyz.juandiii.ark.core.exceptions.RequestInterruptedException;
 import xyz.juandiii.ark.async.http.AsyncHttpTransport;
 import xyz.juandiii.ark.core.http.HttpTransport;
 import xyz.juandiii.ark.core.http.RawResponse;
-import xyz.juandiii.ark.core.http.TransportLogger;
 
 import java.io.IOException;
 import java.net.URI;
@@ -39,51 +38,36 @@ public final class ArkJdkHttpTransport implements HttpTransport, AsyncHttpTransp
         this.executor = executor;
     }
 
-    private static final System.Logger LOGGER = System.getLogger(ArkJdkHttpTransport.class.getName());
-
     @Override
     public RawResponse send(String method, URI uri, Map<String, String> headers,
                             String body, Duration timeout) {
-        return doSend(method, uri, headers,
-                buildRequest(method, uri, headers, toPublisher(body), timeout),
-                body);
+        return doSend(method, uri, buildRequest(method, uri, headers, toPublisher(body), timeout));
     }
 
     @Override
     public RawResponse sendBinary(String method, URI uri, Map<String, String> headers,
                                    byte[] body, Duration timeout) {
-        return doSend(method, uri, headers,
-                buildRequest(method, uri, headers, toPublisher(body), timeout),
-                body != null ? "[binary: " + body.length + " bytes]" : null);
+        return doSend(method, uri, buildRequest(method, uri, headers, toPublisher(body), timeout));
     }
 
     @Override
     public CompletableFuture<RawResponse> sendAsync(String method, URI uri,
                                                     Map<String, String> headers,
                                                     String body, Duration timeout) {
-        return doSendAsync(method, uri, headers,
-                buildRequest(method, uri, headers, toPublisher(body), timeout),
-                body);
+        return doSendAsync(buildRequest(method, uri, headers, toPublisher(body), timeout));
     }
 
     @Override
     public CompletableFuture<RawResponse> sendBinaryAsync(String method, URI uri,
                                                            Map<String, String> headers,
                                                            byte[] body, Duration timeout) {
-        return doSendAsync(method, uri, headers,
-                buildRequest(method, uri, headers, toPublisher(body), timeout),
-                body != null ? "[binary: " + body.length + " bytes]" : null);
+        return doSendAsync(buildRequest(method, uri, headers, toPublisher(body), timeout));
     }
 
-    private RawResponse doSend(String method, URI uri, Map<String, String> headers,
-                                HttpRequest request, Object logBody) {
-        LOGGER.log(System.Logger.Level.DEBUG, () ->
-                TransportLogger.formatRequest(method, uri, headers, logBody != null ? logBody.toString() : null));
+    private RawResponse doSend(String method, URI uri, HttpRequest request) {
         try {
             HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
-            LOGGER.log(System.Logger.Level.DEBUG, () ->
-                    TransportLogger.formatResponse(response.statusCode(), response.headers().map(), response.body()));
-            return toRawResponse(response);
+            return new RawResponse(response.statusCode(), response.headers().map(), response.body());
         } catch (IOException e) {
             throw ArkException.fromIOException(method, uri, e);
         } catch (InterruptedException e) {
@@ -92,10 +76,7 @@ public final class ArkJdkHttpTransport implements HttpTransport, AsyncHttpTransp
         }
     }
 
-    private CompletableFuture<RawResponse> doSendAsync(String method, URI uri, Map<String, String> headers,
-                                                        HttpRequest request, Object logBody) {
-        LOGGER.log(System.Logger.Level.DEBUG, () ->
-                TransportLogger.formatRequest(method, uri, headers, logBody != null ? logBody.toString() : null));
+    private CompletableFuture<RawResponse> doSendAsync(HttpRequest request) {
         return httpClient.sendAsync(request, HttpResponse.BodyHandlers.ofString())
                 .thenApplyAsync(response ->
                         new RawResponse(response.statusCode(), response.headers().map(), response.body()),
@@ -116,9 +97,5 @@ public final class ArkJdkHttpTransport implements HttpTransport, AsyncHttpTransp
 
     private static HttpRequest.BodyPublisher toPublisher(byte[] body) {
         return body != null ? HttpRequest.BodyPublishers.ofByteArray(body) : HttpRequest.BodyPublishers.noBody();
-    }
-
-    private RawResponse toRawResponse(HttpResponse<String> response) {
-        return new RawResponse(response.statusCode(), response.headers().map(), response.body());
     }
 }

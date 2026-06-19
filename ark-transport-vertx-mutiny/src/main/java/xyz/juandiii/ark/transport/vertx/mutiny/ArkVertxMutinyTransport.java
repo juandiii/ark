@@ -8,7 +8,6 @@ import io.vertx.mutiny.ext.web.client.WebClient;
 import xyz.juandiii.ark.core.exceptions.ArkException;
 import xyz.juandiii.ark.core.http.HeaderUtils;
 import xyz.juandiii.ark.core.http.RawResponse;
-import xyz.juandiii.ark.core.http.TransportLogger;
 import xyz.juandiii.ark.mutiny.http.MutinyHttpTransport;
 
 import java.net.URI;
@@ -30,20 +29,15 @@ public final class ArkVertxMutinyTransport implements MutinyHttpTransport {
         this.webClient = webClient;
     }
 
-    private static final System.Logger LOGGER = System.getLogger(ArkVertxMutinyTransport.class.getName());
-
     @Override
     public Uni<RawResponse> send(String method, URI uri, Map<String, String> headers,
                                  String body, Duration timeout) {
-        LOGGER.log(System.Logger.Level.DEBUG, () -> TransportLogger.formatRequest(method, uri, headers, body));
         return execute(method, uri, headers, body != null ? Buffer.buffer(body) : null, timeout);
     }
 
     @Override
     public Uni<RawResponse> sendBinary(String method, URI uri, Map<String, String> headers,
                                         byte[] body, Duration timeout) {
-        LOGGER.log(System.Logger.Level.DEBUG, () ->
-                TransportLogger.formatRequest(method, uri, headers, body != null ? "[binary: " + body.length + " bytes]" : null));
         return execute(method, uri, headers, body != null ? Buffer.buffer(body) : null, timeout);
     }
 
@@ -61,13 +55,10 @@ public final class ArkVertxMutinyTransport implements MutinyHttpTransport {
                 : request.send();
 
         return response.onItem()
-                .transform(r -> {
-                    int statusCode = r.statusCode();
-                    String responseBody = r.bodyAsString();
-                    var responseHeaders = HeaderUtils.toHeaderMap(r.headers().getDelegate());
-                    LOGGER.log(System.Logger.Level.DEBUG, () -> TransportLogger.formatResponse(statusCode, responseHeaders, responseBody));
-                    return new RawResponse(statusCode, responseHeaders, responseBody);
-                })
+                .transform(r -> new RawResponse(
+                        r.statusCode(),
+                        HeaderUtils.toHeaderMap(r.headers().getDelegate()),
+                        r.bodyAsString()))
                 .onFailure().transform(e -> ArkException.fromThrowable(method, uri, e));
     }
 }
