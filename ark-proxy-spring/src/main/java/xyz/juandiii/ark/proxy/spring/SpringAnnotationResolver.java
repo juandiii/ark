@@ -75,6 +75,10 @@ final class SpringAnnotationResolver implements AnnotationResolver {
             PathVariable pv = params[i].getAnnotation(PathVariable.class);
             if (pv != null) {
                 String name = pv.value().isEmpty() ? params[i].getName() : pv.value();
+                if (args[i] == null) {
+                    throw new ArkException("Path variable '" + name + "' is null (parameter index "
+                            + i + "). Path variables cannot be null because they become part of the URL.");
+                }
                 path = path.replace("{" + name + "}", String.valueOf(args[i]));
             }
         }

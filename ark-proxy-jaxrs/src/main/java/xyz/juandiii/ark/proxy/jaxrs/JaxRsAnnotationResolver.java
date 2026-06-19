@@ -64,6 +64,10 @@ final class JaxRsAnnotationResolver implements AnnotationResolver {
         for (int i = 0; i < params.length; i++) {
             PathParam pp = params[i].getAnnotation(PathParam.class);
             if (pp != null) {
+                if (args[i] == null) {
+                    throw new ArkException("Path variable '" + pp.value() + "' is null (parameter index "
+                            + i + "). Path variables cannot be null because they become part of the URL.");
+                }
                 path = path.replace("{" + pp.value() + "}", String.valueOf(args[i]));
             }
         }
