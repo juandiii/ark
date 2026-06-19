@@ -1,139 +1,53 @@
 package xyz.juandiii.ark.core.http;
 
-import xyz.juandiii.ark.core.exceptions.ApiException;
-import xyz.juandiii.ark.core.exceptions.ConnectionException;
-import xyz.juandiii.ark.core.exceptions.RequestInterruptedException;
-import xyz.juandiii.ark.core.exceptions.TimeoutException;
+import xyz.juandiii.ark.core.http.decorator.Retry;
+import xyz.juandiii.ark.core.http.decorator.SyncRetryOps;
 
 import java.net.URI;
 import java.time.Duration;
 import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.ThreadLocalRandom;
 import java.util.function.LongConsumer;
-import java.util.function.Supplier;
 
 /**
- * Transport decorator that retries failed requests with exponential backoff and jitter.
+ * Sync transport decorator that retries failed requests with exponential backoff and jitter.
  * Only retries idempotent methods (GET, HEAD, PUT, DELETE, OPTIONS) unless {@code retryPost} is enabled.
+ *
+ * @deprecated since plan 017. Use {@code transport.with(Retry.of(policy, new SyncRetryOps()))} or
+ * construct {@code new Retry<>(delegate, policy, new SyncRetryOps())} directly. This wrapper
+ * remains for backward compatibility with existing callers and will be removed in a future plan.
  *
  * @author Juan Diego Lopez V.
  */
+@Deprecated(since = "1.0.x", forRemoval = false)
 public final class RetryTransport implements HttpTransport {
 
-    private static final System.Logger LOGGER = System.getLogger("xyz.juandiii.ark.retry");
-    private static final Set<String> IDEMPOTENT_METHODS = Set.of("GET", "HEAD", "PUT", "DELETE", "OPTIONS");
-
-    private final HttpTransport delegate;
-    private final RetryPolicy policy;
-    private final LongConsumer sleeper;
-    private final long[] precomputedDelays;
+    private final Retry<RawResponse> inner;
 
     public RetryTransport(HttpTransport delegate, RetryPolicy policy) {
-        this(delegate, policy, RetryTransport::threadSleep);
+        this.inner = new Retry<>(delegate, policy, new SyncRetryOps());
     }
 
     RetryTransport(HttpTransport delegate, RetryPolicy policy, LongConsumer sleeper) {
-        this.delegate = delegate;
-        this.policy = policy;
-        this.sleeper = sleeper;
-        this.precomputedDelays = precomputeDelays(policy);
-    }
-
-    static long[] precomputeDelays(RetryPolicy policy) {
-        long baseDelay = policy.delay().toMillis();
-        long maxDelay = policy.maxDelay().toMillis();
-        double multiplier = policy.multiplier();
-        int n = Math.max(policy.maxAttempts(), 1);
-        long[] delays = new long[n];
-        double current = baseDelay;
-        for (int i = 0; i < n; i++) {
-            delays[i] = Math.min((long) current, maxDelay);
-            current *= multiplier;
-        }
-        return delays;
+        this.inner = new Retry<>(delegate, policy, new SyncRetryOps(sleeper));
     }
 
     @Override
     public RawResponse send(String method, URI uri, Map<String, String> headers,
                             String body, Duration timeout) {
-        return retryLoop(method, uri, () -> delegate.send(method, uri, headers, body, timeout));
+        return inner.send(method, uri, headers, body, timeout);
     }
 
     @Override
     public RawResponse sendBinary(String method, URI uri, Map<String, String> headers,
                                    byte[] body, Duration timeout) {
-        return retryLoop(method, uri, () -> delegate.sendBinary(method, uri, headers, body, timeout));
+        return inner.sendBinary(method, uri, headers, body, timeout);
     }
 
-    private RawResponse retryLoop(String method, URI uri, Supplier<RawResponse> attempt) {
-        for (int i = 1; i <= policy.maxAttempts(); i++) {
-            RawResponse response;
-            try {
-                response = attempt.get();
-            } catch (TimeoutException | ConnectionException e) {
-                if (i == policy.maxAttempts()) {
-                    logExhausted(i, method, uri, -1);
-                    throw e;
-                }
-                if (!policy.retryOnException() || !isRetryableMethod(method)) {
-                    throw e;
-                }
-                long delayMs = computeDelayMillis(i);
-                logRetry(i, method, uri, -1, delayMs);
-                sleeper.accept(delayMs);
-                continue;
-            }
-            if (!response.isError()) {
-                return response;
-            }
-            int statusCode = response.statusCode();
-            if (i == policy.maxAttempts()) {
-                logExhausted(i, method, uri, statusCode);
-                throw ApiException.of(statusCode, response.body());
-            }
-            if (!policy.retryOn().contains(statusCode) || !isRetryableMethod(method)) {
-                throw ApiException.of(statusCode, response.body());
-            }
-            long delayMs = computeDelayMillis(i);
-            logRetry(i, method, uri, statusCode, delayMs);
-            sleeper.accept(delayMs);
-        }
-        throw new IllegalStateException("Retry loop completed without result");
-    }
-
-    private boolean isRetryableMethod(String method) {
-        return IDEMPOTENT_METHODS.contains(method.toUpperCase()) || policy.retryPost();
-    }
-
-    private long computeDelayMillis(int attempt) {
-        int index = Math.min(attempt - 1, precomputedDelays.length - 1);
-        long cappedDelay = precomputedDelays[index];
-        long minJitter = Math.max(cappedDelay / 2, 1);
-        return ThreadLocalRandom.current().nextLong(minJitter, cappedDelay + 1);
-    }
-
-    private void logExhausted(int attempt, String method, URI uri, int statusCode) {
-        LOGGER.log(System.Logger.Level.ERROR,
-                "Retry exhausted {0}/{1} for {2} {3}{4} - giving up",
-                attempt, policy.maxAttempts(), method, uri,
-                statusCode > 0 ? " (HTTP " + statusCode + ")" : " (exception)");
-    }
-
-    private void logRetry(int attempt, String method, URI uri, int statusCode, long delayMs) {
-        LOGGER.log(System.Logger.Level.WARNING,
-                "Retry {0}/{1} for {2} {3}{4} - waiting {5}ms",
-                attempt, policy.maxAttempts(), method, uri,
-                statusCode > 0 ? " (HTTP " + statusCode + ")" : " (exception)",
-                delayMs);
-    }
-
-    private static void threadSleep(long millis) {
-        try {
-            Thread.sleep(millis);
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            throw new RequestInterruptedException("Retry sleep interrupted", e);
-        }
+    /**
+     * Package-private static helper preserved for {@code RetryTransportTest.precomputeDelays}
+     * (added in plan 010). Delegates to {@link Retry#precomputeDelays}.
+     */
+    static long[] precomputeDelays(RetryPolicy policy) {
+        return Retry.precomputeDelays(policy);
     }
 }
