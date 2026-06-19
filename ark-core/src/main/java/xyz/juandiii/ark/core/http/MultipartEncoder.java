@@ -5,6 +5,7 @@ import xyz.juandiii.ark.core.exceptions.ArkException;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.util.regex.Pattern;
 
 /**
  * Encodes a {@link MultipartBody} into {@code byte[]} following RFC 2046 multipart/form-data format.
@@ -15,6 +16,7 @@ public final class MultipartEncoder {
 
     private static final byte[] CRLF = "\r\n".getBytes(StandardCharsets.UTF_8);
     private static final byte[] DASHDASH = "--".getBytes(StandardCharsets.UTF_8);
+    private static final Pattern CONTROL_CHARS = Pattern.compile("[\\x00-\\x1F\\x7F]");
 
     private MultipartEncoder() {}
 
@@ -62,7 +64,8 @@ public final class MultipartEncoder {
     }
 
     private static String sanitize(String value) {
-        return value.replace("\"", "\\\"").replace("\r", "").replace("\n", "");
+        String stripped = CONTROL_CHARS.matcher(value).replaceAll("");
+        return stripped.replace("\"", "\\\"");
     }
 
     private static void writeFieldPart(ByteArrayOutputStream out, MultipartBody.FieldPart field) throws IOException {
