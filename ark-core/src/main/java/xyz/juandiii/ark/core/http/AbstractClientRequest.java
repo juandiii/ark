@@ -18,6 +18,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.StringJoiner;
+import java.util.regex.Pattern;
 
 /**
  * CRTP base for fluent request configuration across all execution models.
@@ -26,6 +27,8 @@ import java.util.StringJoiner;
  */
 public abstract class AbstractClientRequest<T extends AbstractClientRequest<T>>
         implements RequestContext {
+
+    private static final Pattern DOUBLE_SLASH = Pattern.compile("(?<=[^:])//+");
 
     protected final String method;
     protected final String baseUrl;
@@ -175,7 +178,7 @@ public abstract class AbstractClientRequest<T extends AbstractClientRequest<T>>
             return base;
         }
         String p = StringUtils.ensureLeadingSlash(trimmedPath);
-        return (base + p).replaceAll("(?<=[^:])//+", "/");
+        return DOUBLE_SLASH.matcher(base + p).replaceAll("/");
     }
 
     private String encode(String value) {
