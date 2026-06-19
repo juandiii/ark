@@ -3,6 +3,7 @@ package xyz.juandiii.ark.async.http;
 import xyz.juandiii.ark.core.JsonSerializer;
 import xyz.juandiii.ark.core.http.AbstractClientRequest;
 import xyz.juandiii.ark.core.http.RawResponse;
+import xyz.juandiii.ark.core.http.Transport;
 import xyz.juandiii.ark.core.interceptor.RequestInterceptor;
 import xyz.juandiii.ark.core.interceptor.ResponseInterceptor;
 
@@ -16,10 +17,11 @@ import java.util.concurrent.CompletableFuture;
  */
 public final class DefaultAsyncClientRequest extends AbstractClientRequest<DefaultAsyncClientRequest> implements AsyncClientRequest {
 
-    private final AsyncHttpTransport transport;
+    private final Transport<CompletableFuture<RawResponse>> transport;
 
     public DefaultAsyncClientRequest(String method, String baseUrl, String path,
-                                     AsyncHttpTransport transport, JsonSerializer serializer,
+                                     Transport<CompletableFuture<RawResponse>> transport,
+                                     JsonSerializer serializer,
                                      List<RequestInterceptor> requestInterceptors,
                                      List<ResponseInterceptor> responseInterceptors) {
         super(method, baseUrl, path, serializer, requestInterceptors, responseInterceptors);
@@ -31,8 +33,8 @@ public final class DefaultAsyncClientRequest extends AbstractClientRequest<Defau
         applyInterceptors();
         SerializedBody body = prepareBody();
         CompletableFuture<RawResponse> future = body.isBinary()
-                ? transport.sendBinaryAsync(method, buildUri(), headers, body.binary(), timeout)
-                : transport.sendAsync(method, buildUri(), headers, body.text(), timeout);
+                ? transport.sendBinary(method, buildUri(), headers, body.binary(), timeout)
+                : transport.send(method, buildUri(), headers, body.text(), timeout);
         for (ResponseInterceptor interceptor : responseInterceptors) {
             future = future.thenApply(interceptor::intercept);
         }

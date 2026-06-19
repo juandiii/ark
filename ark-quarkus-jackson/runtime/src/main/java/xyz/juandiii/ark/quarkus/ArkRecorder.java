@@ -6,7 +6,6 @@ import io.quarkus.runtime.annotations.Recorder;
 import io.vertx.ext.web.client.WebClientOptions;
 import io.vertx.mutiny.core.Vertx;
 import io.vertx.mutiny.ext.web.client.WebClient;
-import xyz.juandiii.ark.async.http.AsyncHttpTransport;
 import xyz.juandiii.ark.async.http.decorator.Adapters;
 import xyz.juandiii.ark.async.http.decorator.AsyncRetryOps;
 import xyz.juandiii.ark.core.ArkClient;
@@ -14,13 +13,13 @@ import xyz.juandiii.ark.core.JsonSerializer;
 import xyz.juandiii.ark.async.AsyncArkClient;
 import xyz.juandiii.ark.core.AbstractArkBuilder;
 import xyz.juandiii.ark.core.http.decorator.Retry;
+import xyz.juandiii.ark.core.http.decorator.SyncRetryOps;
 import xyz.juandiii.ark.core.interceptor.LoggingInterceptor;
 import xyz.juandiii.ark.core.interceptor.RequestInterceptor;
 import xyz.juandiii.ark.core.proxy.InterceptorResolver;
 import xyz.juandiii.ark.mutiny.MutinyArkClient;
 import xyz.juandiii.ark.core.proxy.HttpVersion;
 import xyz.juandiii.ark.core.http.RetryPolicy;
-import xyz.juandiii.ark.core.http.RetryTransport;
 import xyz.juandiii.ark.core.ssl.InsecureSslContext;
 import xyz.juandiii.ark.core.proxy.PropertyResolver;
 import xyz.juandiii.ark.core.proxy.RegisterArkClient;
@@ -112,14 +111,12 @@ public class ArkRecorder {
             return ArkJaxRsProxy.create(iface, builder.build());
         } else if (usesAsyncReturnTypes(iface)) {
             SSLContext sslContext = resolveSslContext(rc.clientName(), rc.tlsConfigName(), rc.trustAll());
-            var transport = buildJdkTransport(rc.httpVersion(), rc.connectTimeout(), sslContext);
-            AsyncHttpTransport asyncTransport = rc.retryPolicy() != null
-                    ? Adapters.toAsync(Adapters.fromAsync(transport)
-                            .with(Retry.of(rc.retryPolicy(), new AsyncRetryOps())))
-                    : transport;
+            var jdk = buildJdkTransport(rc.httpVersion(), rc.connectTimeout(), sslContext);
             AsyncArkClient.Builder builder = AsyncArkClient.builder()
                     .serializer(serializer)
-                    .transport(asyncTransport)
+                    .transport(rc.retryPolicy() != null
+                            ? Adapters.fromAsync(jdk).with(Retry.of(rc.retryPolicy(), new AsyncRetryOps()))
+                            : Adapters.fromAsync(jdk))
                     .baseUrl(rc.baseUrl())
                     .httpVersion(rc.httpVersion())
                     .connectTimeout(rc.connectTimeout())
@@ -133,7 +130,7 @@ public class ArkRecorder {
         ArkClient.Builder builder = ArkClient.builder()
                 .serializer(serializer)
                 .transport(rc.retryPolicy() != null
-                        ? new RetryTransport(jdkTransport, rc.retryPolicy())
+                        ? jdkTransport.with(Retry.of(rc.retryPolicy(), new SyncRetryOps()))
                         : jdkTransport)
                 .baseUrl(rc.baseUrl())
                 .httpVersion(rc.httpVersion())

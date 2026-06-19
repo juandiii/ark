@@ -13,10 +13,10 @@ import java.util.List;
  */
 public final class DefaultClientRequest extends AbstractClientRequest<DefaultClientRequest> implements ClientRequest {
 
-    private final HttpTransport transport;
+    private final Transport<RawResponse> transport;
 
     public DefaultClientRequest(String method, String baseUrl, String path,
-                                HttpTransport transport, JsonSerializer serializer,
+                                Transport<RawResponse> transport, JsonSerializer serializer,
                                 List<RequestInterceptor> requestInterceptors,
                                 List<ResponseInterceptor> responseInterceptors) {
         super(method, baseUrl, path, serializer, requestInterceptors, responseInterceptors);

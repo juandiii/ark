@@ -1,7 +1,9 @@
 package xyz.juandiii.ark.core;
 
-import xyz.juandiii.ark.core.http.HttpTransport;
 import xyz.juandiii.ark.core.http.DefaultClientRequest;
+import xyz.juandiii.ark.core.http.HttpTransport;
+import xyz.juandiii.ark.core.http.RawResponse;
+import xyz.juandiii.ark.core.http.Transport;
 import xyz.juandiii.ark.core.interceptor.RequestInterceptor;
 import xyz.juandiii.ark.core.interceptor.ResponseInterceptor;
 
@@ -21,9 +23,9 @@ import java.util.Objects;
  */
 public class ArkClient extends AbstractArkClient<DefaultClientRequest> implements Ark {
 
-    private final HttpTransport transport;
+    private final Transport<RawResponse> transport;
 
-    private ArkClient(HttpTransport transport, JsonSerializer serializer, String userAgent,
+    private ArkClient(Transport<RawResponse> transport, JsonSerializer serializer, String userAgent,
                       String baseUrl,
                       List<RequestInterceptor> requestInterceptors,
                       List<ResponseInterceptor> responseInterceptors) {
@@ -52,17 +54,22 @@ public class ArkClient extends AbstractArkClient<DefaultClientRequest> implement
      */
     public static final class Builder extends AbstractArkBuilder<Builder> {
 
-        private HttpTransport transport;
+        private Transport<RawResponse> transport;
 
         private Builder() {}
 
         /**
          * Set the synchronous HTTP transport. Required.
          *
+         * <p>Accepts any {@code Transport<RawResponse>} — including bare
+         * {@link HttpTransport} implementations (which extend the unified
+         * Transport) and decorator-chain results like
+         * {@code jdkTransport.with(Retry.of(policy, new SyncRetryOps()))}.
+         *
          * @param transport configured transport instance
          * @return this builder for chaining
          */
-        public Builder transport(HttpTransport transport) {
+        public Builder transport(Transport<RawResponse> transport) {
             this.transport = transport;
             return this;
         }

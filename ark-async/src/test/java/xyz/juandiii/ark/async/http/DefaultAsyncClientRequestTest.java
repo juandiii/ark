@@ -31,7 +31,8 @@ class DefaultAsyncClientRequestTest {
 
     private DefaultAsyncClientRequest request(String method, String path) {
         return new DefaultAsyncClientRequest(method, "https://api.example.com", path,
-                transport, serializer, Collections.emptyList(), Collections.emptyList());
+                xyz.juandiii.ark.async.http.decorator.Adapters.fromAsync(transport),
+                serializer, Collections.emptyList(), Collections.emptyList());
     }
 
     @Nested
@@ -71,7 +72,8 @@ class DefaultAsyncClientRequestTest {
 
             DefaultAsyncClientRequest req = new DefaultAsyncClientRequest(
                     "GET", "https://api.example.com", "/",
-                    transport, serializer, List.of(interceptor), Collections.emptyList());
+                    xyz.juandiii.ark.async.http.decorator.Adapters.fromAsync(transport),
+                    serializer, List.of(interceptor), Collections.emptyList());
             req.retrieve();
 
             verify(interceptor).intercept(req);
@@ -85,8 +87,10 @@ class DefaultAsyncClientRequestTest {
 
             DefaultAsyncClientRequest req = new DefaultAsyncClientRequest(
                     "GET", "https://api.example.com", "/",
-                    transport, serializer, Collections.emptyList(),
-                    List.of(raw -> new RawResponse(raw.statusCode(), raw.headers(), "modified")));
+                    xyz.juandiii.ark.async.http.decorator.Adapters.fromAsync(transport),
+                    serializer, Collections.emptyList(),
+                    List.of((xyz.juandiii.ark.core.interceptor.ResponseInterceptor)
+                            raw -> new RawResponse(raw.statusCode(), raw.headers(), "modified")));
 
             AsyncClientResponse response = req.retrieve();
             // Verify the future completes without error (interceptor applied)
