@@ -379,6 +379,12 @@ Please read [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines on commit conventi
 
 ---
 
+## Security
+
+Found a vulnerability? Please follow the disclosure process in [SECURITY.md](SECURITY.md) — do not open a public issue.
+
+---
+
 ## License
 
 Apache 2.0
