@@ -12,6 +12,10 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.LongConsumer;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
@@ -233,5 +237,65 @@ class RetryTransportTest {
                 transport(RetryPolicy.defaults()).sendBinary("POST", TEST_URI, HEADERS, new byte[]{1}, null));
 
         verify(delegate, times(1)).sendBinary(anyString(), any(), any(), any(), any());
+    }
+
+    // ---- Interrupt handling during retry sleep ----
+
+    @Test
+    void givenInjectedSleeperThrowsRequestInterrupted_whenRetrying_thenPropagatesAndStopsRetry() {
+        when(delegate.send(anyString(), any(), any(), any(), any()))
+                .thenThrow(new ServiceUnavailableException("unavailable"));
+
+        LongConsumer interruptingSleeper = millis -> {
+            Thread.currentThread().interrupt();
+            throw new RequestInterruptedException("Retry sleep interrupted",
+                    new InterruptedException("test"));
+        };
+        var policy = RetryPolicy.builder().maxAttempts(3).delay(Duration.ofMillis(10)).build();
+        var transport = new RetryTransport(delegate, policy, interruptingSleeper);
+
+        RequestInterruptedException ex = assertThrows(RequestInterruptedException.class,
+                () -> transport.send("GET", TEST_URI, HEADERS, null, null));
+
+        assertInstanceOf(InterruptedException.class, ex.getCause());
+        // After 1st attempt fails and sleep throws, no further retry attempts must be made
+        verify(delegate, times(1)).send(anyString(), any(), any(), any(), any());
+        // Clear the flag set by the test sleeper so the JVM doesn't leak it
+        assertTrue(Thread.interrupted());
+    }
+
+    @Test
+    void givenRealSleepIsInterrupted_whenRetrying_thenThrowsRequestInterruptedException() throws Exception {
+        when(delegate.send(anyString(), any(), any(), any(), any()))
+                .thenThrow(new ServiceUnavailableException("unavailable"));
+
+        // Use the production 2-arg constructor — real Thread.sleep path via threadSleep().
+        var policy = RetryPolicy.builder().maxAttempts(3).delay(Duration.ofSeconds(10)).build();
+        var transport = new RetryTransport(delegate, policy);
+
+        AtomicReference<Throwable> caught = new AtomicReference<>();
+        CountDownLatch started = new CountDownLatch(1);
+        Thread worker = new Thread(() -> {
+            started.countDown();
+            try {
+                transport.send("GET", TEST_URI, HEADERS, null, null);
+            } catch (Throwable t) {
+                caught.set(t);
+            }
+        }, "interrupt-test-worker");
+        worker.setDaemon(true);
+        worker.start();
+
+        assertTrue(started.await(2, TimeUnit.SECONDS), "worker must start");
+        // Give the worker a moment to fail once and enter the 10s sleep
+        Thread.sleep(150);
+        worker.interrupt();
+        worker.join(3_000);
+
+        assertFalse(worker.isAlive(), "worker should have completed after interrupt");
+        assertNotNull(caught.get(), "worker should have thrown");
+        assertInstanceOf(RequestInterruptedException.class, caught.get(),
+                "expected RequestInterruptedException, got " + caught.get().getClass().getName());
+        assertInstanceOf(InterruptedException.class, caught.get().getCause());
     }
 }
