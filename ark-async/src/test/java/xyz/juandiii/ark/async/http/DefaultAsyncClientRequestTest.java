@@ -100,6 +100,49 @@ class DefaultAsyncClientRequestTest {
     }
 
     @Nested
+    class CallerStackPreservation {
+
+        @Test
+        void givenErrorResponse_whenRetrieve_thenExceptionHasCallerSiteSuppressed() {
+            when(transport.send(anyString(), any(), anyMap(), any(), any()))
+                    .thenReturn(CompletableFuture.completedFuture(
+                            new RawResponse(400, Map.of(), "bad")));
+
+            AsyncClientResponse response = request("GET", "/fail").retrieve();
+
+            ExecutionException ex = assertThrows(ExecutionException.class,
+                    () -> response.toBodilessEntity().get());
+            assertInstanceOf(ApiException.class, ex.getCause());
+
+            Throwable[] suppressed = ex.getCause().getSuppressed();
+            assertEquals(1, suppressed.length,
+                    "Expected exactly one suppressed exception carrying the async call site");
+            assertEquals("Async call originated here", suppressed[0].getMessage());
+            // The suppressed throwable's stack must include this test method's frame
+            boolean foundCallerFrame = false;
+            for (StackTraceElement el : suppressed[0].getStackTrace()) {
+                if (el.getMethodName().equals("givenErrorResponse_whenRetrieve_thenExceptionHasCallerSiteSuppressed")) {
+                    foundCallerFrame = true;
+                    break;
+                }
+            }
+            assertTrue(foundCallerFrame,
+                    "Suppressed stack must include the caller's frame so users can locate the call site");
+        }
+
+        @Test
+        void givenSuccessResponse_whenRetrieve_thenNoSuppressedExceptionAttached() throws Exception {
+            when(transport.send(anyString(), any(), anyMap(), any(), any()))
+                    .thenReturn(CompletableFuture.completedFuture(
+                            new RawResponse(200, Map.of(), "ok")));
+
+            AsyncClientResponse response = request("GET", "/ok").retrieve();
+            response.toBodilessEntity().get();  // does not throw
+            // Nothing to assert beyond no-throw — but covers the happy-path branch of whenComplete
+        }
+    }
+
+    @Nested
     class FluentChaining {
 
         @Test
