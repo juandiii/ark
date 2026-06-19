@@ -8,7 +8,14 @@ import java.nio.charset.StandardCharsets;
 import java.util.regex.Pattern;
 
 /**
- * Encodes a {@link MultipartBody} into {@code byte[]} following RFC 2046 multipart/form-data format.
+ * Encodes a {@link MultipartBody} into a {@code byte[]} payload following the
+ * RFC 7578 / RFC 2046 {@code multipart/form-data} format. Pair with
+ * {@link #contentType(MultipartBody)} to build the matching
+ * {@code Content-Type} header value.
+ *
+ * <p>Filename and field-name strings are sanitized: all control characters
+ * (0x00-0x1F, 0x7F) are stripped and double quotes are backslash-escaped,
+ * so a hostile filename cannot break header framing.
  *
  * @author Juan Diego Lopez V.
  */
@@ -20,6 +27,13 @@ public final class MultipartEncoder {
 
     private MultipartEncoder() {}
 
+    /**
+     * Encode the multipart body into its on-the-wire bytes.
+     *
+     * @param multipart body to encode (must not be {@code null})
+     * @return encoded payload bytes
+     * @throws xyz.juandiii.ark.core.exceptions.ArkException if encoding fails
+     */
     public static byte[] encode(MultipartBody multipart) {
         try {
             ByteArrayOutputStream out = new ByteArrayOutputStream();
@@ -48,6 +62,12 @@ public final class MultipartEncoder {
         }
     }
 
+    /**
+     * Build the {@code Content-Type} header value for the given body's boundary.
+     *
+     * @param multipart body whose boundary to embed
+     * @return {@code "multipart/form-data; boundary=..."}
+     */
     public static String contentType(MultipartBody multipart) {
         return "multipart/form-data; boundary=" + multipart.boundary();
     }
