@@ -26,7 +26,6 @@
     <maven.compiler.source>${java.version}</maven.compiler.source>
     <maven.compiler.target>${java.version}</maven.compiler.target>
     <spring-boot.version>4.1.0</spring-boot.version>
-    <spring-framework.version>7.0.8</spring-framework.version>
     <quarkus.version>3.35.0</quarkus.version>
     <httpclient5.version>5.6</httpclient5.version>
   </properties>
@@ -52,13 +51,6 @@
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-dependencies</artifactId>
         <version>${spring-boot.version}</version>
-        <type>pom</type>
-        <scope>import</scope>
-      </dependency>
-      <dependency>
-        <groupId>org.springframework</groupId>
-        <artifactId>spring-framework-bom</artifactId>
-        <version>${spring-framework.version}</version>
         <type>pom</type>
         <scope>import</scope>
       </dependency>

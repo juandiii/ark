@@ -413,6 +413,7 @@ Ark validates TLS certificates by default. To use a custom truststore (self-sign
 ## Documentation
 
 - [CHANGELOG](CHANGELOG.md) - release notes and migration guidance
+- [Compatibility Matrix](docs/compatibility.md) - supported Spring Boot, Quarkus, and Java versions
 - [Getting Started](docs/getting-started.md)
 - [Sync Client](docs/sync.md)
 - [Async Client](docs/async.md)

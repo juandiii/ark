@@ -1,0 +1,118 @@
+name: Compat Weekly
+
+on:
+  schedule:
+    - cron: '0 6 * * 1'   # Mondays at 06:00 UTC
+  workflow_dispatch: {}   # manual trigger button
+
+jobs:
+  fetch-latest:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    outputs:
+      sb-4-0: ${{ steps.q.outputs.sb-4-0 }}
+      sb-4-1: ${{ steps.q.outputs.sb-4-1 }}
+      qu-3-33: ${{ steps.q.outputs.qu-3-33 }}
+      qu-3-35: ${{ steps.q.outputs.qu-3-35 }}
+    steps:
+      - name: Query Maven Central for latest patches
+        id: q
+        run: |
+          set -euo pipefail
+          # Spring Boot 4.0.x latest
+          SB_4_0=$(curl -fsSL "https://repo1.maven.org/maven2/org/springframework/boot/spring-boot-dependencies/maven-metadata.xml" \
+            | grep -oE '<version>4\.0\.[0-9]+</version>' \
+            | sed -E 's|</?version>||g' | sort -V -u | tail -1)
+          # Spring Boot 4.1.x latest
+          SB_4_1=$(curl -fsSL "https://repo1.maven.org/maven2/org/springframework/boot/spring-boot-dependencies/maven-metadata.xml" \
+            | grep -oE '<version>4\.1\.[0-9]+</version>' \
+            | sed -E 's|</?version>||g' | sort -V -u | tail -1)
+          # Quarkus 3.33.x LTS latest
+          QU_3_33=$(curl -fsSL "https://repo1.maven.org/maven2/io/quarkus/quarkus-bom/maven-metadata.xml" \
+            | grep -oE '<version>3\.33\.[0-9]+</version>' \
+            | sed -E 's|</?version>||g' | sort -V -u | tail -1)
+          # Quarkus 3.35.x latest
+          QU_3_35=$(curl -fsSL "https://repo1.maven.org/maven2/io/quarkus/quarkus-bom/maven-metadata.xml" \
+            | grep -oE '<version>3\.35\.[0-9]+</version>' \
+            | sed -E 's|</?version>||g' | sort -V -u | tail -1)
+          echo "sb-4-0=$SB_4_0" >> "$GITHUB_OUTPUT"
+          echo "sb-4-1=$SB_4_1" >> "$GITHUB_OUTPUT"
+          echo "qu-3-33=$QU_3_33" >> "$GITHUB_OUTPUT"
+          echo "qu-3-35=$QU_3_35" >> "$GITHUB_OUTPUT"
+          echo "## Latest patch versions" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Spring Boot 4.0.x: \`$SB_4_0\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Spring Boot 4.1.x: \`$SB_4_1\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Quarkus 3.33.x LTS: \`$QU_3_33\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Quarkus 3.35.x: \`$QU_3_35\`" >> "$GITHUB_STEP_SUMMARY"
+
+  framework-matrix:
+    needs: fetch-latest
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - spring-boot: ${{ needs.fetch-latest.outputs.sb-4-1 }}
+            quarkus: ${{ needs.fetch-latest.outputs.qu-3-35 }}
+            label: "SB-4.1 latest + Q-3.35 latest"
+          - spring-boot: ${{ needs.fetch-latest.outputs.sb-4-0 }}
+            quarkus: ${{ needs.fetch-latest.outputs.qu-3-35 }}
+            label: "SB-4.0 latest + Q-3.35 latest"
+          - spring-boot: ${{ needs.fetch-latest.outputs.sb-4-1 }}
+            quarkus: ${{ needs.fetch-latest.outputs.qu-3-33 }}
+            label: "SB-4.1 latest + Q-3.33-LTS latest"
+          - spring-boot: ${{ needs.fetch-latest.outputs.sb-4-0 }}
+            quarkus: ${{ needs.fetch-latest.outputs.qu-3-33 }}
+            label: "SB-4.0 latest + Q-3.33-LTS latest"
+    name: ${{ matrix.label }}
+    steps:
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10  # v6
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: 17
+          cache: maven
+      - name: Build and Test
+        run: |
+          ./mvnw clean verify \
+            -Dspring-boot.version=${{ matrix.spring-boot }} \
+            -Dquarkus.version=${{ matrix.quarkus }}
+
+  notify-failure:
+    needs: framework-matrix
+    if: failure() && github.event_name == 'schedule'
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+    steps:
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10  # v6
+      - name: Create issue on regression
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh issue create \
+            --title "Weekly compat regression $(date +%Y-%m-%d)" \
+            --label "compat-regression" \
+            --body "$(cat <<'EOF'
+          The weekly compatibility matrix workflow failed.
+
+          See run: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+
+          This means at least one of the Spring Boot / Quarkus combinations
+          documented in [docs/compatibility.md](../blob/main/docs/compatibility.md)
+          no longer passes against the latest published patches.
+
+          Triage steps:
+          1. Open the failing job to see which cell failed.
+          2. Check whether a new upstream patch (Spring Boot or Quarkus)
+             introduced the regression.
+          3. If yes — investigate the change, file upstream issue if needed,
+             pin to a previous patch in pom.xml, or update Ark to be compatible.
+          4. Update docs/compatibility.md if a cell needs to be marked
+             Known-broken.
+          EOF
+          )"
