@@ -7,8 +7,8 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import xyz.juandiii.ark.core.JsonSerializer;
 import xyz.juandiii.ark.async.http.AsyncClientRequest;
-import xyz.juandiii.ark.async.http.AsyncHttpTransport;
 import xyz.juandiii.ark.core.http.RawResponse;
+import xyz.juandiii.ark.core.http.Transport;
 
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
@@ -24,7 +24,8 @@ class AsyncArkClientTest {
     JsonSerializer serializer;
 
     @Mock
-    AsyncHttpTransport transport;
+    @SuppressWarnings("unchecked")
+    Transport<CompletableFuture<RawResponse>> transport;
 
     private AsyncArk client() {
         return AsyncArkClient.builder()
@@ -96,7 +97,7 @@ class AsyncArkClientTest {
 
         @Test
         void givenCustomUserAgent_whenRetrieve_thenSendsUserAgentHeader() {
-            when(transport.sendAsync(anyString(), any(), anyMap(), any(), any()))
+            when(transport.send(anyString(), any(), anyMap(), any(), any()))
                     .thenReturn(CompletableFuture.completedFuture(
                             new RawResponse(200, Map.of(), "{}")));
 
@@ -109,7 +110,7 @@ class AsyncArkClientTest {
 
             ark.get("/").retrieve();
 
-            verify(transport).sendAsync(anyString(), any(), argThat(headers ->
+            verify(transport).send(anyString(), any(), argThat(headers ->
                     "TestApp/1.0".equals(headers.get("User-Agent"))), any(), any());
         }
     }

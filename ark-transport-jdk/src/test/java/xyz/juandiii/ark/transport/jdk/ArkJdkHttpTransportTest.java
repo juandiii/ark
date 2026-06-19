@@ -5,10 +5,10 @@ import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
-import xyz.juandiii.ark.async.http.AsyncHttpTransport;
 import xyz.juandiii.ark.core.exceptions.*;
 import xyz.juandiii.ark.core.http.HttpTransport;
 import xyz.juandiii.ark.core.http.RawResponse;
+import xyz.juandiii.ark.core.http.Transport;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -120,32 +120,46 @@ class ArkJdkHttpTransportTest {
         server.stop(0);
     }
 
-    private ArkJdkHttpTransport transport() {
-        return new ArkJdkHttpTransport(HttpClient.newBuilder().build());
+    private ArkJdkSyncTransport transport() {
+        return new ArkJdkSyncTransport(HttpClient.newBuilder().build());
+    }
+
+    private ArkJdkAsyncTransport asyncTransport() {
+        return new ArkJdkAsyncTransport(HttpClient.newBuilder().build());
     }
 
     @Nested
     class Constructor {
 
         @Test
-        void givenNullHttpClient_whenConstructing_thenThrowsNullPointerException() {
-            assertThrows(NullPointerException.class, () -> new ArkJdkHttpTransport(null));
+        void givenNullHttpClient_whenConstructingSync_thenThrowsNullPointerException() {
+            assertThrows(NullPointerException.class, () -> new ArkJdkSyncTransport(null));
         }
 
         @Test
-        void givenNullExecutor_whenConstructing_thenThrowsNullPointerException() {
+        void givenNullHttpClient_whenConstructingAsync_thenThrowsNullPointerException() {
+            assertThrows(NullPointerException.class, () -> new ArkJdkAsyncTransport(null));
+        }
+
+        @Test
+        void givenNullExecutor_whenConstructingAsync_thenThrowsNullPointerException() {
             assertThrows(NullPointerException.class,
-                    () -> new ArkJdkHttpTransport(HttpClient.newBuilder().build(), null));
+                    () -> new ArkJdkAsyncTransport(HttpClient.newBuilder().build(), null));
         }
 
         @Test
-        void givenValidHttpClient_whenConstructing_thenSucceeds() {
-            assertDoesNotThrow(() -> new ArkJdkHttpTransport(HttpClient.newBuilder().build()));
+        void givenValidHttpClient_whenConstructingSync_thenSucceeds() {
+            assertDoesNotThrow(() -> new ArkJdkSyncTransport(HttpClient.newBuilder().build()));
         }
 
         @Test
-        void givenCustomExecutor_whenConstructing_thenSucceeds() {
-            assertDoesNotThrow(() -> new ArkJdkHttpTransport(
+        void givenValidHttpClient_whenConstructingAsync_thenSucceeds() {
+            assertDoesNotThrow(() -> new ArkJdkAsyncTransport(HttpClient.newBuilder().build()));
+        }
+
+        @Test
+        void givenCustomExecutor_whenConstructingAsync_thenSucceeds() {
+            assertDoesNotThrow(() -> new ArkJdkAsyncTransport(
                     HttpClient.newBuilder().build(),
                     Executors.newSingleThreadExecutor()));
         }
@@ -380,7 +394,7 @@ class ArkJdkHttpTransportTest {
 
         @Test
         void givenSuccessEndpoint_whenSendAsync_thenReturnsRawResponseWith200() throws Exception {
-            CompletableFuture<RawResponse> future = transport().sendAsync("GET",
+            CompletableFuture<RawResponse> future = asyncTransport().send("GET",
                     baseUri.resolve("/ok"), Map.of(), null, null);
 
             RawResponse response = future.get();
@@ -390,7 +404,7 @@ class ArkJdkHttpTransportTest {
 
         @Test
         void given404Endpoint_whenSendAsync_thenCompletesWithErrorResponse() throws Exception {
-            CompletableFuture<RawResponse> future = transport().sendAsync("GET",
+            CompletableFuture<RawResponse> future = asyncTransport().send("GET",
                     baseUri.resolve("/not-found"), Map.of(), null, null);
 
             RawResponse response = future.get();
@@ -400,7 +414,7 @@ class ArkJdkHttpTransportTest {
 
         @Test
         void given500Endpoint_whenSendAsync_thenCompletesWithErrorResponse() throws Exception {
-            CompletableFuture<RawResponse> future = transport().sendAsync("GET",
+            CompletableFuture<RawResponse> future = asyncTransport().send("GET",
                     baseUri.resolve("/server-error"), Map.of(), null, null);
 
             RawResponse response = future.get();
@@ -420,7 +434,7 @@ class ArkJdkHttpTransportTest {
 
         @Test
         void givenBody_whenSendAsync_thenServerReceivesBody() throws Exception {
-            CompletableFuture<RawResponse> future = transport().sendAsync("POST",
+            CompletableFuture<RawResponse> future = asyncTransport().send("POST",
                     baseUri.resolve("/echo-body"), Map.of(), "{\"async\":true}", null);
 
             assertEquals("{\"async\":true}", future.get().body());
@@ -428,7 +442,7 @@ class ArkJdkHttpTransportTest {
 
         @Test
         void givenHeaders_whenSendAsync_thenServerReceivesHeaders() throws Exception {
-            CompletableFuture<RawResponse> future = transport().sendAsync("GET",
+            CompletableFuture<RawResponse> future = asyncTransport().send("GET",
                     baseUri.resolve("/echo-header"),
                     Map.of("Authorization", "Bearer async-token"), null, null);
 
@@ -438,11 +452,11 @@ class ArkJdkHttpTransportTest {
         @Test
         void givenCustomExecutor_whenSendAsync_thenUsesExecutor() throws Exception {
             var executorUsed = new boolean[]{false};
-            ArkJdkHttpTransport transport = new ArkJdkHttpTransport(
+            ArkJdkAsyncTransport transport = new ArkJdkAsyncTransport(
                     HttpClient.newBuilder().build(),
                     runnable -> { executorUsed[0] = true; runnable.run(); });
 
-            transport.sendAsync("GET", baseUri.resolve("/ok"), Map.of(), null, null).get();
+            transport.send("GET", baseUri.resolve("/ok"), Map.of(), null, null).get();
 
             assertTrue(executorUsed[0]);
         }
@@ -458,7 +472,7 @@ class ArkJdkHttpTransportTest {
             when(mockClient.send(any(HttpRequest.class), any(HttpResponse.BodyHandler.class)))
                     .thenThrow(new InterruptedException("interrupted"));
 
-            ArkJdkHttpTransport transport = new ArkJdkHttpTransport(mockClient);
+            ArkJdkSyncTransport transport = new ArkJdkSyncTransport(mockClient);
 
             RequestInterruptedException ex = assertThrows(RequestInterruptedException.class, () ->
                     transport.send("GET", URI.create("http://localhost/test"), Map.of(), null, null));
@@ -477,7 +491,7 @@ class ArkJdkHttpTransportTest {
             when(mockClient.send(any(HttpRequest.class), any(HttpResponse.BodyHandler.class)))
                     .thenThrow(new IOException("connection refused"));
 
-            ArkJdkHttpTransport transport = new ArkJdkHttpTransport(mockClient);
+            ArkJdkSyncTransport transport = new ArkJdkSyncTransport(mockClient);
 
             ArkException ex = assertThrows(ArkException.class, () ->
                     transport.send("GET", URI.create("http://localhost/test"), Map.of(), null, null));
@@ -531,7 +545,7 @@ class ArkJdkHttpTransportTest {
         @Test
         void givenBinaryBody_whenSendBinaryAsync_thenServerReceivesBytes() throws Exception {
             byte[] body = "{\"async-binary\":true}".getBytes();
-            CompletableFuture<RawResponse> future = transport().sendBinaryAsync("POST",
+            CompletableFuture<RawResponse> future = asyncTransport().sendBinary("POST",
                     baseUri.resolve("/echo-body"), Map.of(), body, null);
 
             assertEquals("{\"async-binary\":true}", future.get().body());
@@ -539,7 +553,7 @@ class ArkJdkHttpTransportTest {
 
         @Test
         void givenNullBinaryBody_whenSendBinaryAsync_thenSucceeds() throws Exception {
-            CompletableFuture<RawResponse> future = transport().sendBinaryAsync("GET",
+            CompletableFuture<RawResponse> future = asyncTransport().sendBinary("GET",
                     baseUri.resolve("/ok"), Map.of(), null, null);
 
             assertEquals(200, future.get().statusCode());
@@ -547,7 +561,7 @@ class ArkJdkHttpTransportTest {
 
         @Test
         void given404_whenSendBinaryAsync_thenCompletesWithErrorResponse() throws Exception {
-            CompletableFuture<RawResponse> future = transport().sendBinaryAsync("GET",
+            CompletableFuture<RawResponse> future = asyncTransport().sendBinary("GET",
                     baseUri.resolve("/not-found"), Map.of(), null, null);
 
             RawResponse response = future.get();
@@ -560,13 +574,13 @@ class ArkJdkHttpTransportTest {
     class ImplementsInterfaces {
 
         @Test
-        void givenTransport_whenChecked_thenImplementsHttpTransport() {
+        void givenSyncTransport_whenChecked_thenImplementsHttpTransport() {
             assertInstanceOf(HttpTransport.class, transport());
         }
 
         @Test
-        void givenTransport_whenChecked_thenImplementsAsyncHttpTransport() {
-            assertInstanceOf(AsyncHttpTransport.class, transport());
+        void givenAsyncTransport_whenChecked_thenImplementsTransport() {
+            assertInstanceOf(Transport.class, asyncTransport());
         }
     }
 }

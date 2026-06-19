@@ -1,8 +1,6 @@
 package xyz.juandiii.ark.async;
 
-import xyz.juandiii.ark.async.http.AsyncHttpTransport;
 import xyz.juandiii.ark.async.http.DefaultAsyncClientRequest;
-import xyz.juandiii.ark.async.http.decorator.Adapters;
 import xyz.juandiii.ark.core.AbstractArkBuilder;
 import xyz.juandiii.ark.core.AbstractArkClient;
 import xyz.juandiii.ark.core.JsonSerializer;
@@ -52,24 +50,12 @@ public class AsyncArkClient extends AbstractArkClient<DefaultAsyncClientRequest>
         private Builder() {}
 
         /**
-         * Set an {@link AsyncHttpTransport} (legacy / typical usage). Wraps it
-         * via {@link Adapters#fromAsync(AsyncHttpTransport)} internally so the
-         * client stores the unified Transport type.
+         * Set the async transport. Required. Accepts any
+         * {@code Transport<CompletableFuture<RawResponse>>} — typically an
+         * {@code ArkJdkAsyncTransport} (optionally wrapped with the decorator
+         * chain: {@code jdk.with(Retry.of(policy, new AsyncRetryOps()))}).
          *
-         * @param transport AsyncHttpTransport implementation
-         * @return this builder for chaining
-         */
-        public Builder transport(AsyncHttpTransport transport) {
-            this.transport = Adapters.fromAsync(transport);
-            return this;
-        }
-
-        /**
-         * Set a {@code Transport<CompletableFuture<RawResponse>>} — typically the
-         * result of a decorator chain like
-         * {@code Adapters.fromAsync(jdk).with(Retry.of(policy, new AsyncRetryOps()))}.
-         *
-         * @param transport unified transport instance
+         * @param transport configured transport instance
          * @return this builder for chaining
          */
         public Builder transport(Transport<CompletableFuture<RawResponse>> transport) {

@@ -13,7 +13,7 @@ import xyz.juandiii.ark.jackson.JacksonSerializer;
 import xyz.juandiii.ark.core.JsonSerializer;
 import xyz.juandiii.ark.core.http.HttpTransport;
 import xyz.juandiii.ark.core.proxy.TlsResolver;
-import xyz.juandiii.ark.transport.jdk.ArkJdkHttpTransport;
+import xyz.juandiii.ark.transport.jdk.ArkJdkSyncTransport;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.boot.ssl.SslBundles;
 import xyz.juandiii.ark.core.exceptions.ArkException;
@@ -40,7 +40,7 @@ public class ArkAutoConfiguration {
     @Bean
     @ConditionalOnMissingBean(HttpTransport.class)
     public HttpTransport httpTransport() {
-        return new ArkJdkHttpTransport(HttpClient.newBuilder()
+        return new ArkJdkSyncTransport(HttpClient.newBuilder()
                 .version(HttpClient.Version.HTTP_2)
                 .build());
     }

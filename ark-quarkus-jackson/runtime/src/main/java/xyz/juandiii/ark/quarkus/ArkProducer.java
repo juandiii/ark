@@ -14,7 +14,7 @@ import xyz.juandiii.ark.core.JsonSerializer;
 import xyz.juandiii.ark.core.http.HttpTransport;
 import xyz.juandiii.ark.mutiny.MutinyArkClient;
 import xyz.juandiii.ark.mutiny.http.MutinyHttpTransport;
-import xyz.juandiii.ark.transport.jdk.ArkJdkHttpTransport;
+import xyz.juandiii.ark.transport.jdk.ArkJdkSyncTransport;
 import xyz.juandiii.ark.transport.vertx.mutiny.ArkVertxMutinyTransport;
 
 import java.net.http.HttpClient;
@@ -38,7 +38,7 @@ public class ArkProducer {
     @Singleton
     @DefaultBean
     public HttpTransport httpTransport() {
-        return new ArkJdkHttpTransport(HttpClient.newBuilder().build());
+        return new ArkJdkSyncTransport(HttpClient.newBuilder().build());
     }
 
     @Produces

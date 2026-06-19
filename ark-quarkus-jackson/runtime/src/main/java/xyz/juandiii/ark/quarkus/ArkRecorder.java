@@ -6,7 +6,6 @@ import io.quarkus.runtime.annotations.Recorder;
 import io.vertx.ext.web.client.WebClientOptions;
 import io.vertx.mutiny.core.Vertx;
 import io.vertx.mutiny.ext.web.client.WebClient;
-import xyz.juandiii.ark.async.http.decorator.Adapters;
 import xyz.juandiii.ark.async.http.decorator.AsyncRetryOps;
 import xyz.juandiii.ark.core.ArkClient;
 import xyz.juandiii.ark.core.JsonSerializer;
@@ -27,7 +26,8 @@ import xyz.juandiii.ark.core.proxy.TlsResolver;
 import xyz.juandiii.ark.proxy.jaxrs.ArkJaxRsProxy;
 import xyz.juandiii.ark.quarkus.config.ArkClientNamedConfig;
 import xyz.juandiii.ark.quarkus.config.ArkClientsConfig;
-import xyz.juandiii.ark.transport.jdk.ArkJdkHttpTransport;
+import xyz.juandiii.ark.transport.jdk.ArkJdkAsyncTransport;
+import xyz.juandiii.ark.transport.jdk.ArkJdkSyncTransport;
 import xyz.juandiii.ark.transport.vertx.mutiny.ArkVertxMutinyTransport;
 import xyz.juandiii.ark.core.util.StringUtils;
 
@@ -111,12 +111,12 @@ public class ArkRecorder {
             return ArkJaxRsProxy.create(iface, builder.build());
         } else if (usesAsyncReturnTypes(iface)) {
             SSLContext sslContext = resolveSslContext(rc.clientName(), rc.tlsConfigName(), rc.trustAll());
-            var jdk = buildJdkTransport(rc.httpVersion(), rc.connectTimeout(), sslContext);
+            var jdk = new ArkJdkAsyncTransport(buildHttpClient(rc.httpVersion(), rc.connectTimeout(), sslContext));
             AsyncArkClient.Builder builder = AsyncArkClient.builder()
                     .serializer(serializer)
                     .transport(rc.retryPolicy() != null
-                            ? Adapters.fromAsync(jdk).with(Retry.of(rc.retryPolicy(), new AsyncRetryOps()))
-                            : Adapters.fromAsync(jdk))
+                            ? jdk.with(Retry.of(rc.retryPolicy(), new AsyncRetryOps()))
+                            : jdk)
                     .baseUrl(rc.baseUrl())
                     .httpVersion(rc.httpVersion())
                     .connectTimeout(rc.connectTimeout())
@@ -126,7 +126,7 @@ public class ArkRecorder {
             return ArkJaxRsProxy.create(iface, builder.build());
         }
         SSLContext sslContext = resolveSslContext(rc.clientName(), rc.tlsConfigName(), rc.trustAll());
-        var jdkTransport = buildJdkTransport(rc.httpVersion(), rc.connectTimeout(), sslContext);
+        var jdkTransport = new ArkJdkSyncTransport(buildHttpClient(rc.httpVersion(), rc.connectTimeout(), sslContext));
         ArkClient.Builder builder = ArkClient.builder()
                 .serializer(serializer)
                 .transport(rc.retryPolicy() != null
@@ -180,8 +180,8 @@ public class ArkRecorder {
         return resolver.resolve(tlsConfigName);
     }
 
-    private static ArkJdkHttpTransport buildJdkTransport(HttpVersion httpVersion, int connectTimeout,
-                                                          SSLContext sslContext) {
+    private static HttpClient buildHttpClient(HttpVersion httpVersion, int connectTimeout,
+                                               SSLContext sslContext) {
         HttpClient.Builder httpBuilder = HttpClient.newBuilder()
                 .version(httpVersion == HttpVersion.HTTP_2
                         ? HttpClient.Version.HTTP_2
@@ -190,7 +190,7 @@ public class ArkRecorder {
         if (sslContext != null) {
             httpBuilder.sslContext(sslContext);
         }
-        return new ArkJdkHttpTransport(httpBuilder.build());
+        return httpBuilder.build();
     }
 
     private static ArkVertxMutinyTransport buildMutinyTransport(ResolvedConfig rc) {

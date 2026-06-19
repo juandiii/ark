@@ -8,7 +8,9 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import xyz.juandiii.ark.core.JsonSerializer;
 import xyz.juandiii.ark.core.exceptions.ApiException;
 import xyz.juandiii.ark.core.http.RawResponse;
+import xyz.juandiii.ark.core.http.Transport;
 import xyz.juandiii.ark.core.interceptor.RequestInterceptor;
+import xyz.juandiii.ark.core.interceptor.ResponseInterceptor;
 
 import java.util.Collections;
 import java.util.List;
@@ -24,15 +26,15 @@ import static org.mockito.Mockito.*;
 class DefaultAsyncClientRequestTest {
 
     @Mock
-    AsyncHttpTransport transport;
+    @SuppressWarnings("unchecked")
+    Transport<CompletableFuture<RawResponse>> transport;
 
     @Mock
     JsonSerializer serializer;
 
     private DefaultAsyncClientRequest request(String method, String path) {
         return new DefaultAsyncClientRequest(method, "https://api.example.com", path,
-                xyz.juandiii.ark.async.http.decorator.Adapters.fromAsync(transport),
-                serializer, Collections.emptyList(), Collections.emptyList());
+                transport, serializer, Collections.emptyList(), Collections.emptyList());
     }
 
     @Nested
@@ -40,7 +42,7 @@ class DefaultAsyncClientRequestTest {
 
         @Test
         void givenSuccessResponse_whenRetrieve_thenReturnsAsyncClientResponse() {
-            when(transport.sendAsync(anyString(), any(), anyMap(), any(), any()))
+            when(transport.send(anyString(), any(), anyMap(), any(), any()))
                     .thenReturn(CompletableFuture.completedFuture(
                             new RawResponse(200, Map.of(), "{}")));
 
@@ -51,7 +53,7 @@ class DefaultAsyncClientRequestTest {
 
         @Test
         void givenErrorResponse_whenRetrieve_thenFutureFailsWithApiException() {
-            when(transport.sendAsync(anyString(), any(), anyMap(), any(), any()))
+            when(transport.send(anyString(), any(), anyMap(), any(), any()))
                     .thenReturn(CompletableFuture.completedFuture(
                             new RawResponse(500, Map.of(), "Server Error")));
 
@@ -66,14 +68,13 @@ class DefaultAsyncClientRequestTest {
         @Test
         void givenRequestInterceptor_whenRetrieve_thenInterceptorRunsBeforeSend() {
             RequestInterceptor interceptor = mock(RequestInterceptor.class);
-            when(transport.sendAsync(anyString(), any(), anyMap(), any(), any()))
+            when(transport.send(anyString(), any(), anyMap(), any(), any()))
                     .thenReturn(CompletableFuture.completedFuture(
                             new RawResponse(200, Map.of(), "{}")));
 
             DefaultAsyncClientRequest req = new DefaultAsyncClientRequest(
                     "GET", "https://api.example.com", "/",
-                    xyz.juandiii.ark.async.http.decorator.Adapters.fromAsync(transport),
-                    serializer, List.of(interceptor), Collections.emptyList());
+                    transport, serializer, List.of(interceptor), Collections.emptyList());
             req.retrieve();
 
             verify(interceptor).intercept(req);
@@ -81,19 +82,19 @@ class DefaultAsyncClientRequestTest {
 
         @Test
         void givenResponseInterceptor_whenRetrieve_thenInterceptorChainsViaThenApply() throws Exception {
-            when(transport.sendAsync(anyString(), any(), anyMap(), any(), any()))
+            when(transport.send(anyString(), any(), anyMap(), any(), any()))
                     .thenReturn(CompletableFuture.completedFuture(
                             new RawResponse(200, Map.of(), "original")));
 
+            ResponseInterceptor responseInterceptor =
+                    raw -> new RawResponse(raw.statusCode(), raw.headers(), "modified");
+
             DefaultAsyncClientRequest req = new DefaultAsyncClientRequest(
                     "GET", "https://api.example.com", "/",
-                    xyz.juandiii.ark.async.http.decorator.Adapters.fromAsync(transport),
-                    serializer, Collections.emptyList(),
-                    List.of((xyz.juandiii.ark.core.interceptor.ResponseInterceptor)
-                            raw -> new RawResponse(raw.statusCode(), raw.headers(), "modified")));
+                    transport, serializer, Collections.emptyList(),
+                    List.of(responseInterceptor));
 
             AsyncClientResponse response = req.retrieve();
-            // Verify the future completes without error (interceptor applied)
             assertNotNull(response.toBodilessEntity().get());
         }
     }
@@ -102,23 +103,13 @@ class DefaultAsyncClientRequestTest {
     class FluentChaining {
 
         @Test
-        void givenRequest_whenChaining_thenReturnsSameInstance() {
-            DefaultAsyncClientRequest req = request("GET", "/");
-            assertSame(req, req.accept("application/json"));
-            assertSame(req, req.contentType("text/plain"));
-            assertSame(req, req.header("X-Key", "value"));
-            assertSame(req, req.queryParam("k", "v"));
-            assertSame(req, req.body("test"));
-            assertSame(req, req.timeout(java.time.Duration.ofSeconds(5)));
-        }
-    }
-
-    @Nested
-    class ImplementsInterface {
-
-        @Test
-        void givenRequest_whenChecked_thenImplementsAsyncClientRequest() {
-            assertInstanceOf(AsyncClientRequest.class, request("GET", "/"));
+        void givenRequest_whenChained_thenReturnsSameInstance() {
+            DefaultAsyncClientRequest req = request("POST", "/users");
+            assertSame(req, req.header("X-Custom", "value")
+                    .queryParam("filter", "active")
+                    .body("{}")
+                    .contentType("application/json")
+                    .accept("application/json"));
         }
     }
 }

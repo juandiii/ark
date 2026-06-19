@@ -13,7 +13,10 @@ import org.springframework.core.env.Environment;
 import xyz.juandiii.ark.core.ArkClient;
 import xyz.juandiii.ark.core.JsonSerializer;
 import xyz.juandiii.ark.core.http.HttpTransport;
-import xyz.juandiii.ark.core.http.RetryTransport;
+import xyz.juandiii.ark.core.http.RawResponse;
+import xyz.juandiii.ark.core.http.Transport;
+import xyz.juandiii.ark.core.http.decorator.Retry;
+import xyz.juandiii.ark.core.http.decorator.SyncRetryOps;
 import xyz.juandiii.ark.core.interceptor.LoggingInterceptor;
 import xyz.juandiii.ark.core.proxy.ArkProxy;
 import xyz.juandiii.ark.core.proxy.HttpVersion;
@@ -21,7 +24,7 @@ import xyz.juandiii.ark.core.proxy.InterceptorResolver;
 import xyz.juandiii.ark.core.proxy.RegisterArkClient;
 import xyz.juandiii.ark.core.proxy.TlsResolver;
 import xyz.juandiii.ark.core.ssl.InsecureSslContext;
-import xyz.juandiii.ark.transport.jdk.ArkJdkHttpTransport;
+import xyz.juandiii.ark.transport.jdk.ArkJdkSyncTransport;
 import xyz.juandiii.ark.core.util.StringUtils;
 
 /**
@@ -77,10 +80,10 @@ public class ArkClientFactoryBean<T> implements FactoryBean<T>, BeanFactoryAware
         String tlsConfigName = config != null ? config.tlsConfigurationName() : null;
         boolean trustAll = config != null && config.trustAll();
 
-        HttpTransport transport = resolveTransport(httpVersion, connectTimeout, tlsConfigName, trustAll, configKey);
-        if (config != null && config.retry() != null) {
-            transport = new RetryTransport(transport, config.retry().toRetryPolicy());
-        }
+        HttpTransport baseTransport = resolveTransport(httpVersion, connectTimeout, tlsConfigName, trustAll, configKey);
+        Transport<RawResponse> transport = (config != null && config.retry() != null)
+                ? baseTransport.with(Retry.of(config.retry().toRetryPolicy(), new SyncRetryOps()))
+                : baseTransport;
 
         ArkClient.Builder builder = ArkClient.builder()
                 .serializer(serializer)
@@ -129,7 +132,7 @@ public class ArkClientFactoryBean<T> implements FactoryBean<T>, BeanFactoryAware
                 httpBuilder.sslContext(sslContext);
             }
             HttpClient httpClient = httpBuilder.build();
-            return new ArkJdkHttpTransport(httpClient);
+            return new ArkJdkSyncTransport(httpClient);
         }
         return defaultTransport;
     }
