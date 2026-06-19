@@ -394,7 +394,7 @@ class ArkReactorNettyTransportTest {
     class EmptyResponse {
 
         @Test
-        void givenEmptyResponse_whenSend_thenEmitsArkException() throws Exception {
+        void givenEmptyResponse_whenSend_thenEmitsTypedException() throws Exception {
             // Server accepts connection, sends nothing, and closes
             try (ServerSocket ss = new ServerSocket(0)) {
                 int port = ss.getLocalPort();
@@ -411,9 +411,15 @@ class ArkReactorNettyTransportTest {
                         URI.create("http://localhost:" + port + "/empty"),
                         Map.of(), null, Duration.ofSeconds(5));
 
+                // Reactor Netty surfaces a premature server close as either a
+                // transport error (ArkException) or a synthetic HTTP 4xx
+                // (ApiException), depending on parser state. Either matches
+                // Ark's contract: the caller always gets a typed framework
+                // exception, never a raw Throwable.
                 StepVerifier.create(result)
                         .expectErrorSatisfies(error ->
-                                assertInstanceOf(ArkException.class, error))
+                                assertTrue(error instanceof ArkException || error instanceof ApiException,
+                                        "Expected ArkException or ApiException, got " + error.getClass().getName()))
                         .verify(Duration.ofSeconds(10));
             }
         }
