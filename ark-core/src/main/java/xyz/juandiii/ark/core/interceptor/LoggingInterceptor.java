@@ -10,6 +10,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.StringJoiner;
+import java.util.regex.Pattern;
 
 /**
  * Provides paired request/response logging interceptors with timing.
@@ -33,6 +34,14 @@ public final class LoggingInterceptor {
             "x-xsrf-token"
     );
 
+    private static final Pattern JSON_SECRET = Pattern.compile(
+            "(\"(?:password|passwd|pwd|secret|api_?key|access_?token|refresh_?token|client_?secret|authorization|private_?key)\"\\s*:\\s*)\"[^\"]*\"",
+            Pattern.CASE_INSENSITIVE);
+
+    private static final Pattern FORM_SECRET = Pattern.compile(
+            "(^|[?&;])((?:password|passwd|pwd|secret|api_?key|access_?token|refresh_?token|client_?secret|authorization|private_?key)=)[^&;]*",
+            Pattern.CASE_INSENSITIVE);
+
     private LoggingInterceptor() {}
 
     private static String redact(String name, String value) {
@@ -40,6 +49,12 @@ public final class LoggingInterceptor {
         return SENSITIVE_HEADERS.contains(name.toLowerCase(Locale.ROOT))
                 ? "[REDACTED]"
                 : value;
+    }
+
+    private static String redactBody(String body) {
+        if (body == null || body.isEmpty()) return body;
+        String afterJson = JSON_SECRET.matcher(body).replaceAll("$1\"[REDACTED]\"");
+        return FORM_SECRET.matcher(afterJson).replaceAll("$1$2[REDACTED]");
     }
 
     public enum Level {
@@ -94,7 +109,7 @@ public final class LoggingInterceptor {
         }
 
         if (level == Level.BODY && context.body() != null) {
-            sb.append("\n    ").append(context.body());
+            sb.append("\n    ").append(redactBody(String.valueOf(context.body())));
         }
 
         LOGGER.log(System.Logger.Level.DEBUG, sb.toString());
@@ -119,7 +134,7 @@ public final class LoggingInterceptor {
         }
 
         if (level == Level.BODY && raw.body() != null) {
-            String body = raw.body();
+            String body = redactBody(raw.body());
             if (body.length() > 1024) {
                 sb.append("\n    ").append(body, 0, 1024).append("... (truncated)");
             } else {

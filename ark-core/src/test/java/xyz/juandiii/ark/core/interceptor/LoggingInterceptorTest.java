@@ -390,6 +390,159 @@ class LoggingInterceptorTest {
     }
 
     @Nested
+    class BodyRedaction {
+
+        private Logger jul;
+        private Level previousLevel;
+        private HeaderRedaction.CapturingHandler handler;
+
+        @BeforeEach
+        void attachHandler() {
+            jul = Logger.getLogger("xyz.juandiii.ark");
+            previousLevel = jul.getLevel();
+            jul.setLevel(Level.ALL);
+            handler = new HeaderRedaction.CapturingHandler();
+            handler.setLevel(Level.ALL);
+            jul.addHandler(handler);
+        }
+
+        @AfterEach
+        void detachHandler() {
+            jul.removeHandler(handler);
+            jul.setLevel(previousLevel);
+        }
+
+        @Test
+        void givenJsonBodyWithPassword_whenLevelBody_thenPasswordRedacted() {
+            var builder = new TestBuilder();
+            LoggingInterceptor.apply(builder, LoggingInterceptor.Level.BODY);
+
+            String json = "{\"username\":\"alice\",\"password\":\"hunter2\"}";
+            builder.reqList.get(0).intercept(createContext("POST", "/login", Map.of(), json));
+
+            String logged = handler.lastMessage();
+            assertTrue(logged.contains("\"password\":\"[REDACTED]\""), logged);
+            assertFalse(logged.contains("hunter2"), logged);
+            assertTrue(logged.contains("\"username\":\"alice\""), logged);
+        }
+
+        @Test
+        void givenJsonBodyWithAccessToken_thenAccessTokenRedacted() {
+            var builder = new TestBuilder();
+            LoggingInterceptor.apply(builder, LoggingInterceptor.Level.BODY);
+
+            String json = "{\"access_token\":\"eyJabc.def\",\"scope\":\"read\"}";
+            builder.reqList.get(0).intercept(createContext("POST", "/token", Map.of(), json));
+
+            String logged = handler.lastMessage();
+            assertFalse(logged.contains("eyJabc.def"), logged);
+            assertTrue(logged.contains("\"scope\":\"read\""), logged);
+        }
+
+        @Test
+        void givenJsonBodyWithApiKeyVariations_caseInsensitive() {
+            var builder = new TestBuilder();
+            LoggingInterceptor.apply(builder, LoggingInterceptor.Level.BODY);
+
+            String json = "{\"apiKey\":\"a1\",\"api_key\":\"a2\",\"API_KEY\":\"a3\"}";
+            builder.reqList.get(0).intercept(createContext("POST", "/x", Map.of(), json));
+
+            String logged = handler.lastMessage();
+            assertFalse(logged.contains("\"a1\""), logged);
+            assertFalse(logged.contains("\"a2\""), logged);
+            assertFalse(logged.contains("\"a3\""), logged);
+        }
+
+        @Test
+        void givenFormBodyWithPassword_thenPasswordRedacted() {
+            var builder = new TestBuilder();
+            LoggingInterceptor.apply(builder, LoggingInterceptor.Level.BODY);
+
+            builder.reqList.get(0).intercept(
+                    createContext("POST", "/login", Map.of(), "username=alice&password=hunter2"));
+
+            String logged = handler.lastMessage();
+            assertTrue(logged.contains("password=[REDACTED]"), logged);
+            assertFalse(logged.contains("hunter2"), logged);
+            assertTrue(logged.contains("username=alice"), logged);
+        }
+
+        @Test
+        void givenFormBodyStartingWithSecret_thenSecretRedacted() {
+            var builder = new TestBuilder();
+            LoggingInterceptor.apply(builder, LoggingInterceptor.Level.BODY);
+
+            builder.reqList.get(0).intercept(
+                    createContext("POST", "/x", Map.of(), "password=hunter2&user=alice"));
+
+            String logged = handler.lastMessage();
+            assertTrue(logged.contains("password=[REDACTED]"), logged);
+            assertFalse(logged.contains("hunter2"), logged);
+        }
+
+        @Test
+        void givenJsonBodyWithoutSecrets_whenLevelBody_thenBodyAppearsVerbatim() {
+            var builder = new TestBuilder();
+            LoggingInterceptor.apply(builder, LoggingInterceptor.Level.BODY);
+
+            String json = "{\"name\":\"Alice\",\"city\":\"Bogota\"}";
+            builder.reqList.get(0).intercept(createContext("POST", "/x", Map.of(), json));
+
+            String logged = handler.lastMessage();
+            assertTrue(logged.contains(json), logged);
+            assertFalse(logged.contains("[REDACTED]"), logged);
+        }
+
+        @Test
+        void givenResponseBodyWithAccessToken_thenRedacted() {
+            var builder = new TestBuilder();
+            LoggingInterceptor.apply(builder, LoggingInterceptor.Level.BODY);
+
+            builder.reqList.get(0).intercept(createContext("POST", "/x", Map.of(), null));
+            handler.records.clear();
+
+            RawResponse raw = new RawResponse(200, Map.of(),
+                    "{\"access_token\":\"eyJ.xxx\",\"expires_in\":3600}");
+            builder.resList.get(0).intercept(raw);
+
+            String logged = handler.lastMessage();
+            assertFalse(logged.contains("eyJ.xxx"), logged);
+            assertTrue(logged.contains("\"expires_in\":3600"), logged);
+        }
+
+        @Test
+        void givenResponseBodyLargerThan1024_thenTruncatedAfterRedaction() {
+            var builder = new TestBuilder();
+            LoggingInterceptor.apply(builder, LoggingInterceptor.Level.BODY);
+
+            builder.reqList.get(0).intercept(createContext("POST", "/x", Map.of(), null));
+            handler.records.clear();
+
+            // Construct a body > 1024 chars with a secret near the start so redaction
+            // happens BEFORE the 1024-char truncation cap is applied.
+            String prefix = "{\"password\":\"hunter2\",\"data\":\"";
+            String filler = "x".repeat(1200);
+            String body = prefix + filler + "\"}";
+            RawResponse raw = new RawResponse(200, Map.of(), body);
+            builder.resList.get(0).intercept(raw);
+
+            String logged = handler.lastMessage();
+            assertTrue(logged.contains("\"password\":\"[REDACTED]\""), logged);
+            assertFalse(logged.contains("hunter2"), logged);
+            assertTrue(logged.contains("... (truncated)"), logged);
+        }
+
+        @Test
+        void givenNullBody_thenNoExceptionAndNoBodyLine() {
+            var builder = new TestBuilder();
+            LoggingInterceptor.apply(builder, LoggingInterceptor.Level.BODY);
+
+            assertDoesNotThrow(() ->
+                    builder.reqList.get(0).intercept(createContext("GET", "/x", Map.of(), null)));
+        }
+    }
+
+    @Nested
     class ParseLevel {
 
         @Test
