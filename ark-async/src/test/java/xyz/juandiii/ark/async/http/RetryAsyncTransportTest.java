@@ -184,6 +184,30 @@ class RetryAsyncTransportTest {
         verify(delegate, times(1)).sendAsync(anyString(), any(), any(), any(), any());
     }
 
+    // ---- Precomputed delay multiplier table ----
+
+    @org.junit.jupiter.api.Test
+    void givenMultiplierTwo_whenPrecomputingDelays_thenSequenceDoubles() {
+        var policy = RetryPolicy.builder()
+                .maxAttempts(3).delay(Duration.ofMillis(100))
+                .multiplier(2.0).maxDelay(Duration.ofSeconds(10)).build();
+
+        long[] delays = RetryAsyncTransport.precomputeDelays(policy);
+
+        assertArrayEquals(new long[]{100L, 200L, 400L}, delays);
+    }
+
+    @org.junit.jupiter.api.Test
+    void givenMultiplierExceedsMaxDelay_whenPrecomputing_thenCappedAtMax() {
+        var policy = RetryPolicy.builder()
+                .maxAttempts(5).delay(Duration.ofMillis(100))
+                .multiplier(10.0).maxDelay(Duration.ofMillis(500)).build();
+
+        long[] delays = RetryAsyncTransport.precomputeDelays(policy);
+
+        assertArrayEquals(new long[]{100L, 500L, 500L, 500L, 500L}, delays);
+    }
+
     // ---- sendBinaryAsync — bytes must survive retry intact ----
 
     private static final byte[] BINARY_BODY = new byte[]{

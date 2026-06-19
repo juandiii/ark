@@ -25,6 +25,7 @@ public final class RetryAsyncTransport implements AsyncHttpTransport {
     private final AsyncHttpTransport delegate;
     private final RetryPolicy policy;
     private final ScheduledExecutorService scheduler;
+    private final long[] precomputedDelays;
 
     public RetryAsyncTransport(AsyncHttpTransport delegate, RetryPolicy policy) {
         this(delegate, policy, Executors.newSingleThreadScheduledExecutor(r -> {
@@ -39,6 +40,21 @@ public final class RetryAsyncTransport implements AsyncHttpTransport {
         this.delegate = delegate;
         this.policy = policy;
         this.scheduler = scheduler;
+        this.precomputedDelays = precomputeDelays(policy);
+    }
+
+    static long[] precomputeDelays(RetryPolicy policy) {
+        long baseDelay = policy.delay().toMillis();
+        long maxDelay = policy.maxDelay().toMillis();
+        double multiplier = policy.multiplier();
+        int n = Math.max(policy.maxAttempts(), 1);
+        long[] delays = new long[n];
+        double current = baseDelay;
+        for (int i = 0; i < n; i++) {
+            delays[i] = Math.min((long) current, maxDelay);
+            current *= multiplier;
+        }
+        return delays;
     }
 
     @Override
@@ -127,9 +143,8 @@ public final class RetryAsyncTransport implements AsyncHttpTransport {
     }
 
     private long computeDelayMillis(int attempt) {
-        long baseDelay = policy.delay().toMillis();
-        long exponentialDelay = (long) (baseDelay * Math.pow(policy.multiplier(), attempt - 1));
-        long cappedDelay = Math.min(exponentialDelay, policy.maxDelay().toMillis());
+        int index = Math.min(attempt - 1, precomputedDelays.length - 1);
+        long cappedDelay = precomputedDelays[index];
         long minJitter = Math.max(cappedDelay / 2, 1);
         return ThreadLocalRandom.current().nextLong(minJitter, cappedDelay + 1);
     }
