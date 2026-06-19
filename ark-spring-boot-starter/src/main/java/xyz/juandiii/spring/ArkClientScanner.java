@@ -20,6 +20,7 @@ final class ArkClientScanner {
 
     static final String SERIALIZER_BEAN = "jsonSerializer";
     static final String TRANSPORT_BEAN = "httpTransport";
+    static final String ASYNC_TRANSPORT_BEAN = "asyncHttpTransport";
     static final String ENVIRONMENT_BEAN = "environment";
     static final String TLS_RESOLVER_BEAN = "arkTlsResolver";
     static final String ARK_PROPERTIES_BEAN = "ark-" + ArkProperties.class.getName();
@@ -45,6 +46,7 @@ final class ArkClientScanner {
                 .addConstructorArgValue(iface)
                 .addConstructorArgReference(SERIALIZER_BEAN)
                 .addConstructorArgReference(TRANSPORT_BEAN)
+                .addConstructorArgReference(ASYNC_TRANSPORT_BEAN)
                 .addConstructorArgReference(ENVIRONMENT_BEAN)
                 .addConstructorArgReference(TLS_RESOLVER_BEAN)
                 .addConstructorArgReference(ARK_PROPERTIES_BEAN)

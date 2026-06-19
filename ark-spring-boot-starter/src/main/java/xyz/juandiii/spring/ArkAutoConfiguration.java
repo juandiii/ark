@@ -8,11 +8,13 @@ import org.springframework.context.annotation.Import;
 import org.springframework.context.annotation.ImportRuntimeHints;
 import org.springframework.context.annotation.Scope;
 import tools.jackson.databind.ObjectMapper;
+import xyz.juandiii.ark.async.AsyncArkClient;
 import xyz.juandiii.ark.core.ArkClient;
 import xyz.juandiii.ark.jackson.JacksonSerializer;
 import xyz.juandiii.ark.core.JsonSerializer;
 import xyz.juandiii.ark.core.http.HttpTransport;
 import xyz.juandiii.ark.core.proxy.TlsResolver;
+import xyz.juandiii.ark.transport.jdk.ArkJdkAsyncTransport;
 import xyz.juandiii.ark.transport.jdk.ArkJdkSyncTransport;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.boot.ssl.SslBundles;
@@ -21,7 +23,10 @@ import xyz.juandiii.ark.core.exceptions.ArkException;
 import java.net.http.HttpClient;
 
 /**
- * Spring Boot auto-configuration for sync Ark HTTP client.
+ * Spring Boot auto-configuration for Ark HTTP clients.
+ * Produces sync ({@code ArkClient}) and async ({@code AsyncArkClient}) builder
+ * beans plus the matching default transports. The webflux starter handles
+ * reactive ({@code ReactorArkClient}) separately.
  *
  * @author Juan Diego Lopez V.
  */
@@ -46,10 +51,28 @@ public class ArkAutoConfiguration {
     }
 
     @Bean
+    @ConditionalOnMissingBean(ArkJdkAsyncTransport.class)
+    public ArkJdkAsyncTransport asyncHttpTransport() {
+        return new ArkJdkAsyncTransport(HttpClient.newBuilder()
+                .version(HttpClient.Version.HTTP_2)
+                .build());
+    }
+
+    @Bean
     @Scope("prototype")
     @ConditionalOnMissingBean
     public ArkClient.Builder arkClientBuilder(JsonSerializer serializer, HttpTransport transport) {
         return ArkClient.builder()
+                .serializer(serializer)
+                .transport(transport);
+    }
+
+    @Bean
+    @Scope("prototype")
+    @ConditionalOnMissingBean
+    public AsyncArkClient.Builder asyncArkClientBuilder(JsonSerializer serializer,
+                                                         ArkJdkAsyncTransport transport) {
+        return AsyncArkClient.builder()
                 .serializer(serializer)
                 .transport(transport);
     }
