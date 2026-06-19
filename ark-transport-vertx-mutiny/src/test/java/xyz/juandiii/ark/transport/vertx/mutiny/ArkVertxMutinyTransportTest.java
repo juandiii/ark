@@ -136,31 +136,24 @@ class ArkVertxMutinyTransportTest {
         }
 
         @Test
-        void given404Endpoint_whenSend_thenUniFailsWithNotFoundException() {
+        void given404Endpoint_whenSend_thenUniEmitsErrorResponse() {
             Uni<RawResponse> result = transport().send("GET", baseUri.resolve("/not-found"),
                     Map.of(), null, null);
 
-            UniAssertSubscriber<RawResponse> subscriber = result
-                    .subscribe().withSubscriber(UniAssertSubscriber.create());
-
-            subscriber.awaitFailure(Duration.ofSeconds(10));
-            Throwable failure = subscriber.getFailure();
-            assertInstanceOf(NotFoundException.class, failure);
-            assertEquals(404, ((ApiException) failure).statusCode());
-            assertEquals("Not Found", ((ApiException) failure).responseBody());
+            RawResponse response = result.await().atMost(Duration.ofSeconds(10));
+            assertEquals(404, response.statusCode());
+            assertEquals("Not Found", response.body());
+            assertTrue(response.isError());
         }
 
         @Test
-        void given500Endpoint_whenSend_thenUniFailsWithServerException() {
+        void given500Endpoint_whenSend_thenUniEmitsErrorResponse() {
             Uni<RawResponse> result = transport().send("GET", baseUri.resolve("/server-error"),
                     Map.of(), null, null);
 
-            UniAssertSubscriber<RawResponse> subscriber = result
-                    .subscribe().withSubscriber(UniAssertSubscriber.create());
-
-            subscriber.awaitFailure(Duration.ofSeconds(10));
-            assertInstanceOf(ServerException.class, subscriber.getFailure());
-            assertEquals(500, ((ApiException) subscriber.getFailure()).statusCode());
+            RawResponse response = result.await().atMost(Duration.ofSeconds(10));
+            assertEquals(500, response.statusCode());
+            assertTrue(response.isError());
         }
 
         @Test
@@ -302,6 +295,47 @@ class ArkVertxMutinyTransportTest {
                 subscriber.awaitFailure(Duration.ofSeconds(10));
                 assertInstanceOf(ArkException.class, subscriber.getFailure());
             }
+        }
+    }
+
+    @Nested
+    class SendBinary {
+
+        @Test
+        void givenBinaryBody_whenSendBinary_thenServerReceivesBytes() {
+            byte[] body = new byte[]{(byte) 0xFF, 0x00, 0x01, (byte) 0xC0};
+            RawResponse response = transport().sendBinary("POST", baseUri.resolve("/echo-body"),
+                    Map.of(), body, null).await().atMost(Duration.ofSeconds(10));
+
+            assertEquals(200, response.statusCode());
+        }
+
+        @Test
+        void givenNullBinaryBody_whenSendBinary_thenSucceeds() {
+            RawResponse response = transport().sendBinary("GET", baseUri.resolve("/ok"),
+                    Map.of(), null, null).await().atMost(Duration.ofSeconds(10));
+
+            assertEquals(200, response.statusCode());
+        }
+
+        @Test
+        void given404_whenSendBinary_thenEmitsErrorResponse() {
+            RawResponse response = transport().sendBinary("GET", baseUri.resolve("/not-found"),
+                    Map.of(), null, null).await().atMost(Duration.ofSeconds(10));
+
+            assertEquals(404, response.statusCode());
+            assertTrue(response.isError());
+        }
+
+        @Test
+        void givenConnectionRefused_whenSendBinary_thenFailsWithArkException() {
+            Uni<RawResponse> result = transport().sendBinary("GET",
+                    URI.create("http://localhost:1/refused"), Map.of(), null, Duration.ofSeconds(2));
+
+            UniAssertSubscriber<RawResponse> subscriber = result
+                    .subscribe().withSubscriber(UniAssertSubscriber.create());
+            subscriber.awaitFailure(Duration.ofSeconds(10));
+            assertInstanceOf(ArkException.class, subscriber.getFailure());
         }
     }
 

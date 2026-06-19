@@ -30,6 +30,10 @@ class RetryAsyncTransportTest {
     private static final URI TEST_URI = URI.create("https://api.example.com/test");
     private static final Map<String, String> HEADERS = Map.of();
     private static final RawResponse SUCCESS = new RawResponse(200, Map.of(), "ok");
+    private static final RawResponse SERVER_ERROR = new RawResponse(503, Map.of(), "unavailable");
+    private static final RawResponse RATE_LIMITED = new RawResponse(429, Map.of(), "rate limited");
+    private static final RawResponse BAD_REQUEST = new RawResponse(400, Map.of(), "bad");
+    private static final RawResponse INTERNAL_ERROR = new RawResponse(500, Map.of(), "error");
     private static final ScheduledExecutorService SCHEDULER = Executors.newSingleThreadScheduledExecutor(r -> {
         Thread t = new Thread(r, "test-retry");
         t.setDaemon(true);
@@ -55,7 +59,7 @@ class RetryAsyncTransportTest {
     @Test
     void givenServerError_thenRetriesAndSucceeds() {
         when(delegate.sendAsync(anyString(), any(), any(), any(), any()))
-                .thenReturn(CompletableFuture.failedFuture(new ServiceUnavailableException("unavailable")))
+                .thenReturn(CompletableFuture.completedFuture(SERVER_ERROR))
                 .thenReturn(CompletableFuture.completedFuture(SUCCESS));
 
         var policy = RetryPolicy.builder().maxAttempts(3).delay(Duration.ofMillis(50)).build();
@@ -68,7 +72,7 @@ class RetryAsyncTransportTest {
     @Test
     void given429_thenRetriesAndSucceeds() {
         when(delegate.sendAsync(anyString(), any(), any(), any(), any()))
-                .thenReturn(CompletableFuture.failedFuture(new TooManyRequestsException("rate limited")))
+                .thenReturn(CompletableFuture.completedFuture(RATE_LIMITED))
                 .thenReturn(CompletableFuture.completedFuture(SUCCESS));
 
         var policy = RetryPolicy.builder().maxAttempts(3).delay(Duration.ofMillis(50)).build();
@@ -81,7 +85,7 @@ class RetryAsyncTransportTest {
     @Test
     void givenMaxAttemptsExhausted_thenFutureCompletesExceptionally() {
         when(delegate.sendAsync(anyString(), any(), any(), any(), any()))
-                .thenReturn(CompletableFuture.failedFuture(new ServiceUnavailableException("unavailable")));
+                .thenReturn(CompletableFuture.completedFuture(SERVER_ERROR));
 
         var policy = RetryPolicy.builder().maxAttempts(2).delay(Duration.ofMillis(50)).build();
         var future = transport(policy).sendAsync("GET", TEST_URI, HEADERS, null, null);
@@ -107,7 +111,7 @@ class RetryAsyncTransportTest {
     @Test
     void givenPostMethod_thenNoRetryByDefault() {
         when(delegate.sendAsync(anyString(), any(), any(), any(), any()))
-                .thenReturn(CompletableFuture.failedFuture(new ServiceUnavailableException("unavailable")));
+                .thenReturn(CompletableFuture.completedFuture(SERVER_ERROR));
 
         var policy = RetryPolicy.builder().maxAttempts(3).delay(Duration.ofMillis(50)).build();
         var future = transport(policy).sendAsync("POST", TEST_URI, HEADERS, "body", null);
@@ -120,7 +124,7 @@ class RetryAsyncTransportTest {
     @Test
     void givenPostMethodWithRetryPostEnabled_thenRetries() {
         when(delegate.sendAsync(anyString(), any(), any(), any(), any()))
-                .thenReturn(CompletableFuture.failedFuture(new ServiceUnavailableException("unavailable")))
+                .thenReturn(CompletableFuture.completedFuture(SERVER_ERROR))
                 .thenReturn(CompletableFuture.completedFuture(SUCCESS));
 
         var policy = RetryPolicy.builder().maxAttempts(3).delay(Duration.ofMillis(50)).retryPost(true).build();
@@ -173,7 +177,7 @@ class RetryAsyncTransportTest {
     @Test
     void givenCustomRetryOnStatuses_thenOnlyRetriesConfigured() {
         when(delegate.sendAsync(anyString(), any(), any(), any(), any()))
-                .thenReturn(CompletableFuture.failedFuture(new InternalServerErrorException("error")));
+                .thenReturn(CompletableFuture.completedFuture(INTERNAL_ERROR));
 
         var policy = RetryPolicy.builder().maxAttempts(3).delay(Duration.ofMillis(50))
                 .retryOn(Set.of(503)).build();
@@ -217,7 +221,7 @@ class RetryAsyncTransportTest {
     @Test
     void givenBinaryBody_whenRetrySucceedsOnSecondAttempt_thenBytesArePreservedExactly() {
         when(delegate.sendBinaryAsync(anyString(), any(), any(), any(byte[].class), any()))
-                .thenReturn(CompletableFuture.failedFuture(new ServiceUnavailableException("unavailable")))
+                .thenReturn(CompletableFuture.completedFuture(SERVER_ERROR))
                 .thenReturn(CompletableFuture.completedFuture(SUCCESS));
 
         var policy = RetryPolicy.builder().maxAttempts(3).delay(Duration.ofMillis(50)).build();
@@ -253,7 +257,7 @@ class RetryAsyncTransportTest {
     @Test
     void givenBinaryBody_whenAllRetriesExhausted_thenFutureCompletesExceptionally() {
         when(delegate.sendBinaryAsync(anyString(), any(), any(), any(byte[].class), any()))
-                .thenReturn(CompletableFuture.failedFuture(new ServiceUnavailableException("unavailable")));
+                .thenReturn(CompletableFuture.completedFuture(SERVER_ERROR));
 
         var policy = RetryPolicy.builder().maxAttempts(3).delay(Duration.ofMillis(50)).build();
         var future = transport(policy)

@@ -152,22 +152,23 @@ class ArkApacheTransportTest {
         }
 
         @Test
-        void given404Endpoint_whenSend_thenThrowsApiException() {
-            ApiException ex = assertThrows(ApiException.class, () ->
-                    transport().send("GET", baseUri.resolve("/not-found"), Map.of(), null, null));
+        void given404Endpoint_whenSend_thenReturnsErrorResponse() {
+            RawResponse response = transport().send("GET", baseUri.resolve("/not-found"),
+                    Map.of(), null, null);
 
-            assertEquals(404, ex.statusCode());
-            assertEquals("Not Found", ex.responseBody());
-            assertInstanceOf(NotFoundException.class, ex);
+            assertEquals(404, response.statusCode());
+            assertEquals("Not Found", response.body());
+            assertTrue(response.isError());
         }
 
         @Test
-        void given500Endpoint_whenSend_thenThrowsServerException() {
-            ServerException ex = assertThrows(ServerException.class, () ->
-                    transport().send("GET", baseUri.resolve("/server-error"), Map.of(), null, null));
+        void given500Endpoint_whenSend_thenReturnsErrorResponse() {
+            RawResponse response = transport().send("GET", baseUri.resolve("/server-error"),
+                    Map.of(), null, null);
 
-            assertEquals(500, ex.statusCode());
-            assertEquals("Internal Server Error", ex.responseBody());
+            assertEquals(500, response.statusCode());
+            assertEquals("Internal Server Error", response.body());
+            assertTrue(response.isError());
         }
 
         @Test
@@ -349,10 +350,12 @@ class ArkApacheTransportTest {
         }
 
         @Test
-        void given404_whenSendBinary_thenThrowsNotFoundException() {
-            assertThrows(xyz.juandiii.ark.core.exceptions.NotFoundException.class, () ->
-                    transport().sendBinary("GET", baseUri.resolve("/not-found"),
-                            Map.of(), null, null));
+        void given404_whenSendBinary_thenReturnsErrorResponse() {
+            RawResponse response = transport().sendBinary("GET", baseUri.resolve("/not-found"),
+                    Map.of(), null, null);
+
+            assertEquals(404, response.statusCode());
+            assertTrue(response.isError());
         }
 
         @Test

@@ -1,6 +1,5 @@
 package xyz.juandiii.ark.transport.jdk;
 
-import xyz.juandiii.ark.core.exceptions.ApiException;
 import xyz.juandiii.ark.core.exceptions.ArkException;
 import xyz.juandiii.ark.core.exceptions.RequestInterruptedException;
 import xyz.juandiii.ark.async.http.AsyncHttpTransport;
@@ -17,7 +16,6 @@ import java.net.http.HttpResponse;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CompletionException;
 import java.util.concurrent.Executor;
 
 /**
@@ -99,13 +97,9 @@ public final class ArkJdkHttpTransport implements HttpTransport, AsyncHttpTransp
         LOGGER.log(System.Logger.Level.DEBUG, () ->
                 TransportLogger.formatRequest(method, uri, headers, logBody != null ? logBody.toString() : null));
         return httpClient.sendAsync(request, HttpResponse.BodyHandlers.ofString())
-                .thenApplyAsync(response -> {
-                    if (RawResponse.isErrorStatus(response.statusCode())) {
-                        throw new CompletionException(
-                                ApiException.of(response.statusCode(), response.body()));
-                    }
-                    return new RawResponse(response.statusCode(), response.headers().map(), response.body());
-                }, executor);
+                .thenApplyAsync(response ->
+                        new RawResponse(response.statusCode(), response.headers().map(), response.body()),
+                        executor);
     }
 
     private HttpRequest buildRequest(String method, URI uri, Map<String, String> headers,
@@ -125,9 +119,6 @@ public final class ArkJdkHttpTransport implements HttpTransport, AsyncHttpTransp
     }
 
     private RawResponse toRawResponse(HttpResponse<String> response) {
-        if (RawResponse.isErrorStatus(response.statusCode())) {
-            throw ApiException.of(response.statusCode(), response.body());
-        }
         return new RawResponse(response.statusCode(), response.headers().map(), response.body());
     }
 }

@@ -29,6 +29,10 @@ class RetryTransportTest {
     private static final URI TEST_URI = URI.create("https://api.example.com/test");
     private static final Map<String, String> HEADERS = Map.of();
     private static final RawResponse SUCCESS = new RawResponse(200, Map.of(), "ok");
+    private static final RawResponse SERVER_ERROR = new RawResponse(503, Map.of(), "unavailable");
+    private static final RawResponse RATE_LIMITED = new RawResponse(429, Map.of(), "rate limited");
+    private static final RawResponse BAD_REQUEST = new RawResponse(400, Map.of(), "bad request");
+    private static final RawResponse INTERNAL_ERROR = new RawResponse(500, Map.of(), "error");
 
     private RetryTransport transport(RetryPolicy policy) {
         List<Long> delays = new ArrayList<>();
@@ -52,7 +56,7 @@ class RetryTransportTest {
     @Test
     void givenServerError_thenRetriesAndSucceeds() {
         when(delegate.send(anyString(), any(), any(), any(), any()))
-                .thenThrow(new ServiceUnavailableException("unavailable"))
+                .thenReturn(SERVER_ERROR)
                 .thenReturn(SUCCESS);
 
         var result = transport(RetryPolicy.defaults()).send("GET", TEST_URI, HEADERS, null, null);
@@ -64,7 +68,7 @@ class RetryTransportTest {
     @Test
     void given429_thenRetriesAndSucceeds() {
         when(delegate.send(anyString(), any(), any(), any(), any()))
-                .thenThrow(new TooManyRequestsException("rate limited"))
+                .thenReturn(RATE_LIMITED)
                 .thenReturn(SUCCESS);
 
         var result = transport(RetryPolicy.defaults()).send("GET", TEST_URI, HEADERS, null, null);
@@ -76,7 +80,7 @@ class RetryTransportTest {
     @Test
     void givenMaxAttemptsExhausted_thenThrowsOriginalException() {
         when(delegate.send(anyString(), any(), any(), any(), any()))
-                .thenThrow(new ServiceUnavailableException("unavailable"));
+                .thenReturn(SERVER_ERROR);
 
         var policy = RetryPolicy.builder().maxAttempts(3).build();
         assertThrows(ServiceUnavailableException.class, () ->
@@ -88,7 +92,7 @@ class RetryTransportTest {
     @Test
     void givenNonRetryableStatus_thenThrowsImmediately() {
         when(delegate.send(anyString(), any(), any(), any(), any()))
-                .thenThrow(new BadRequestException("bad request"));
+                .thenReturn(BAD_REQUEST);
 
         assertThrows(BadRequestException.class, () ->
                 transport(RetryPolicy.defaults()).send("GET", TEST_URI, HEADERS, null, null));
@@ -135,7 +139,7 @@ class RetryTransportTest {
     @Test
     void givenPostMethod_thenNoRetryByDefault() {
         when(delegate.send(anyString(), any(), any(), any(), any()))
-                .thenThrow(new ServiceUnavailableException("unavailable"));
+                .thenReturn(SERVER_ERROR);
 
         assertThrows(ServiceUnavailableException.class, () ->
                 transport(RetryPolicy.defaults()).send("POST", TEST_URI, HEADERS, "body", null));
@@ -146,7 +150,7 @@ class RetryTransportTest {
     @Test
     void givenPostMethodWithRetryPostEnabled_thenRetries() {
         when(delegate.send(anyString(), any(), any(), any(), any()))
-                .thenThrow(new ServiceUnavailableException("unavailable"))
+                .thenReturn(SERVER_ERROR)
                 .thenReturn(SUCCESS);
 
         var policy = RetryPolicy.builder().retryPost(true).build();
@@ -159,7 +163,7 @@ class RetryTransportTest {
     @Test
     void givenPatchMethod_thenNoRetryByDefault() {
         when(delegate.send(anyString(), any(), any(), any(), any()))
-                .thenThrow(new ServiceUnavailableException("unavailable"));
+                .thenReturn(SERVER_ERROR);
 
         assertThrows(ServiceUnavailableException.class, () ->
                 transport(RetryPolicy.defaults()).send("PATCH", TEST_URI, HEADERS, "body", null));
@@ -170,7 +174,7 @@ class RetryTransportTest {
     @Test
     void givenCustomRetryOnStatuses_thenOnlyRetriesConfigured() {
         when(delegate.send(anyString(), any(), any(), any(), any()))
-                .thenThrow(new InternalServerErrorException("error"));
+                .thenReturn(INTERNAL_ERROR);
 
         var policy = RetryPolicy.builder().retryOn(Set.of(503)).build();
         assertThrows(InternalServerErrorException.class, () ->
@@ -182,8 +186,8 @@ class RetryTransportTest {
     @Test
     void givenRetries_thenDelaysAreInExpectedRange() {
         when(delegate.send(anyString(), any(), any(), any(), any()))
-                .thenThrow(new ServiceUnavailableException("unavailable"))
-                .thenThrow(new ServiceUnavailableException("unavailable"))
+                .thenReturn(SERVER_ERROR)
+                .thenReturn(SERVER_ERROR)
                 .thenReturn(SUCCESS);
 
         List<Long> delays = new ArrayList<>();
@@ -207,7 +211,7 @@ class RetryTransportTest {
     @Test
     void givenSendBinary_thenRetriesOnServerError() {
         when(delegate.sendBinary(anyString(), any(), any(), any(), any()))
-                .thenThrow(new ServiceUnavailableException("unavailable"))
+                .thenReturn(SERVER_ERROR)
                 .thenReturn(SUCCESS);
 
         var result = transport(RetryPolicy.defaults()).sendBinary("GET", TEST_URI, HEADERS, new byte[]{1, 2, 3}, null);
@@ -219,7 +223,7 @@ class RetryTransportTest {
     @Test
     void givenSendBinary_thenExhaustsRetries() {
         when(delegate.sendBinary(anyString(), any(), any(), any(), any()))
-                .thenThrow(new ServiceUnavailableException("unavailable"));
+                .thenReturn(SERVER_ERROR);
 
         var policy = RetryPolicy.builder().maxAttempts(2).build();
         assertThrows(ServiceUnavailableException.class, () ->
@@ -231,7 +235,7 @@ class RetryTransportTest {
     @Test
     void givenSendBinaryPost_thenNoRetryByDefault() {
         when(delegate.sendBinary(anyString(), any(), any(), any(), any()))
-                .thenThrow(new ServiceUnavailableException("unavailable"));
+                .thenReturn(SERVER_ERROR);
 
         assertThrows(ServiceUnavailableException.class, () ->
                 transport(RetryPolicy.defaults()).sendBinary("POST", TEST_URI, HEADERS, new byte[]{1}, null));
@@ -268,7 +272,7 @@ class RetryTransportTest {
     @Test
     void givenInjectedSleeperThrowsRequestInterrupted_whenRetrying_thenPropagatesAndStopsRetry() {
         when(delegate.send(anyString(), any(), any(), any(), any()))
-                .thenThrow(new ServiceUnavailableException("unavailable"));
+                .thenReturn(SERVER_ERROR);
 
         LongConsumer interruptingSleeper = millis -> {
             Thread.currentThread().interrupt();
@@ -291,7 +295,7 @@ class RetryTransportTest {
     @Test
     void givenRealSleepIsInterrupted_whenRetrying_thenThrowsRequestInterruptedException() throws Exception {
         when(delegate.send(anyString(), any(), any(), any(), any()))
-                .thenThrow(new ServiceUnavailableException("unavailable"));
+                .thenReturn(SERVER_ERROR);
 
         // Use the production 2-arg constructor — real Thread.sleep path via threadSleep().
         var policy = RetryPolicy.builder().maxAttempts(3).delay(Duration.ofSeconds(10)).build();

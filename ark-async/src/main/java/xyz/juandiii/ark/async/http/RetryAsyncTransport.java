@@ -11,6 +11,7 @@ import java.time.Duration;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.*;
+import java.util.function.Supplier;
 
 /**
  * Async transport decorator that retries failed requests with exponential backoff and jitter.
@@ -76,27 +77,9 @@ public final class RetryAsyncTransport implements AsyncHttpTransport {
                                                          String body, Duration timeout,
                                                          int attempt) {
         return delegate.sendAsync(method, uri, headers, body, timeout)
-                .exceptionallyCompose(throwable -> {
-                    Throwable cause = unwrap(throwable);
-
-                    if (attempt >= policy.maxAttempts() || !isRetryable(method, cause)) {
-                        return CompletableFuture.failedFuture(cause);
-                    }
-
-                    long delayMs = computeDelayMillis(attempt);
-                    logRetry(attempt, method, uri, cause, delayMs);
-
-                    CompletableFuture<RawResponse> delayed = new CompletableFuture<>();
-                    scheduler.schedule(
-                            () -> attemptAsync(method, uri, headers, body, timeout, attempt + 1)
-                                    .whenComplete((r, e) -> {
-                                        if (e != null) delayed.completeExceptionally(unwrap(e));
-                                        else delayed.complete(r);
-                                    }),
-                            delayMs, TimeUnit.MILLISECONDS
-                    );
-                    return delayed;
-                });
+                .handle((response, throwable) -> decideNext(method, uri, attempt, response, throwable,
+                        () -> attemptAsync(method, uri, headers, body, timeout, attempt + 1)))
+                .thenCompose(f -> f);
     }
 
     private CompletableFuture<RawResponse> attemptBinaryAsync(String method, URI uri,
@@ -104,38 +87,58 @@ public final class RetryAsyncTransport implements AsyncHttpTransport {
                                                                byte[] body, Duration timeout,
                                                                int attempt) {
         return delegate.sendBinaryAsync(method, uri, headers, body, timeout)
-                .exceptionallyCompose(throwable -> {
-                    Throwable cause = unwrap(throwable);
-
-                    if (attempt >= policy.maxAttempts() || !isRetryable(method, cause)) {
-                        return CompletableFuture.failedFuture(cause);
-                    }
-
-                    long delayMs = computeDelayMillis(attempt);
-                    logRetry(attempt, method, uri, cause, delayMs);
-
-                    CompletableFuture<RawResponse> delayed = new CompletableFuture<>();
-                    scheduler.schedule(
-                            () -> attemptBinaryAsync(method, uri, headers, body, timeout, attempt + 1)
-                                    .whenComplete((r, e) -> {
-                                        if (e != null) delayed.completeExceptionally(unwrap(e));
-                                        else delayed.complete(r);
-                                    }),
-                            delayMs, TimeUnit.MILLISECONDS
-                    );
-                    return delayed;
-                });
+                .handle((response, throwable) -> decideNext(method, uri, attempt, response, throwable,
+                        () -> attemptBinaryAsync(method, uri, headers, body, timeout, attempt + 1)))
+                .thenCompose(f -> f);
     }
 
-    private boolean isRetryable(String method, Throwable cause) {
-        if (!isRetryableMethod(method)) return false;
-        if (cause instanceof ApiException api) {
-            return policy.retryOn().contains(api.statusCode());
+    private CompletableFuture<RawResponse> decideNext(String method, URI uri, int attempt,
+                                                       RawResponse response, Throwable throwable,
+                                                       Supplier<CompletableFuture<RawResponse>> nextAttempt) {
+        if (throwable != null) {
+            Throwable cause = unwrap(throwable);
+            if (attempt >= policy.maxAttempts() || !isRetryableException(method, cause)) {
+                return CompletableFuture.failedFuture(cause);
+            }
+            long delayMs = computeDelayMillis(attempt);
+            logRetry(attempt, method, uri, cause, delayMs);
+            return scheduleRetry(nextAttempt, delayMs);
         }
+        if (!response.isError()) {
+            return CompletableFuture.completedFuture(response);
+        }
+        int statusCode = response.statusCode();
+        if (attempt >= policy.maxAttempts() || !isRetryableStatus(method, statusCode)) {
+            return CompletableFuture.failedFuture(ApiException.of(statusCode, response.body()));
+        }
+        long delayMs = computeDelayMillis(attempt);
+        logRetryStatus(attempt, method, uri, statusCode, delayMs);
+        return scheduleRetry(nextAttempt, delayMs);
+    }
+
+    private CompletableFuture<RawResponse> scheduleRetry(Supplier<CompletableFuture<RawResponse>> nextAttempt,
+                                                          long delayMs) {
+        CompletableFuture<RawResponse> delayed = new CompletableFuture<>();
+        scheduler.schedule(
+                () -> nextAttempt.get().whenComplete((r, e) -> {
+                    if (e != null) delayed.completeExceptionally(unwrap(e));
+                    else delayed.complete(r);
+                }),
+                delayMs, TimeUnit.MILLISECONDS
+        );
+        return delayed;
+    }
+
+    private boolean isRetryableException(String method, Throwable cause) {
+        if (!isRetryableMethod(method)) return false;
         if (cause instanceof TimeoutException || cause instanceof ConnectionException) {
             return policy.retryOnException();
         }
         return false;
+    }
+
+    private boolean isRetryableStatus(String method, int statusCode) {
+        return isRetryableMethod(method) && policy.retryOn().contains(statusCode);
     }
 
     private boolean isRetryableMethod(String method) {
@@ -150,12 +153,15 @@ public final class RetryAsyncTransport implements AsyncHttpTransport {
     }
 
     private void logRetry(int attempt, String method, URI uri, Throwable cause, long delayMs) {
-        String detail = cause instanceof ApiException api
-                ? "(HTTP " + api.statusCode() + ")"
-                : "(exception)";
         LOGGER.log(System.Logger.Level.WARNING,
-                "Retry {0}/{1} for {2} {3} {4} - waiting {5}ms",
-                attempt, policy.maxAttempts(), method, uri, detail, delayMs);
+                "Retry {0}/{1} for {2} {3} (exception: {4}) - waiting {5}ms",
+                attempt, policy.maxAttempts(), method, uri, cause.getClass().getSimpleName(), delayMs);
+    }
+
+    private void logRetryStatus(int attempt, String method, URI uri, int statusCode, long delayMs) {
+        LOGGER.log(System.Logger.Level.WARNING,
+                "Retry {0}/{1} for {2} {3} (HTTP {4}) - waiting {5}ms",
+                attempt, policy.maxAttempts(), method, uri, statusCode, delayMs);
     }
 
     private static Throwable unwrap(Throwable t) {

@@ -5,7 +5,6 @@ import io.vertx.core.http.HttpMethod;
 import io.vertx.mutiny.core.buffer.Buffer;
 import io.vertx.mutiny.ext.web.client.HttpResponse;
 import io.vertx.mutiny.ext.web.client.WebClient;
-import xyz.juandiii.ark.core.exceptions.ApiException;
 import xyz.juandiii.ark.core.exceptions.ArkException;
 import xyz.juandiii.ark.core.http.HeaderUtils;
 import xyz.juandiii.ark.core.http.RawResponse;
@@ -67,11 +66,8 @@ public final class ArkVertxMutinyTransport implements MutinyHttpTransport {
                     String responseBody = r.bodyAsString();
                     var responseHeaders = HeaderUtils.toHeaderMap(r.headers().getDelegate());
                     LOGGER.log(System.Logger.Level.DEBUG, () -> TransportLogger.formatResponse(statusCode, responseHeaders, responseBody));
-                    if (RawResponse.isErrorStatus(statusCode)) {
-                        throw ApiException.of(statusCode, responseBody);
-                    }
                     return new RawResponse(statusCode, responseHeaders, responseBody);
                 })
-                .onFailure().transform(e -> (e instanceof ArkException || e instanceof ApiException) ? e : ArkException.fromThrowable(method, uri, e));
+                .onFailure().transform(e -> ArkException.fromThrowable(method, uri, e));
     }
 }

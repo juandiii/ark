@@ -20,6 +20,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
+import java.util.concurrent.atomic.AtomicReference;
 import java.net.Socket;
 import java.net.URI;
 import java.time.Duration;
@@ -145,31 +146,30 @@ class ArkReactorNettyTransportTest {
         }
 
         @Test
-        void given404Endpoint_whenSend_thenEmitsNotFoundException() {
+        void given404Endpoint_whenSend_thenEmitsErrorResponse() {
             Mono<RawResponse> result = transport().send("GET", baseUri.resolve("/not-found"),
                     Map.of(), null, null);
 
             StepVerifier.create(result)
-                    .expectErrorSatisfies(error -> {
-                        assertInstanceOf(NotFoundException.class, error);
-                        ApiException ex = (ApiException) error;
-                        assertEquals(404, ex.statusCode());
-                        assertEquals("Not Found", ex.responseBody());
+                    .assertNext(response -> {
+                        assertEquals(404, response.statusCode());
+                        assertEquals("Not Found", response.body());
+                        assertTrue(response.isError());
                     })
-                    .verify();
+                    .verifyComplete();
         }
 
         @Test
-        void given500Endpoint_whenSend_thenEmitsServerException() {
+        void given500Endpoint_whenSend_thenEmitsErrorResponse() {
             Mono<RawResponse> result = transport().send("GET", baseUri.resolve("/server-error"),
                     Map.of(), null, null);
 
             StepVerifier.create(result)
-                    .expectErrorSatisfies(error -> {
-                        assertInstanceOf(ServerException.class, error);
-                        assertEquals(500, ((ApiException) error).statusCode());
+                    .assertNext(response -> {
+                        assertEquals(500, response.statusCode());
+                        assertTrue(response.isError());
                     })
-                    .verify();
+                    .verifyComplete();
         }
 
         @Test
@@ -412,15 +412,27 @@ class ArkReactorNettyTransportTest {
                         Map.of(), null, Duration.ofSeconds(5));
 
                 // Reactor Netty surfaces a premature server close as either a
-                // transport error (ArkException) or a synthetic HTTP 4xx
-                // (ApiException), depending on parser state. Either matches
-                // Ark's contract: the caller always gets a typed framework
-                // exception, never a raw Throwable.
-                StepVerifier.create(result)
-                        .expectErrorSatisfies(error ->
-                                assertTrue(error instanceof ArkException || error instanceof ApiException,
-                                        "Expected ArkException or ApiException, got " + error.getClass().getName()))
-                        .verify(Duration.ofSeconds(10));
+                // transport error (ArkException via onErrorMap) or a synthetic
+                // HTTP 4xx RawResponse (Netty's parser fills in a status code).
+                // Both are acceptable at the transport layer; the framework's
+                // validateResponse() turns the error RawResponse into the
+                // matching ApiException at retrieve-time.
+                RawResponse response = null;
+                Throwable error = null;
+                try {
+                    response = result.block(Duration.ofSeconds(10));
+                } catch (Throwable t) {
+                    error = t;
+                }
+
+                if (error != null) {
+                    assertTrue(error instanceof ArkException || error instanceof ApiException,
+                            "Expected ArkException or ApiException, got " + error.getClass().getName());
+                } else {
+                    assertNotNull(response, "Expected an error response or an exception, got neither");
+                    assertTrue(response.isError(),
+                            "Empty/malformed response must surface as an error response, got status: " + response.statusCode());
+                }
             }
         }
     }
@@ -515,13 +527,16 @@ class ArkReactorNettyTransportTest {
         }
 
         @Test
-        void given404_whenSendBinary_thenEmitsNotFoundException() {
+        void given404_whenSendBinary_thenEmitsErrorResponse() {
             Mono<RawResponse> result = transport().sendBinary("GET", baseUri.resolve("/not-found"),
                     Map.of(), null, null);
 
             StepVerifier.create(result)
-                    .expectErrorSatisfies(error -> assertInstanceOf(NotFoundException.class, error))
-                    .verify();
+                    .assertNext(response -> {
+                        assertEquals(404, response.statusCode());
+                        assertTrue(response.isError());
+                    })
+                    .verifyComplete();
         }
 
         @Test

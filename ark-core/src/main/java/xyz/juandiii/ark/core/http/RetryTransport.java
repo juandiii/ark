@@ -68,19 +68,9 @@ public final class RetryTransport implements HttpTransport {
 
     private RawResponse retryLoop(String method, URI uri, Supplier<RawResponse> attempt) {
         for (int i = 1; i <= policy.maxAttempts(); i++) {
+            RawResponse response;
             try {
-                return attempt.get();
-            } catch (ApiException e) {
-                if (i == policy.maxAttempts()) {
-                    logExhausted(i, method, uri, e.statusCode());
-                    throw e;
-                }
-                if (!policy.retryOn().contains(e.statusCode()) || !isRetryableMethod(method)) {
-                    throw e;
-                }
-                long delayMs = computeDelayMillis(i);
-                logRetry(i, method, uri, e.statusCode(), delayMs);
-                sleeper.accept(delayMs);
+                response = attempt.get();
             } catch (TimeoutException | ConnectionException e) {
                 if (i == policy.maxAttempts()) {
                     logExhausted(i, method, uri, -1);
@@ -92,7 +82,22 @@ public final class RetryTransport implements HttpTransport {
                 long delayMs = computeDelayMillis(i);
                 logRetry(i, method, uri, -1, delayMs);
                 sleeper.accept(delayMs);
+                continue;
             }
+            if (!response.isError()) {
+                return response;
+            }
+            int statusCode = response.statusCode();
+            if (i == policy.maxAttempts()) {
+                logExhausted(i, method, uri, statusCode);
+                throw ApiException.of(statusCode, response.body());
+            }
+            if (!policy.retryOn().contains(statusCode) || !isRetryableMethod(method)) {
+                throw ApiException.of(statusCode, response.body());
+            }
+            long delayMs = computeDelayMillis(i);
+            logRetry(i, method, uri, statusCode, delayMs);
+            sleeper.accept(delayMs);
         }
         throw new IllegalStateException("Retry loop completed without result");
     }

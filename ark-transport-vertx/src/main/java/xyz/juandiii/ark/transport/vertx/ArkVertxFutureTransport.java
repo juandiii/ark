@@ -5,7 +5,6 @@ import io.vertx.core.buffer.Buffer;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.ext.web.client.HttpResponse;
 import io.vertx.ext.web.client.WebClient;
-import xyz.juandiii.ark.core.exceptions.ApiException;
 import xyz.juandiii.ark.core.exceptions.ArkException;
 import xyz.juandiii.ark.core.http.HeaderUtils;
 import xyz.juandiii.ark.core.http.RawResponse;
@@ -64,9 +63,7 @@ public final class ArkVertxFutureTransport implements VertxHttpTransport {
         return response
                 .map(this::handleResponse)
                 .otherwise(e -> {
-                    throw (e instanceof ArkException || e instanceof ApiException)
-                            ? (RuntimeException) e
-                            : ArkException.fromThrowable(method, uri, e);
+                    throw ArkException.fromThrowable(method, uri, e);
                 });
     }
 
@@ -75,9 +72,6 @@ public final class ArkVertxFutureTransport implements VertxHttpTransport {
         String responseBody = r.bodyAsString();
         var responseHeaders = HeaderUtils.toHeaderMap(r.headers());
         LOGGER.log(System.Logger.Level.DEBUG, () -> TransportLogger.formatResponse(statusCode, responseHeaders, responseBody));
-        if (RawResponse.isErrorStatus(statusCode)) {
-            throw ApiException.of(statusCode, responseBody);
-        }
         return new RawResponse(statusCode, responseHeaders, responseBody);
     }
 }

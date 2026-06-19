@@ -171,24 +171,22 @@ class ArkVertxFutureTransportTest {
         }
 
         @Test
-        void given404Endpoint_whenSend_thenFutureFailsWithApiException() throws Exception {
-            Throwable error = awaitFailure(transport().send("GET", baseUri.resolve("/not-found"),
+        void given404Endpoint_whenSend_thenFutureReturnsErrorResponse() throws Exception {
+            RawResponse response = await(transport().send("GET", baseUri.resolve("/not-found"),
                     Map.of(), null, null));
 
-            assertInstanceOf(ApiException.class, error);
-            ApiException ex = (ApiException) error;
-            assertEquals(404, ex.statusCode());
-            assertEquals("Not Found", ex.responseBody());
-            assertInstanceOf(NotFoundException.class, ex);
+            assertEquals(404, response.statusCode());
+            assertEquals("Not Found", response.body());
+            assertTrue(response.isError());
         }
 
         @Test
-        void given500Endpoint_whenSend_thenFutureFailsWithServerException() throws Exception {
-            Throwable error = awaitFailure(transport().send("GET", baseUri.resolve("/server-error"),
+        void given500Endpoint_whenSend_thenFutureReturnsErrorResponse() throws Exception {
+            RawResponse response = await(transport().send("GET", baseUri.resolve("/server-error"),
                     Map.of(), null, null));
 
-            assertInstanceOf(ServerException.class, error);
-            assertEquals(500, ((ApiException) error).statusCode());
+            assertEquals(500, response.statusCode());
+            assertTrue(response.isError());
         }
 
         @Test
@@ -309,6 +307,44 @@ class ArkVertxFutureTransportTest {
                         URI.create("http://localhost:" + port + "/slow-headers"), Map.of(), null, Duration.ofMillis(200)));
                 assertInstanceOf(ArkException.class, error);
             }
+        }
+    }
+
+    @Nested
+    class SendBinary {
+
+        @Test
+        void givenBinaryBody_whenSendBinary_thenServerReceivesBytes() throws Exception {
+            byte[] body = new byte[]{(byte) 0xFF, 0x00, 0x01, (byte) 0xC0};
+            RawResponse response = await(transport().sendBinary("POST",
+                    baseUri.resolve("/echo-body"), Map.of(), body, null));
+
+            assertEquals(200, response.statusCode());
+        }
+
+        @Test
+        void givenNullBinaryBody_whenSendBinary_thenSucceeds() throws Exception {
+            RawResponse response = await(transport().sendBinary("GET", baseUri.resolve("/ok"),
+                    Map.of(), null, null));
+
+            assertEquals(200, response.statusCode());
+        }
+
+        @Test
+        void given404_whenSendBinary_thenReturnsErrorResponse() throws Exception {
+            RawResponse response = await(transport().sendBinary("GET",
+                    baseUri.resolve("/not-found"), Map.of(), null, null));
+
+            assertEquals(404, response.statusCode());
+            assertTrue(response.isError());
+        }
+
+        @Test
+        void givenConnectionRefused_whenSendBinary_thenFailsWithArkException() throws Exception {
+            Throwable error = awaitFailure(transport().sendBinary("GET",
+                    URI.create("http://localhost:1/refused"), Map.of(), null, Duration.ofSeconds(2)));
+
+            assertInstanceOf(ArkException.class, error);
         }
     }
 

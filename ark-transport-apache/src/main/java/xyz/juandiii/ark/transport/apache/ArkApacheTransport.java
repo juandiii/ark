@@ -10,7 +10,6 @@ import org.apache.hc.core5.http.io.entity.EntityUtils;
 import org.apache.hc.core5.http.io.entity.StringEntity;
 import org.apache.hc.core5.http.io.support.ClassicRequestBuilder;
 import org.apache.hc.core5.util.Timeout;
-import xyz.juandiii.ark.core.exceptions.ApiException;
 import xyz.juandiii.ark.core.exceptions.ArkException;
 import xyz.juandiii.ark.core.http.HeaderUtils;
 import xyz.juandiii.ark.core.http.HttpTransport;
@@ -79,11 +78,6 @@ public final class ArkApacheTransport implements HttpTransport {
             return httpClient.execute(builder.build(), context, response -> {
                 int statusCode = response.getCode();
                 String responseBody = EntityUtils.toString(response.getEntity());
-
-                if (RawResponse.isErrorStatus(statusCode)) {
-                    throw ApiException.of(statusCode, responseBody);
-                }
-
                 Map<String, List<String>> responseHeaders = HeaderUtils.toHeaderMap(
                         java.util.Arrays.stream(response.getHeaders())
                                 .map(h -> Map.entry(h.getName(), h.getValue()))
@@ -92,8 +86,6 @@ public final class ArkApacheTransport implements HttpTransport {
                 LOGGER.log(System.Logger.Level.DEBUG, () -> TransportLogger.formatResponse(statusCode, responseHeaders, responseBody));
                 return new RawResponse(statusCode, responseHeaders, responseBody);
             });
-        } catch (ApiException e) {
-            throw e;
         } catch (IOException e) {
             throw ArkException.fromIOException(method, uri, e);
         }

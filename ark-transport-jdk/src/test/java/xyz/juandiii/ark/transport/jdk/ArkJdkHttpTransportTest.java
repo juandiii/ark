@@ -182,22 +182,23 @@ class ArkJdkHttpTransportTest {
         }
 
         @Test
-        void given404Endpoint_whenSend_thenThrowsApiException() {
-            ApiException ex = assertThrows(ApiException.class, () ->
-                    transport().send("GET", baseUri.resolve("/not-found"), Map.of(), null, null));
+        void given404Endpoint_whenSend_thenReturnsErrorResponse() {
+            RawResponse response = transport().send("GET", baseUri.resolve("/not-found"),
+                    Map.of(), null, null);
 
-            assertEquals(404, ex.statusCode());
-            assertEquals("Resource not found", ex.responseBody());
-            assertInstanceOf(NotFoundException.class, ex);
+            assertEquals(404, response.statusCode());
+            assertEquals("Resource not found", response.body());
+            assertTrue(response.isError());
         }
 
         @Test
-        void given500Endpoint_whenSend_thenThrowsServerException() {
-            ServerException ex = assertThrows(ServerException.class, () ->
-                    transport().send("GET", baseUri.resolve("/server-error"), Map.of(), null, null));
+        void given500Endpoint_whenSend_thenReturnsErrorResponse() {
+            RawResponse response = transport().send("GET", baseUri.resolve("/server-error"),
+                    Map.of(), null, null);
 
-            assertEquals(500, ex.statusCode());
-            assertEquals("Internal Server Error", ex.responseBody());
+            assertEquals(500, response.statusCode());
+            assertEquals("Internal Server Error", response.body());
+            assertTrue(response.isError());
         }
 
         @Test
@@ -388,25 +389,23 @@ class ArkJdkHttpTransportTest {
         }
 
         @Test
-        void given404Endpoint_whenSendAsync_thenCompletesExceptionallyWithApiException() {
+        void given404Endpoint_whenSendAsync_thenCompletesWithErrorResponse() throws Exception {
             CompletableFuture<RawResponse> future = transport().sendAsync("GET",
                     baseUri.resolve("/not-found"), Map.of(), null, null);
 
-            ExecutionException ex = assertThrows(ExecutionException.class, future::get);
-            ApiException apiEx = findCause(ex, ApiException.class);
-            assertNotNull(apiEx);
-            assertEquals(404, apiEx.statusCode());
+            RawResponse response = future.get();
+            assertEquals(404, response.statusCode());
+            assertTrue(response.isError());
         }
 
         @Test
-        void given500Endpoint_whenSendAsync_thenCompletesExceptionallyWithApiException() {
+        void given500Endpoint_whenSendAsync_thenCompletesWithErrorResponse() throws Exception {
             CompletableFuture<RawResponse> future = transport().sendAsync("GET",
                     baseUri.resolve("/server-error"), Map.of(), null, null);
 
-            ExecutionException ex = assertThrows(ExecutionException.class, future::get);
-            ApiException apiEx = findCause(ex, ApiException.class);
-            assertNotNull(apiEx);
-            assertEquals(500, apiEx.statusCode());
+            RawResponse response = future.get();
+            assertEquals(500, response.statusCode());
+            assertTrue(response.isError());
         }
 
         @SuppressWarnings("unchecked")
@@ -510,10 +509,12 @@ class ArkJdkHttpTransportTest {
         }
 
         @Test
-        void given404_whenSendBinary_thenThrowsApiException() {
-            assertThrows(NotFoundException.class, () ->
-                    transport().sendBinary("GET", baseUri.resolve("/not-found"),
-                            Map.of(), null, null));
+        void given404_whenSendBinary_thenReturnsErrorResponse() {
+            RawResponse response = transport().sendBinary("GET", baseUri.resolve("/not-found"),
+                    Map.of(), null, null);
+
+            assertEquals(404, response.statusCode());
+            assertTrue(response.isError());
         }
 
         @Test
@@ -545,13 +546,13 @@ class ArkJdkHttpTransportTest {
         }
 
         @Test
-        void given404_whenSendBinaryAsync_thenCompletesExceptionally() {
+        void given404_whenSendBinaryAsync_thenCompletesWithErrorResponse() throws Exception {
             CompletableFuture<RawResponse> future = transport().sendBinaryAsync("GET",
                     baseUri.resolve("/not-found"), Map.of(), null, null);
 
-            ExecutionException ex = assertThrows(ExecutionException.class, future::get);
-            assertNotNull(ex.getCause());
-            assertInstanceOf(ApiException.class, ex.getCause());
+            RawResponse response = future.get();
+            assertEquals(404, response.statusCode());
+            assertTrue(response.isError());
         }
     }
 
