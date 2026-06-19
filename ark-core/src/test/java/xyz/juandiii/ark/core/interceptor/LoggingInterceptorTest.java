@@ -1,13 +1,20 @@
 package xyz.juandiii.ark.core.interceptor;
 
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import xyz.juandiii.ark.core.AbstractArkBuilder;
 import xyz.juandiii.ark.core.http.RawResponse;
 
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.logging.Handler;
+import java.util.logging.Level;
+import java.util.logging.LogRecord;
+import java.util.logging.Logger;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -225,6 +232,160 @@ class LoggingInterceptorTest {
             RawResponse raw = new RawResponse(204, Map.of(), null);
 
             assertDoesNotThrow(() -> builder.resList.get(0).intercept(raw));
+        }
+    }
+
+    @Nested
+    class HeaderRedaction {
+
+        private Logger jul;
+        private Level previousLevel;
+        private CapturingHandler handler;
+
+        @BeforeEach
+        void attachHandler() {
+            jul = Logger.getLogger("xyz.juandiii.ark");
+            previousLevel = jul.getLevel();
+            jul.setLevel(Level.ALL);
+            handler = new CapturingHandler();
+            handler.setLevel(Level.ALL);
+            jul.addHandler(handler);
+        }
+
+        @AfterEach
+        void detachHandler() {
+            jul.removeHandler(handler);
+            jul.setLevel(previousLevel);
+        }
+
+        @Test
+        void givenAuthorizationHeader_whenLevelHeaders_thenValueIsRedacted() {
+            var builder = new TestBuilder();
+            LoggingInterceptor.apply(builder, LoggingInterceptor.Level.HEADERS);
+
+            Map<String, String> headers = orderedHeaders("Authorization", "Bearer secret123");
+            builder.reqList.get(0).intercept(createContext("GET", "/users", headers, null));
+
+            String logged = handler.lastMessage();
+            assertTrue(logged.contains("Authorization: [REDACTED]"), logged);
+            assertFalse(logged.contains("Bearer secret123"), logged);
+        }
+
+        @Test
+        void givenCookieHeader_whenLevelHeaders_thenValueIsRedacted() {
+            var builder = new TestBuilder();
+            LoggingInterceptor.apply(builder, LoggingInterceptor.Level.HEADERS);
+
+            Map<String, String> headers = orderedHeaders("Cookie", "session=abc");
+            builder.reqList.get(0).intercept(createContext("GET", "/users", headers, null));
+
+            String logged = handler.lastMessage();
+            assertTrue(logged.contains("Cookie: [REDACTED]"), logged);
+            assertFalse(logged.contains("session=abc"), logged);
+        }
+
+        @Test
+        void givenXApiKeyHeader_caseInsensitive_whenLevelHeaders_thenValueIsRedacted() {
+            var builder = new TestBuilder();
+            LoggingInterceptor.apply(builder, LoggingInterceptor.Level.HEADERS);
+
+            Map<String, String> headers = orderedHeaders("x-Api-Key", "k-12345");
+            builder.reqList.get(0).intercept(createContext("GET", "/users", headers, null));
+
+            String logged = handler.lastMessage();
+            assertTrue(logged.contains("x-Api-Key: [REDACTED]"), logged);
+            assertFalse(logged.contains("k-12345"), logged);
+        }
+
+        @Test
+        void givenNonSensitiveHeader_whenLevelHeaders_thenValueIsPreserved() {
+            var builder = new TestBuilder();
+            LoggingInterceptor.apply(builder, LoggingInterceptor.Level.HEADERS);
+
+            Map<String, String> headers = orderedHeaders("Content-Type", "application/json");
+            builder.reqList.get(0).intercept(createContext("POST", "/users", headers, null));
+
+            String logged = handler.lastMessage();
+            assertTrue(logged.contains("Content-Type: application/json"), logged);
+            assertFalse(logged.contains("[REDACTED]"), logged);
+        }
+
+        @Test
+        void givenLevelBasic_thenHeadersAreNotLogged() {
+            var builder = new TestBuilder();
+            LoggingInterceptor.apply(builder, LoggingInterceptor.Level.BASIC);
+
+            Map<String, String> headers = orderedHeaders("Authorization", "Bearer secret123");
+            builder.reqList.get(0).intercept(createContext("GET", "/users", headers, null));
+
+            String logged = handler.lastMessage();
+            assertFalse(logged.contains("Authorization"), logged);
+            assertFalse(logged.contains("Bearer secret123"), logged);
+        }
+
+        @Test
+        void givenLevelNone_thenNothingIsLogged() {
+            var builder = new TestBuilder();
+            LoggingInterceptor.apply(builder, LoggingInterceptor.Level.NONE);
+
+            assertTrue(builder.reqList.isEmpty());
+            assertTrue(handler.records.isEmpty());
+        }
+
+        @Test
+        void givenResponseAuthorizationHeader_thenValueIsRedacted() {
+            var builder = new TestBuilder();
+            LoggingInterceptor.apply(builder, LoggingInterceptor.Level.HEADERS);
+
+            builder.reqList.get(0).intercept(createContext("GET", "/", Map.of(), null));
+            handler.records.clear();
+
+            RawResponse raw = new RawResponse(200,
+                    Map.of("Set-Cookie", List.of("session=xyz", "csrf=abc")),
+                    "ok");
+            builder.resList.get(0).intercept(raw);
+
+            String logged = handler.lastMessage();
+            assertTrue(logged.contains("Set-Cookie: [REDACTED], [REDACTED]"), logged);
+            assertFalse(logged.contains("session=xyz"), logged);
+            assertFalse(logged.contains("csrf=abc"), logged);
+        }
+
+        @Test
+        void givenRequestContextHeaders_afterLogging_thenOriginalMapUnchanged() {
+            var builder = new TestBuilder();
+            LoggingInterceptor.apply(builder, LoggingInterceptor.Level.HEADERS);
+
+            Map<String, String> headers = orderedHeaders("Authorization", "Bearer keep-me");
+            RequestContext context = createContext("GET", "/", headers, null);
+            builder.reqList.get(0).intercept(context);
+
+            assertEquals("Bearer keep-me", context.headers().get("Authorization"));
+        }
+
+        private static Map<String, String> orderedHeaders(String... kv) {
+            Map<String, String> m = new LinkedHashMap<>();
+            for (int i = 0; i < kv.length; i += 2) {
+                m.put(kv[i], kv[i + 1]);
+            }
+            return m;
+        }
+
+        private static final class CapturingHandler extends Handler {
+            final List<LogRecord> records = new ArrayList<>();
+
+            @Override
+            public void publish(LogRecord record) {
+                records.add(record);
+            }
+
+            @Override public void flush() {}
+            @Override public void close() {}
+
+            String lastMessage() {
+                if (records.isEmpty()) return "";
+                return records.get(records.size() - 1).getMessage();
+            }
         }
     }
 

@@ -6,7 +6,9 @@ import xyz.juandiii.ark.core.http.RawResponse;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 import java.util.StringJoiner;
 
 /**
@@ -19,7 +21,26 @@ public final class LoggingInterceptor {
 
     private static final System.Logger LOGGER = System.getLogger("xyz.juandiii.ark");
 
+    private static final Set<String> SENSITIVE_HEADERS = Set.of(
+            "authorization",
+            "proxy-authorization",
+            "cookie",
+            "set-cookie",
+            "x-api-key",
+            "x-auth-token",
+            "x-access-token",
+            "x-csrf-token",
+            "x-xsrf-token"
+    );
+
     private LoggingInterceptor() {}
+
+    private static String redact(String name, String value) {
+        if (name == null || value == null) return value;
+        return SENSITIVE_HEADERS.contains(name.toLowerCase(Locale.ROOT))
+                ? "[REDACTED]"
+                : value;
+    }
 
     public enum Level {
         NONE,
@@ -68,7 +89,7 @@ public final class LoggingInterceptor {
             Map<String, String> headers = context.headers();
             if (headers != null && !headers.isEmpty()) {
                 headers.forEach((key, value) ->
-                        sb.append("\n    ").append(key).append(": ").append(value));
+                        sb.append("\n    ").append(key).append(": ").append(redact(key, value)));
             }
         }
 
@@ -89,8 +110,11 @@ public final class LoggingInterceptor {
         if (level.ordinal() >= Level.HEADERS.ordinal()) {
             Map<String, List<String>> headers = raw.headers();
             if (headers != null && !headers.isEmpty()) {
-                headers.forEach((key, values) ->
-                        sb.append("\n    ").append(key).append(": ").append(String.join(", ", values)));
+                headers.forEach((key, values) -> {
+                    StringJoiner joined = new StringJoiner(", ");
+                    values.forEach(v -> joined.add(redact(key, v)));
+                    sb.append("\n    ").append(key).append(": ").append(joined);
+                });
             }
         }
 
