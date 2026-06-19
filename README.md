@@ -7,7 +7,7 @@
 
 **A modular HTTP client toolkit for Java 17+ with fluent and declarative APIs, pluggable transports, composable decorators, and support for sync, async, and reactive applications.**
 
-> **Status**: Ark is in active 1.x development. Breaking changes are acceptable in minor versions until 2.0. See [CHANGELOG.md](CHANGELOG.md) for what's new and migration notes per release.
+> **Status**: Ark is in active 1.x development. Breaking changes are acceptable in minor versions until 2.0.
 
 ---
 
