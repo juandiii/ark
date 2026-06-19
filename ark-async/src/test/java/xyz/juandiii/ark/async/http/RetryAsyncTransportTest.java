@@ -2,6 +2,7 @@ package xyz.juandiii.ark.async.http;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import xyz.juandiii.ark.core.exceptions.*;
@@ -181,5 +182,77 @@ class RetryAsyncTransportTest {
         var ex = assertThrows(CompletionException.class, future::join);
         assertInstanceOf(InternalServerErrorException.class, ex.getCause());
         verify(delegate, times(1)).sendAsync(anyString(), any(), any(), any(), any());
+    }
+
+    // ---- sendBinaryAsync — bytes must survive retry intact ----
+
+    private static final byte[] BINARY_BODY = new byte[]{
+            (byte) 0xFF, (byte) 0xFE, 0x00, 0x01, (byte) 0xC0, (byte) 0x80, 0x7F, (byte) 0x80
+    };
+
+    @Test
+    void givenBinaryBody_whenRetrySucceedsOnSecondAttempt_thenBytesArePreservedExactly() {
+        when(delegate.sendBinaryAsync(anyString(), any(), any(), any(byte[].class), any()))
+                .thenReturn(CompletableFuture.failedFuture(new ServiceUnavailableException("unavailable")))
+                .thenReturn(CompletableFuture.completedFuture(SUCCESS));
+
+        var policy = RetryPolicy.builder().maxAttempts(3).delay(Duration.ofMillis(50)).build();
+        var result = transport(policy)
+                .sendBinaryAsync("PUT", TEST_URI, HEADERS, BINARY_BODY, null).join();
+
+        assertEquals(200, result.statusCode());
+        ArgumentCaptor<byte[]> captor = ArgumentCaptor.forClass(byte[].class);
+        verify(delegate, times(2))
+                .sendBinaryAsync(anyString(), any(), any(), captor.capture(), any());
+        for (byte[] captured : captor.getAllValues()) {
+            assertArrayEquals(BINARY_BODY, captured,
+                    "bytes must survive retry byte-for-byte (no UTF-8 conversion)");
+        }
+    }
+
+    @Test
+    void givenBinaryBodyWithRetryDisabled_thenSingleCallNoCorruption() {
+        when(delegate.sendBinaryAsync(anyString(), any(), any(), any(byte[].class), any()))
+                .thenReturn(CompletableFuture.completedFuture(SUCCESS));
+
+        var policy = RetryPolicy.builder().maxAttempts(1).build();
+        var result = transport(policy)
+                .sendBinaryAsync("PUT", TEST_URI, HEADERS, BINARY_BODY, null).join();
+
+        assertEquals(200, result.statusCode());
+        ArgumentCaptor<byte[]> captor = ArgumentCaptor.forClass(byte[].class);
+        verify(delegate, times(1))
+                .sendBinaryAsync(anyString(), any(), any(), captor.capture(), any());
+        assertArrayEquals(BINARY_BODY, captor.getValue());
+    }
+
+    @Test
+    void givenBinaryBody_whenAllRetriesExhausted_thenFutureCompletesExceptionally() {
+        when(delegate.sendBinaryAsync(anyString(), any(), any(), any(byte[].class), any()))
+                .thenReturn(CompletableFuture.failedFuture(new ServiceUnavailableException("unavailable")));
+
+        var policy = RetryPolicy.builder().maxAttempts(3).delay(Duration.ofMillis(50)).build();
+        var future = transport(policy)
+                .sendBinaryAsync("PUT", TEST_URI, HEADERS, BINARY_BODY, null);
+
+        var ex = assertThrows(CompletionException.class, future::join);
+        assertInstanceOf(ServiceUnavailableException.class, ex.getCause());
+        verify(delegate, times(3))
+                .sendBinaryAsync(anyString(), any(), any(), any(byte[].class), any());
+    }
+
+    @Test
+    void givenNonRetryableException_thenSendBinaryAsyncDoesNotRetry() {
+        when(delegate.sendBinaryAsync(anyString(), any(), any(), any(byte[].class), any()))
+                .thenReturn(CompletableFuture.failedFuture(new BadRequestException("bad")));
+
+        var policy = RetryPolicy.builder().maxAttempts(3).delay(Duration.ofMillis(50)).build();
+        var future = transport(policy)
+                .sendBinaryAsync("PUT", TEST_URI, HEADERS, BINARY_BODY, null);
+
+        var ex = assertThrows(CompletionException.class, future::join);
+        assertInstanceOf(BadRequestException.class, ex.getCause());
+        verify(delegate, times(1))
+                .sendBinaryAsync(anyString(), any(), any(), any(byte[].class), any());
     }
 }

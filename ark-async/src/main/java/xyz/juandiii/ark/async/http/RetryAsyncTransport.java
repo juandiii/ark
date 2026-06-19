@@ -48,6 +48,13 @@ public final class RetryAsyncTransport implements AsyncHttpTransport {
         return attemptAsync(method, uri, headers, body, timeout, 1);
     }
 
+    @Override
+    public CompletableFuture<RawResponse> sendBinaryAsync(String method, URI uri,
+                                                           Map<String, String> headers,
+                                                           byte[] body, Duration timeout) {
+        return attemptBinaryAsync(method, uri, headers, body, timeout, 1);
+    }
+
     private CompletableFuture<RawResponse> attemptAsync(String method, URI uri,
                                                          Map<String, String> headers,
                                                          String body, Duration timeout,
@@ -66,6 +73,34 @@ public final class RetryAsyncTransport implements AsyncHttpTransport {
                     CompletableFuture<RawResponse> delayed = new CompletableFuture<>();
                     scheduler.schedule(
                             () -> attemptAsync(method, uri, headers, body, timeout, attempt + 1)
+                                    .whenComplete((r, e) -> {
+                                        if (e != null) delayed.completeExceptionally(unwrap(e));
+                                        else delayed.complete(r);
+                                    }),
+                            delayMs, TimeUnit.MILLISECONDS
+                    );
+                    return delayed;
+                });
+    }
+
+    private CompletableFuture<RawResponse> attemptBinaryAsync(String method, URI uri,
+                                                               Map<String, String> headers,
+                                                               byte[] body, Duration timeout,
+                                                               int attempt) {
+        return delegate.sendBinaryAsync(method, uri, headers, body, timeout)
+                .exceptionallyCompose(throwable -> {
+                    Throwable cause = unwrap(throwable);
+
+                    if (attempt >= policy.maxAttempts() || !isRetryable(method, cause)) {
+                        return CompletableFuture.failedFuture(cause);
+                    }
+
+                    long delayMs = computeDelayMillis(attempt);
+                    logRetry(attempt, method, uri, cause, delayMs);
+
+                    CompletableFuture<RawResponse> delayed = new CompletableFuture<>();
+                    scheduler.schedule(
+                            () -> attemptBinaryAsync(method, uri, headers, body, timeout, attempt + 1)
                                     .whenComplete((r, e) -> {
                                         if (e != null) delayed.completeExceptionally(unwrap(e));
                                         else delayed.complete(r);
