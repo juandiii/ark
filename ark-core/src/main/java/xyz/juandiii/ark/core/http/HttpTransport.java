@@ -17,7 +17,7 @@ import java.util.Map;
  * @author Juan Diego Lopez V.
  */
 @FunctionalInterface
-public interface HttpTransport {
+public interface HttpTransport extends Transport<RawResponse> {
 
     /**
      * Send a text/JSON request and return the raw response synchronously.
@@ -30,6 +30,7 @@ public interface HttpTransport {
      * @return raw response with status, headers and body
      * @throws xyz.juandiii.ark.core.exceptions.ArkException on transport/IO errors (timeout, connection refused, interrupted)
      */
+    @Override
     RawResponse send(String method, URI uri, Map<String, String> headers, String body, Duration timeout);
 
     /**
@@ -37,19 +38,12 @@ public interface HttpTransport {
      * Transport implementations MUST override this method when supporting
      * binary bodies; the default throws to prevent silent data corruption.
      *
-     * @param method   HTTP method
-     * @param uri      fully-qualified target URI
-     * @param headers  request headers (caller-owned; transport MUST NOT mutate)
-     * @param body     binary request body; {@code null} for bodiless methods
-     * @param timeout  per-request timeout; {@code null} uses the underlying client's default
-     * @return raw response with status, headers and body
      * @throws UnsupportedOperationException if the transport does not implement binary upload
      * @throws xyz.juandiii.ark.core.exceptions.ArkException on transport/IO errors
      */
+    @Override
     default RawResponse sendBinary(String method, URI uri, Map<String, String> headers,
                                     byte[] body, Duration timeout) {
-        throw new UnsupportedOperationException(
-                "Transport must override sendBinary to preserve binary fidelity. " +
-                "The default lossy implementation has been removed to prevent silent corruption.");
+        return Transport.super.sendBinary(method, uri, headers, body, timeout);
     }
 }
