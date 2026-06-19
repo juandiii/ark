@@ -32,24 +32,32 @@ final class SpringAnnotationResolver implements AnnotationResolver {
 
     @Override
     public MethodInfo resolveMethod(Method method) {
-        String classContentType = resolveClassContentType(method.getDeclaringClass());
+        Class<?> declaringClass = method.getDeclaringClass();
+        String classContentType = resolveClassContentType(declaringClass);
+        String classAccept = resolveClassAccept(declaringClass);
 
         GetExchange get = method.getAnnotation(GetExchange.class);
-        if (get != null) return new MethodInfo("GET", resolve(get.url(), get.value()), null, null);
+        if (get != null) return new MethodInfo("GET", resolve(get.url(), get.value()),
+                null, resolveAccept(get.accept(), classAccept));
 
         PostExchange post = method.getAnnotation(PostExchange.class);
         if (post != null) return new MethodInfo("POST", resolve(post.url(), post.value()),
-                resolveContentType(post.contentType(), classContentType), null);
+                resolveContentType(post.contentType(), classContentType),
+                resolveAccept(post.accept(), classAccept));
 
         PutExchange put = method.getAnnotation(PutExchange.class);
         if (put != null) return new MethodInfo("PUT", resolve(put.url(), put.value()),
-                resolveContentType(put.contentType(), classContentType), null);
+                resolveContentType(put.contentType(), classContentType),
+                resolveAccept(put.accept(), classAccept));
 
         PatchExchange patch = method.getAnnotation(PatchExchange.class);
-        if (patch != null) return new MethodInfo("PATCH", resolve(patch.url(), patch.value()), null, null);
+        if (patch != null) return new MethodInfo("PATCH", resolve(patch.url(), patch.value()),
+                resolveContentType(patch.contentType(), classContentType),
+                resolveAccept(patch.accept(), classAccept));
 
         DeleteExchange delete = method.getAnnotation(DeleteExchange.class);
-        if (delete != null) return new MethodInfo("DELETE", resolve(delete.url(), delete.value()), null, null);
+        if (delete != null) return new MethodInfo("DELETE", resolve(delete.url(), delete.value()),
+                null, resolveAccept(delete.accept(), classAccept));
 
         throw new ArkException("No @HttpExchange annotation found on method: " + method.getName());
     }
@@ -62,9 +70,24 @@ final class SpringAnnotationResolver implements AnnotationResolver {
         return null;
     }
 
+    private String resolveClassAccept(Class<?> declaringClass) {
+        HttpExchange exchange = declaringClass.getAnnotation(HttpExchange.class);
+        if (exchange != null && exchange.accept().length > 0 && !exchange.accept()[0].isEmpty()) {
+            return exchange.accept()[0];
+        }
+        return null;
+    }
+
     private String resolveContentType(String methodContentType, String classContentType) {
         if (!methodContentType.isEmpty()) return methodContentType;
         return classContentType;
+    }
+
+    private String resolveAccept(String[] methodAccept, String classAccept) {
+        if (methodAccept != null && methodAccept.length > 0 && !methodAccept[0].isEmpty()) {
+            return methodAccept[0];
+        }
+        return classAccept;
     }
 
     @Override
