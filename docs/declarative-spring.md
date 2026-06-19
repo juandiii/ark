@@ -96,7 +96,7 @@ api.users.url=https://api.example.com
 ```java
 Ark ark = ArkClient.builder()
     .serializer(new JacksonSerializer(new ObjectMapper()))
-    .transport(new ArkJdkHttpTransport(HttpClient.newBuilder().build()))
+    .transport(new ArkJdkSyncTransport(HttpClient.newBuilder().build()))
     .baseUrl("https://api.example.com")
     .build();
 

@@ -20,7 +20,7 @@ Ark is built around a simple flow:
 ```java
 Ark client = ArkClient.builder()
     .serializer(new JacksonSerializer(new ObjectMapper()))
-    .transport(new ArkJdkHttpTransport(HttpClient.newBuilder().build()))
+    .transport(new ArkJdkSyncTransport(HttpClient.newBuilder().build()))
     .baseUrl("https://api.example.com")
     .build();
 
@@ -211,7 +211,7 @@ Applied via `LoggingInterceptor.apply(builder, level)` or `ark.logging.level` in
 
 ### Retry
 
-`RetryTransport` / `RetryAsyncTransport` - transport decorators with exponential backoff + jitter. Configured per-client via `ark.client.*.retry.*` properties. Only retries idempotent methods by default. Does not apply to reactive transports (Reactor/Mutiny have built-in retry).
+`Retry<R>` - unified transport decorator with exponential backoff + jitter. Composes via `transport.with(Retry.of(policy, ops))`. Per execution-model `RetryOps<R>` strategy: `SyncRetryOps`, `AsyncRetryOps`, `ReactorRetryOps`, `MutinyRetryOps`, `VertxRetryOps`. Configured per-client via `ark.client.*.retry.*` properties (auto-applied by Spring `ArkClientFactoryBean` and Quarkus `ArkRecorder`). Only retries idempotent methods by default. Reactive users may also use the ecosystem's native operators (`Mono.retryWhen`, `Uni.onFailure().retry()`) if preferred.
 
 ### Multipart Upload
 

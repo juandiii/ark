@@ -54,7 +54,7 @@ Or use a starter:
 ```java
 Ark client = ArkClient.builder()
     .serializer(new JacksonSerializer(new ObjectMapper()))
-    .transport(new ArkJdkHttpTransport(HttpClient.newBuilder().build()))
+    .transport(new ArkJdkSyncTransport(HttpClient.newBuilder().build()))
     .baseUrl("https://api.example.com")
     .build();
 
@@ -68,7 +68,7 @@ User user = client.get("/users/1")
 ```java
 AsyncArk client = AsyncArkClient.builder()
     .serializer(serializer)
-    .transport(new ArkJdkHttpTransport(HttpClient.newBuilder().build()))
+    .transport(new ArkJdkAsyncTransport(HttpClient.newBuilder().build()))
     .baseUrl("https://api.example.com")
     .build();
 
@@ -195,7 +195,7 @@ HttpClient httpClient = HttpClient.newBuilder()
 
 Ark client = ArkClient.builder()
     .serializer(serializer)
-    .transport(new ArkJdkHttpTransport(httpClient))
+    .transport(new ArkJdkSyncTransport(httpClient))
     .baseUrl("https://api.example.com")
     .userAgent("MyApp", "2.0")
     .requestInterceptor(request ->

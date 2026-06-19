@@ -25,7 +25,8 @@ Both starters support `@RegisterArkClient` declarative clients, per-client confi
 ### What It Provides
 
 - `JsonSerializer` - `JacksonSerializer` using Spring's `ObjectMapper`
-- `HttpTransport` - `ArkJdkHttpTransport` with default `HttpClient`
+- `HttpTransport` - `ArkJdkSyncTransport` with default `HttpClient` (HTTP/2)
+- `ArkJdkAsyncTransport` - default async transport (for `AsyncArkClient` and `@RegisterArkClient` interfaces returning `CompletableFuture<T>`)
 - `ArkClient.Builder` - prototype-scoped, pre-configured with serializer + transport
 
 All beans use `@ConditionalOnMissingBean` - define your own to override.
@@ -79,7 +80,7 @@ Override the default JDK transport:
 ```java
 @Bean
 public HttpTransport httpTransport() {
-    return new ArkJdkHttpTransport(HttpClient.newBuilder()
+    return new ArkJdkSyncTransport(HttpClient.newBuilder()
         .version(HttpClient.Version.HTTP_2)
         .connectTimeout(Duration.ofSeconds(10))
         .build());

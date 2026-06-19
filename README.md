@@ -53,7 +53,7 @@ Use the fluent API when you want full control over request composition.
 ```java
 Ark client = ArkClient.builder()
     .serializer(new JacksonSerializer(new ObjectMapper()))
-    .transport(new ArkJdkHttpTransport(HttpClient.newBuilder().build()))
+    .transport(new ArkJdkSyncTransport(HttpClient.newBuilder().build()))
     .baseUrl("https://api.example.com")
     .build();
 
