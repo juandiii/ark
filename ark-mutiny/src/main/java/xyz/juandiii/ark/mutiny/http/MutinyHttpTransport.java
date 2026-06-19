@@ -20,6 +20,8 @@ public interface MutinyHttpTransport {
 
     default Uni<RawResponse> sendBinary(String method, URI uri, Map<String, String> headers,
                                          byte[] body, Duration timeout) {
-        return send(method, uri, headers, body != null ? new String(body, java.nio.charset.StandardCharsets.UTF_8) : null, timeout);
+        throw new UnsupportedOperationException(
+                "Transport must override sendBinary to preserve binary fidelity. " +
+                "The default lossy implementation has been removed to prevent silent corruption.");
     }
 }

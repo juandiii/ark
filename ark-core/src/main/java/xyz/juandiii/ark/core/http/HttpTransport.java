@@ -1,7 +1,6 @@
 package xyz.juandiii.ark.core.http;
 
 import java.net.URI;
-import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.Map;
 
@@ -35,11 +34,8 @@ public interface HttpTransport {
 
     /**
      * Send a binary request and return the raw response synchronously.
-     *
-     * <p>The default implementation falls back to {@link #send} after a UTF-8
-     * decode of {@code body} — that is LOSSY for non-UTF8 bytes. Transports
-     * that handle binary uploads (multipart, gzipped, image, protobuf) MUST
-     * override this to preserve byte-for-byte fidelity.
+     * Transport implementations MUST override this method when supporting
+     * binary bodies; the default throws to prevent silent data corruption.
      *
      * @param method   HTTP method
      * @param uri      fully-qualified target URI
@@ -47,10 +43,13 @@ public interface HttpTransport {
      * @param body     binary request body; {@code null} for bodiless methods
      * @param timeout  per-request timeout; {@code null} uses the underlying client's default
      * @return raw response with status, headers and body
+     * @throws UnsupportedOperationException if the transport does not implement binary upload
      * @throws xyz.juandiii.ark.core.exceptions.ArkException on transport/IO errors
      */
     default RawResponse sendBinary(String method, URI uri, Map<String, String> headers,
                                     byte[] body, Duration timeout) {
-        return send(method, uri, headers, body != null ? new String(body, StandardCharsets.UTF_8) : null, timeout);
+        throw new UnsupportedOperationException(
+                "Transport must override sendBinary to preserve binary fidelity. " +
+                "The default lossy implementation has been removed to prevent silent corruption.");
     }
 }
