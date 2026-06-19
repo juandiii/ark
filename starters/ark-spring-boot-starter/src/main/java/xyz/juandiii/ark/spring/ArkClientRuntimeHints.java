@@ -1,4 +1,4 @@
-package xyz.juandiii.spring.webflux;
+package xyz.juandiii.ark.spring;
 
 import org.springframework.aot.hint.MemberCategory;
 import org.springframework.aot.hint.RuntimeHints;
@@ -7,28 +7,29 @@ import org.springframework.aot.hint.TypeReference;
 import org.springframework.boot.context.properties.bind.BindableRuntimeHintsRegistrar;
 
 /**
- * Registers Ark reactive classes for reflection in GraalVM native image.
+ * Registers Ark classes for reflection in GraalVM native image.
  *
  * Registers:
- * - Reactive proxy provider classes (Class.forName() instantiation)
- * - {@link ArkWebFluxProperties} binding hints via {@link BindableRuntimeHintsRegistrar}
- * - Enums used in binding (HttpVersion, LoggingInterceptor.Level)
+ * - Proxy provider classes (Class.forName() instantiation)
+ * - {@link ArkProperties} and nested classes (for @ConfigurationProperties binding in native)
+ * - Enums used in binding ({@link xyz.juandiii.ark.core.proxy.HttpVersion},
+ *   {@link xyz.juandiii.ark.core.interceptor.LoggingInterceptor.Level})
  *
  * @author Juan Diego Lopez V.
  */
-public class ArkWebFluxClientRuntimeHints implements RuntimeHintsRegistrar {
+public class ArkClientRuntimeHints implements RuntimeHintsRegistrar {
 
     @Override
     public void registerHints(RuntimeHints hints, ClassLoader classLoader) {
+        // Proxy provider classes (discovered via Class.forName)
         registerIfPresent(hints, classLoader, "xyz.juandiii.ark.proxy.spring.SpringProxyProvider");
         registerIfPresent(hints, classLoader, "xyz.juandiii.ark.proxy.spring.SpringAnnotationResolver");
         registerIfPresent(hints, classLoader, "xyz.juandiii.ark.proxy.spring.SpringParameterBinder");
-        registerIfPresent(hints, classLoader, "xyz.juandiii.ark.reactor.proxy.ReactorExecutionModelProvider");
-        registerIfPresent(hints, classLoader, "xyz.juandiii.ark.reactor.proxy.ReactorReturnTypeHandler");
+        registerIfPresent(hints, classLoader, "xyz.juandiii.ark.core.proxy.SyncReturnTypeHandler");
 
         // Register @ConfigurationProperties binding hints — handles nested classes,
         // Map<String, NestedClass>, and enum types automatically
-        BindableRuntimeHintsRegistrar.forTypes(ArkWebFluxProperties.class).registerHints(hints);
+        BindableRuntimeHintsRegistrar.forTypes(ArkProperties.class).registerHints(hints);
 
         // Enums used in binding (from external packages)
         registerForBinding(hints, xyz.juandiii.ark.core.proxy.HttpVersion.class);

@@ -1,4 +1,4 @@
-package xyz.juandiii.spring;
+package xyz.juandiii.ark.spring;
 
 import org.springframework.beans.factory.aot.BeanFactoryInitializationAotContribution;
 import org.springframework.beans.factory.aot.BeanFactoryInitializationAotProcessor;

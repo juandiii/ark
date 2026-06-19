@@ -1,4 +1,4 @@
-package xyz.juandiii.spring.webflux;
+package xyz.juandiii.ark.spring;
 
 import org.springframework.beans.factory.support.BeanDefinitionRegistry;
 import org.springframework.boot.autoconfigure.AutoConfigurationPackages;
@@ -11,13 +11,14 @@ import xyz.juandiii.ark.core.proxy.RegisterArkClient;
 import java.util.List;
 
 /**
- * Auto-discovers @RegisterArkClient interfaces for reactive proxy creation.
+ * Auto-discovers @RegisterArkClient interfaces using Spring Boot's auto-configuration packages.
+ * Activated automatically by ArkAutoConfiguration.
  *
  * @author Juan Diego Lopez V.
  */
-public class ArkWebFluxClientAutoRegistrar implements ImportBeanDefinitionRegistrar, EnvironmentAware {
+public class ArkClientAutoRegistrar implements ImportBeanDefinitionRegistrar, EnvironmentAware {
 
-    private static final System.Logger LOGGER = System.getLogger(ArkWebFluxClientAutoRegistrar.class.getName());
+    private static final System.Logger LOGGER = System.getLogger(ArkClientAutoRegistrar.class.getName());
     private Environment environment;
 
     @Override
@@ -36,7 +37,7 @@ public class ArkWebFluxClientAutoRegistrar implements ImportBeanDefinitionRegist
             return;
         }
 
-        var scanner = ArkWebFluxClientScanner.createScanner(environment);
+        var scanner = ArkClientScanner.createScanner(environment);
 
         for (String basePackage : basePackages) {
             for (var bd : scanner.findCandidateComponents(basePackage)) {
@@ -45,8 +46,8 @@ public class ArkWebFluxClientAutoRegistrar implements ImportBeanDefinitionRegist
                     var annotation = iface.getAnnotation(RegisterArkClient.class);
                     if (annotation == null) continue;
 
-                    if (!registry.containsBeanDefinition(ArkWebFluxClientScanner.beanName(iface))) {
-                        ArkWebFluxClientScanner.registerProxyBean(registry, iface);
+                    if (!registry.containsBeanDefinition(ArkClientScanner.beanName(iface))) {
+                        ArkClientScanner.registerProxyBean(registry, iface);
                     }
                 } catch (ClassNotFoundException e) {
                     LOGGER.log(System.Logger.Level.WARNING,

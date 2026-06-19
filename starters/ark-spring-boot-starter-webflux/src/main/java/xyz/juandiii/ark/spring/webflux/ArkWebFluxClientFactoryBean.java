@@ -1,4 +1,4 @@
-package xyz.juandiii.spring.webflux;
+package xyz.juandiii.ark.spring.webflux;
 
 import io.netty.channel.ChannelOption;
 import io.netty.handler.ssl.SslContextBuilder;

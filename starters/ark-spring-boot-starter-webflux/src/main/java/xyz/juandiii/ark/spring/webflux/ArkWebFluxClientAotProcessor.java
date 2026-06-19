@@ -1,4 +1,4 @@
-package xyz.juandiii.spring.webflux;
+package xyz.juandiii.ark.spring.webflux;
 
 import org.springframework.beans.factory.aot.BeanFactoryInitializationAotContribution;
 import org.springframework.beans.factory.aot.BeanFactoryInitializationAotProcessor;

@@ -1,1 +1,1 @@
-org.springframework.beans.factory.aot.BeanFactoryInitializationAotProcessor=xyz.juandiii.spring.webflux.ArkWebFluxClientAotProcessor
+org.springframework.beans.factory.aot.BeanFactoryInitializationAotProcessor=xyz.juandiii.ark.spring.webflux.ArkWebFluxClientAotProcessor

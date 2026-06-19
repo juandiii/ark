@@ -1,4 +1,4 @@
-package xyz.juandiii.spring;
+package xyz.juandiii.ark.spring;
 
 import org.springframework.beans.factory.FactoryBean;
 import org.springframework.beans.factory.annotation.AnnotatedBeanDefinition;

@@ -1,4 +1,4 @@
-package xyz.juandiii.spring.webflux;
+package xyz.juandiii.ark.spring.webflux;
 
 import org.springframework.boot.ssl.SslBundle;
 import org.springframework.boot.ssl.SslBundles;

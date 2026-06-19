@@ -1,4 +1,4 @@
-package xyz.juandiii.spring;
+package xyz.juandiii.ark.spring;
 
 import java.lang.reflect.Method;
 import java.net.http.HttpClient;

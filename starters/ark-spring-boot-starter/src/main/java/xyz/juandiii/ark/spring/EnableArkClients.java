@@ -1,4 +1,4 @@
-package xyz.juandiii.spring.webflux;
+package xyz.juandiii.ark.spring;
 
 import org.springframework.context.annotation.Import;
 
@@ -9,18 +9,25 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Enables auto-discovery and registration of @RegisterArkClient interfaces
- * as reactive Spring beans (ReactorArk).
+ * Enables auto-discovery and registration of @ArkClient interfaces as Spring beans.
+ * Scans from the annotated class's package by default.
  *
  * @author Juan Diego Lopez V.
  */
 @Documented
 @Target(ElementType.TYPE)
 @Retention(RetentionPolicy.RUNTIME)
-@Import(ArkWebFluxClientBeanRegistrar.class)
-public @interface EnableArkWebFluxClients {
+@Import(ArkClientBeanRegistrar.class)
+public @interface EnableArkClients {
 
+    /**
+     * Base packages to scan for @ArkClient interfaces.
+     * Defaults to the package of the annotated class.
+     */
     String[] value() default {};
 
+    /**
+     * Alias for {@link #value()}.
+     */
     String[] basePackages() default {};
 }

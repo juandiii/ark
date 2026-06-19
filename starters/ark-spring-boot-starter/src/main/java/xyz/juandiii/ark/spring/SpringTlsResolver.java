@@ -1,4 +1,4 @@
-package xyz.juandiii.spring;
+package xyz.juandiii.ark.spring;
 
 import org.springframework.boot.ssl.SslBundle;
 import org.springframework.boot.ssl.SslBundles;

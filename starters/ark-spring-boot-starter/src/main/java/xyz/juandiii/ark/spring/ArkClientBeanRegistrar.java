@@ -1,24 +1,22 @@
-package xyz.juandiii.spring;
+package xyz.juandiii.ark.spring;
 
 import org.springframework.beans.factory.support.BeanDefinitionRegistry;
-import org.springframework.boot.autoconfigure.AutoConfigurationPackages;
 import org.springframework.context.EnvironmentAware;
 import org.springframework.context.annotation.ImportBeanDefinitionRegistrar;
 import org.springframework.core.env.Environment;
 import org.springframework.core.type.AnnotationMetadata;
 import xyz.juandiii.ark.core.proxy.RegisterArkClient;
 
-import java.util.List;
+import java.util.Map;
 
 /**
- * Auto-discovers @RegisterArkClient interfaces using Spring Boot's auto-configuration packages.
- * Activated automatically by ArkAutoConfiguration.
+ * Scans for @RegisterArkClient interfaces in packages specified by @EnableArkClients.
  *
  * @author Juan Diego Lopez V.
  */
-public class ArkClientAutoRegistrar implements ImportBeanDefinitionRegistrar, EnvironmentAware {
+public class ArkClientBeanRegistrar implements ImportBeanDefinitionRegistrar, EnvironmentAware {
 
-    private static final System.Logger LOGGER = System.getLogger(ArkClientAutoRegistrar.class.getName());
+    private static final System.Logger LOGGER = System.getLogger(ArkClientBeanRegistrar.class.getName());
     private Environment environment;
 
     @Override
@@ -29,14 +27,7 @@ public class ArkClientAutoRegistrar implements ImportBeanDefinitionRegistrar, En
     @Override
     public void registerBeanDefinitions(AnnotationMetadata importingClassMetadata,
                                         BeanDefinitionRegistry registry) {
-        List<String> basePackages;
-        try {
-            basePackages = AutoConfigurationPackages.get(
-                    (org.springframework.beans.factory.BeanFactory) registry);
-        } catch (IllegalStateException e) {
-            return;
-        }
-
+        String[] basePackages = resolveBasePackages(importingClassMetadata);
         var scanner = ArkClientScanner.createScanner(environment);
 
         for (String basePackage : basePackages) {
@@ -55,5 +46,18 @@ public class ArkClientAutoRegistrar implements ImportBeanDefinitionRegistrar, En
                 }
             }
         }
+    }
+
+    private String[] resolveBasePackages(AnnotationMetadata metadata) {
+        Map<String, Object> attrs = metadata.getAnnotationAttributes(EnableArkClients.class.getName());
+        if (attrs != null) {
+            String[] packages = (String[]) attrs.get("basePackages");
+            if (packages != null && packages.length > 0 && !packages[0].isEmpty()) return packages;
+            packages = (String[]) attrs.get("value");
+            if (packages != null && packages.length > 0 && !packages[0].isEmpty()) return packages;
+        }
+        String className = metadata.getClassName();
+        int lastDot = className.lastIndexOf('.');
+        return new String[]{lastDot > 0 ? className.substring(0, lastDot) : ""};
     }
 }

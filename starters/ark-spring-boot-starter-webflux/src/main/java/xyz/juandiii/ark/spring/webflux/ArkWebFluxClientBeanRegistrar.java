@@ -1,4 +1,4 @@
-package xyz.juandiii.spring;
+package xyz.juandiii.ark.spring.webflux;
 
 import org.springframework.beans.factory.support.BeanDefinitionRegistry;
 import org.springframework.context.EnvironmentAware;
@@ -10,13 +10,13 @@ import xyz.juandiii.ark.core.proxy.RegisterArkClient;
 import java.util.Map;
 
 /**
- * Scans for @RegisterArkClient interfaces in packages specified by @EnableArkClients.
+ * Scans for @RegisterArkClient interfaces in packages specified by @EnableArkWebFluxClients.
  *
  * @author Juan Diego Lopez V.
  */
-public class ArkClientBeanRegistrar implements ImportBeanDefinitionRegistrar, EnvironmentAware {
+public class ArkWebFluxClientBeanRegistrar implements ImportBeanDefinitionRegistrar, EnvironmentAware {
 
-    private static final System.Logger LOGGER = System.getLogger(ArkClientBeanRegistrar.class.getName());
+    private static final System.Logger LOGGER = System.getLogger(ArkWebFluxClientBeanRegistrar.class.getName());
     private Environment environment;
 
     @Override
@@ -28,7 +28,7 @@ public class ArkClientBeanRegistrar implements ImportBeanDefinitionRegistrar, En
     public void registerBeanDefinitions(AnnotationMetadata importingClassMetadata,
                                         BeanDefinitionRegistry registry) {
         String[] basePackages = resolveBasePackages(importingClassMetadata);
-        var scanner = ArkClientScanner.createScanner(environment);
+        var scanner = ArkWebFluxClientScanner.createScanner(environment);
 
         for (String basePackage : basePackages) {
             for (var bd : scanner.findCandidateComponents(basePackage)) {
@@ -37,8 +37,8 @@ public class ArkClientBeanRegistrar implements ImportBeanDefinitionRegistrar, En
                     var annotation = iface.getAnnotation(RegisterArkClient.class);
                     if (annotation == null) continue;
 
-                    if (!registry.containsBeanDefinition(ArkClientScanner.beanName(iface))) {
-                        ArkClientScanner.registerProxyBean(registry, iface);
+                    if (!registry.containsBeanDefinition(ArkWebFluxClientScanner.beanName(iface))) {
+                        ArkWebFluxClientScanner.registerProxyBean(registry, iface);
                     }
                 } catch (ClassNotFoundException e) {
                     LOGGER.log(System.Logger.Level.WARNING,
@@ -49,7 +49,7 @@ public class ArkClientBeanRegistrar implements ImportBeanDefinitionRegistrar, En
     }
 
     private String[] resolveBasePackages(AnnotationMetadata metadata) {
-        Map<String, Object> attrs = metadata.getAnnotationAttributes(EnableArkClients.class.getName());
+        Map<String, Object> attrs = metadata.getAnnotationAttributes(EnableArkWebFluxClients.class.getName());
         if (attrs != null) {
             String[] packages = (String[]) attrs.get("basePackages");
             if (packages != null && packages.length > 0 && !packages[0].isEmpty()) return packages;

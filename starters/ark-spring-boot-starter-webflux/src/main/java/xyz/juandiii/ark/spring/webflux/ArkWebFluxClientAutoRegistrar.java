@@ -1,22 +1,23 @@
-package xyz.juandiii.spring.webflux;
+package xyz.juandiii.ark.spring.webflux;
 
 import org.springframework.beans.factory.support.BeanDefinitionRegistry;
+import org.springframework.boot.autoconfigure.AutoConfigurationPackages;
 import org.springframework.context.EnvironmentAware;
 import org.springframework.context.annotation.ImportBeanDefinitionRegistrar;
 import org.springframework.core.env.Environment;
 import org.springframework.core.type.AnnotationMetadata;
 import xyz.juandiii.ark.core.proxy.RegisterArkClient;
 
-import java.util.Map;
+import java.util.List;
 
 /**
- * Scans for @RegisterArkClient interfaces in packages specified by @EnableArkWebFluxClients.
+ * Auto-discovers @RegisterArkClient interfaces for reactive proxy creation.
  *
  * @author Juan Diego Lopez V.
  */
-public class ArkWebFluxClientBeanRegistrar implements ImportBeanDefinitionRegistrar, EnvironmentAware {
+public class ArkWebFluxClientAutoRegistrar implements ImportBeanDefinitionRegistrar, EnvironmentAware {
 
-    private static final System.Logger LOGGER = System.getLogger(ArkWebFluxClientBeanRegistrar.class.getName());
+    private static final System.Logger LOGGER = System.getLogger(ArkWebFluxClientAutoRegistrar.class.getName());
     private Environment environment;
 
     @Override
@@ -27,7 +28,14 @@ public class ArkWebFluxClientBeanRegistrar implements ImportBeanDefinitionRegist
     @Override
     public void registerBeanDefinitions(AnnotationMetadata importingClassMetadata,
                                         BeanDefinitionRegistry registry) {
-        String[] basePackages = resolveBasePackages(importingClassMetadata);
+        List<String> basePackages;
+        try {
+            basePackages = AutoConfigurationPackages.get(
+                    (org.springframework.beans.factory.BeanFactory) registry);
+        } catch (IllegalStateException e) {
+            return;
+        }
+
         var scanner = ArkWebFluxClientScanner.createScanner(environment);
 
         for (String basePackage : basePackages) {
@@ -46,18 +54,5 @@ public class ArkWebFluxClientBeanRegistrar implements ImportBeanDefinitionRegist
                 }
             }
         }
-    }
-
-    private String[] resolveBasePackages(AnnotationMetadata metadata) {
-        Map<String, Object> attrs = metadata.getAnnotationAttributes(EnableArkWebFluxClients.class.getName());
-        if (attrs != null) {
-            String[] packages = (String[]) attrs.get("basePackages");
-            if (packages != null && packages.length > 0 && !packages[0].isEmpty()) return packages;
-            packages = (String[]) attrs.get("value");
-            if (packages != null && packages.length > 0 && !packages[0].isEmpty()) return packages;
-        }
-        String className = metadata.getClassName();
-        int lastDot = className.lastIndexOf('.');
-        return new String[]{lastDot > 0 ? className.substring(0, lastDot) : ""};
     }
 }
