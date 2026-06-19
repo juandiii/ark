@@ -288,6 +288,24 @@ public class UserService {
 }
 ```
 
+### IDE autowiring hint
+
+If your IDE (IntelliJ IDEA, in particular) reports `Could not autowire. No beans of 'UserApi' type found.` on the injection point, the bean **does** exist at runtime — Ark registers it dynamically via `ArkClientFactoryBean`, but static analysis can't see it. Add `@Component` on the interface to make the IDE recognize it:
+
+```java
+@RegisterArkClient(configKey = "user-api")
+@Component                  // ← satisfies IDE inspection; no runtime impact
+@HttpExchange("/users")
+public interface UserApi {
+    @GetExchange("/{id}")
+    User getUser(@PathVariable String id);
+}
+```
+
+Spring's default component scan skips interfaces, so there is **no double registration** — Ark's scanner is the only place the bean is registered. `@Component` is purely a hint for tooling.
+
+Alternative: configure IntelliJ to recognize `@RegisterArkClient` as a bean producer (`Settings → Editor → Inspections → Spring → Spring Core → Bean Autowiring Inspection`) — one-time setup per project, no annotation changes needed.
+
 See [Declarative Spring Clients](declarative-spring.md) for full details.
 
 ---
