@@ -32,8 +32,8 @@ Or use the Spring Boot starter:
 
 ### Transport
 
-- **Interface:** `HttpTransport` - returns `RawResponse`
-- **Implementation:** `ArkJdkHttpTransport` - backed by Java's `HttpClient`
+- **Interface:** `HttpTransport extends Transport<RawResponse>` - returns `RawResponse` directly
+- **Implementation:** `ArkJdkSyncTransport` - backed by Java's `HttpClient` (sync mode)
 
 ---
 
@@ -44,7 +44,7 @@ Or use the Spring Boot starter:
 ```java
 Ark client = ArkClient.builder()
     .serializer(new JacksonSerializer(new ObjectMapper()))
-    .transport(new ArkJdkHttpTransport(HttpClient.newBuilder().build()))
+    .transport(new ArkJdkSyncTransport(HttpClient.newBuilder().build()))
     .baseUrl("https://api.example.com")
     .build();
 ```

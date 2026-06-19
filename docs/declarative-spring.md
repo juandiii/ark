@@ -89,12 +89,14 @@ public class UserController {
 api.users.url=https://api.example.com
 ```
 
+> **IDE hint**: if IntelliJ shows `Could not autowire. No beans of 'UserApi' type found.`, runtime still works — Ark registers the bean via `ArkClientFactoryBean` and static analysis misses it. Add `@org.springframework.stereotype.Component` alongside `@RegisterArkClient` on the interface to silence the warning. Spring's component scan skips interfaces by default, so no double-registration. See [spring-boot.md → IDE autowiring hint](spring-boot.md#ide-autowiring-hint).
+
 ### Manual
 
 ```java
 Ark ark = ArkClient.builder()
     .serializer(new JacksonSerializer(new ObjectMapper()))
-    .transport(new ArkJdkHttpTransport(HttpClient.newBuilder().build()))
+    .transport(new ArkJdkSyncTransport(HttpClient.newBuilder().build()))
     .baseUrl("https://api.example.com")
     .build();
 

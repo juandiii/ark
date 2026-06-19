@@ -1,0 +1,163 @@
+package xyz.juandiii.ark.core.interceptor;
+
+import xyz.juandiii.ark.core.AbstractArkBuilder;
+import xyz.juandiii.ark.core.http.RawResponse;
+
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Set;
+import java.util.StringJoiner;
+import java.util.regex.Pattern;
+
+/**
+ * Provides paired request/response logging interceptors with timing.
+ * Use {@link #apply(AbstractArkBuilder, Level)} to add logging to a builder.
+ *
+ * @author Juan Diego Lopez V.
+ */
+public final class LoggingInterceptor {
+
+    private static final System.Logger LOGGER = System.getLogger("xyz.juandiii.ark");
+
+    private static final Set<String> SENSITIVE_HEADERS = Set.of(
+            "authorization",
+            "proxy-authorization",
+            "cookie",
+            "set-cookie",
+            "x-api-key",
+            "x-auth-token",
+            "x-access-token",
+            "x-csrf-token",
+            "x-xsrf-token"
+    );
+
+    private static final Pattern JSON_SECRET = Pattern.compile(
+            "(\"(?:password|passwd|pwd|secret|api_?key|access_?token|refresh_?token|client_?secret|authorization|private_?key)\"\\s*:\\s*)\"[^\"]*\"",
+            Pattern.CASE_INSENSITIVE);
+
+    private static final Pattern FORM_SECRET = Pattern.compile(
+            "(^|[?&;])((?:password|passwd|pwd|secret|api_?key|access_?token|refresh_?token|client_?secret|authorization|private_?key)=)[^&;]*",
+            Pattern.CASE_INSENSITIVE);
+
+    private LoggingInterceptor() {}
+
+    private static String redact(String name, String value) {
+        if (name == null || value == null) return value;
+        return SENSITIVE_HEADERS.contains(name.toLowerCase(Locale.ROOT))
+                ? "[REDACTED]"
+                : value;
+    }
+
+    private static String redactBody(String body) {
+        if (body == null || body.isEmpty()) return body;
+        String afterJson = JSON_SECRET.matcher(body).replaceAll("$1\"[REDACTED]\"");
+        return FORM_SECRET.matcher(afterJson).replaceAll("$1$2[REDACTED]");
+    }
+
+    public enum Level {
+        NONE,
+        BASIC,
+        HEADERS,
+        BODY
+    }
+
+    /**
+     * Parses a logging level from a string. Returns NONE if null or invalid.
+     */
+    public static Level parseLevel(String value) {
+        if (value == null) return Level.NONE;
+        try {
+            return Level.valueOf(value.toUpperCase());
+        } catch (IllegalArgumentException e) {
+            return Level.NONE;
+        }
+    }
+
+    /**
+     * Applies paired request/response logging to the builder with correct timing.
+     */
+    private static final ThreadLocal<Long> REQUEST_START = new ThreadLocal<>();
+
+    public static <B extends AbstractArkBuilder<B>> void apply(B builder, Level level) {
+        if (level == Level.NONE) return;
+        builder.requestInterceptor(context -> {
+            REQUEST_START.set(System.currentTimeMillis());
+            logRequest(context, level);
+        });
+        builder.responseInterceptor(raw -> {
+            Long start = REQUEST_START.get();
+            long duration = start != null ? System.currentTimeMillis() - start : -1;
+            REQUEST_START.remove();
+            logResponse(raw, level, duration);
+            return raw;
+        });
+    }
+
+    private static void logRequest(RequestContext context, Level level) {
+        StringBuilder sb = new StringBuilder();
+        sb.append("--> ").append(context.method()).append(" ").append(buildFullUrl(context));
+
+        if (level.ordinal() >= Level.HEADERS.ordinal()) {
+            Map<String, String> headers = context.headers();
+            if (headers != null && !headers.isEmpty()) {
+                headers.forEach((key, value) ->
+                        sb.append("\n    ").append(key).append(": ").append(redact(key, value)));
+            }
+        }
+
+        if (level == Level.BODY && context.body() != null) {
+            sb.append("\n    ").append(redactBody(String.valueOf(context.body())));
+        }
+
+        LOGGER.log(System.Logger.Level.DEBUG, sb.toString());
+    }
+
+    private static void logResponse(RawResponse raw, Level level, long durationMs) {
+        StringBuilder sb = new StringBuilder();
+        sb.append("<-- ").append(raw.statusCode());
+        if (durationMs >= 0) {
+            sb.append(" (").append(durationMs).append("ms)");
+        }
+
+        if (level.ordinal() >= Level.HEADERS.ordinal()) {
+            Map<String, List<String>> headers = raw.headers();
+            if (headers != null && !headers.isEmpty()) {
+                headers.forEach((key, values) -> {
+                    StringJoiner joined = new StringJoiner(", ");
+                    values.forEach(v -> joined.add(redact(key, v)));
+                    sb.append("\n    ").append(key).append(": ").append(joined);
+                });
+            }
+        }
+
+        if (level == Level.BODY && raw.body() != null) {
+            String body = redactBody(raw.body());
+            if (body.length() > 1024) {
+                sb.append("\n    ").append(body, 0, 1024).append("... (truncated)");
+            } else {
+                sb.append("\n    ").append(body);
+            }
+        }
+
+        System.Logger.Level logLevel = raw.isError()
+                ? System.Logger.Level.WARNING
+                : System.Logger.Level.DEBUG;
+        LOGGER.log(logLevel, sb.toString());
+    }
+
+    private static String buildFullUrl(RequestContext context) {
+        String url = context.path();
+        Map<String, String> params = context.queryParams();
+        if (params != null && !params.isEmpty()) {
+            StringJoiner joiner = new StringJoiner("&");
+            params.forEach((k, v) -> joiner.add(
+                    URLEncoder.encode(k, StandardCharsets.UTF_8) + "="
+                            + URLEncoder.encode(v, StandardCharsets.UTF_8)));
+            url += "?" + joiner;
+        }
+        return url;
+    }
+}

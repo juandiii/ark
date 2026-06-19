@@ -100,18 +100,33 @@ Logger name: `xyz.juandiii.ark.retry`
 
 ## Programmatic Usage
 
-For standalone use without Spring/Quarkus:
+For standalone use without Spring/Quarkus. Compose retry via the
+`transport.with(Retry.of(policy, ops))` decorator chain. The `RetryOps<R>`
+strategy is per execution model:
+
+| Module | Class | Strategy `RetryOps<R>` |
+|---|---|---|
+| `ark-core` | `Retry<RawResponse>` (sync) | `SyncRetryOps` |
+| `ark-async` | `Retry<CompletableFuture<RawResponse>>` | `AsyncRetryOps` |
+| `ark-reactor` | `Retry<Mono<RawResponse>>` | `ReactorRetryOps` |
+| `ark-mutiny` | `Retry<Uni<RawResponse>>` | `MutinyRetryOps` |
+| `ark-vertx` | `Retry<Future<RawResponse>>` | `VertxRetryOps` |
+
+### Sync
 
 ```java
-HttpTransport transport = new RetryTransport(
-    new ArkJdkHttpTransport(HttpClient.newBuilder().build()),
-    RetryPolicy.builder()
-        .maxAttempts(3)
-        .delay(Duration.ofMillis(500))
-        .multiplier(2.0)
-        .retryOn(Set.of(429, 503))
-        .build()
-);
+import xyz.juandiii.ark.core.http.decorator.Retry;
+import xyz.juandiii.ark.core.http.decorator.SyncRetryOps;
+
+RetryPolicy policy = RetryPolicy.builder()
+    .maxAttempts(3)
+    .delay(Duration.ofMillis(500))
+    .multiplier(2.0)
+    .retryOn(Set.of(429, 503))
+    .build();
+
+Transport<RawResponse> transport = new ArkJdkSyncTransport(HttpClient.newBuilder().build())
+    .with(Retry.of(policy, new SyncRetryOps()));
 
 Ark client = ArkClient.builder()
     .serializer(serializer)
@@ -123,17 +138,54 @@ Ark client = ArkClient.builder()
 ### Async
 
 ```java
-AsyncHttpTransport transport = new RetryAsyncTransport(
-    new ArkJdkHttpTransport(HttpClient.newBuilder().build()),
-    RetryPolicy.defaults()
-);
+import xyz.juandiii.ark.async.http.decorator.AsyncRetryOps;
+import xyz.juandiii.ark.core.http.decorator.Retry;
+
+Transport<CompletableFuture<RawResponse>> transport =
+    new ArkJdkAsyncTransport(HttpClient.newBuilder().build())
+        .with(Retry.of(RetryPolicy.defaults(), new AsyncRetryOps()));
+
+AsyncArk client = AsyncArkClient.builder()
+    .serializer(serializer)
+    .transport(transport)
+    .baseUrl("https://api.example.com")
+    .build();
 ```
+
+### Decorator order
+
+`with(...)` returns a new wrapping `Transport<R>`. Chains compose
+**outside-in** — the last `.with(...)` is the outermost.
+
+```java
+transport
+    .with(Retry.of(policy, new SyncRetryOps()))   // wrap 1
+    .with(MyMetrics.of(registry));                 // wrap 2 — outermost
+```
+
+For sync, this means `MyMetrics.send()` runs first, calls into
+`Retry.send()`, which calls into the underlying transport. Metrics that
+need to measure total wall-clock (including backoff sleeps) go
+**outside** retry; metrics that need per-attempt latency go **inside**.
 
 ---
 
-## Reactive (Reactor / Mutiny)
+## Reactive (Reactor / Mutiny / Vert.x)
 
-Retry is **not applied** for reactive transports - use the built-in retry operators instead:
+Both options work:
+
+1. **Ark's `Retry<R>` decorator** — uniform RetryPolicy + status filter across all execution models. Use `ReactorRetryOps`, `MutinyRetryOps`, or `VertxRetryOps` as the strategy.
+2. **Native operators** of the ecosystem (`Mono.retryWhen`, `Uni.onFailure().retry()`) — fully supported, you can mix.
+
+**Reactor (Ark's decorator):**
+```java
+import xyz.juandiii.ark.reactor.http.decorator.ReactorRetryOps;
+
+Transport<Mono<RawResponse>> transport = new ArkReactorNettyTransport(httpClient)
+    .with(Retry.of(policy, new ReactorRetryOps()));
+```
+
+**Reactor (native operator alternative):**
 
 **Reactor:**
 ```java

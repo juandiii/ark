@@ -23,7 +23,7 @@ Ark provides a Quarkus extension that auto-configures HTTP clients as CDI beans.
 
 This auto-configures:
 - `JsonSerializer` - using Quarkus-managed `ObjectMapper`
-- `HttpTransport` - `ArkJdkHttpTransport` (sync)
+- `HttpTransport` - `ArkJdkSyncTransport` (sync). The Quarkus `ArkRecorder` constructs `ArkJdkAsyncTransport` per-interface when `@RegisterArkClient` methods return `CompletableFuture<T>`.
 - `MutinyHttpTransport` - `ArkVertxMutinyTransport` (reactive)
 - `ArkClient.Builder` - sync, `@Dependent` scope
 - `MutinyArkClient.Builder` - reactive, `@Dependent` scope

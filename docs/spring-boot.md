@@ -25,7 +25,8 @@ Both starters support `@RegisterArkClient` declarative clients, per-client confi
 ### What It Provides
 
 - `JsonSerializer` - `JacksonSerializer` using Spring's `ObjectMapper`
-- `HttpTransport` - `ArkJdkHttpTransport` with default `HttpClient`
+- `HttpTransport` - `ArkJdkSyncTransport` with default `HttpClient` (HTTP/2)
+- `ArkJdkAsyncTransport` - default async transport (for `AsyncArkClient` and `@RegisterArkClient` interfaces returning `CompletableFuture<T>`)
 - `ArkClient.Builder` - prototype-scoped, pre-configured with serializer + transport
 
 All beans use `@ConditionalOnMissingBean` - define your own to override.
@@ -79,7 +80,7 @@ Override the default JDK transport:
 ```java
 @Bean
 public HttpTransport httpTransport() {
-    return new ArkJdkHttpTransport(HttpClient.newBuilder()
+    return new ArkJdkSyncTransport(HttpClient.newBuilder()
         .version(HttpClient.Version.HTTP_2)
         .connectTimeout(Duration.ofSeconds(10))
         .build());
@@ -192,6 +193,8 @@ ark.client.user-api.tls-configuration-name=my-cert
 spring.ssl.bundle.pem.my-cert.truststore.certificate=classpath:certs/ca.crt
 ```
 
+> ⚠️ `trust-all: true` disables certificate validation. Use only in local development. See [Security & TLS in README](../README.md#tls).
+
 Same configuration structure as the sync starter. See [Declarative Spring Clients](declarative-spring.md) for full annotation details.
 
 > **Note:** Retry is not configured via properties for reactive clients - use Reactor's built-in `.retryWhen()` instead. See [Retry & Backoff](retry.md#reactive-reactor--mutiny).
@@ -229,6 +232,8 @@ ark.client.user-api.headers.X-Api-Key=${API_KEY}
 ark.client.user-api.retry.max-attempts=3
 ark.client.user-api.retry.delay=500
 ```
+
+> ⚠️ `trust-all: true` disables certificate validation. Use only in local development. See [Security & TLS in README](../README.md#tls).
 
 See [Retry & Backoff](retry.md) for full retry configuration.
 
@@ -283,6 +288,24 @@ public class UserService {
     }
 }
 ```
+
+### IDE autowiring hint
+
+If your IDE (IntelliJ IDEA, in particular) reports `Could not autowire. No beans of 'UserApi' type found.` on the injection point, the bean **does** exist at runtime — Ark registers it dynamically via `ArkClientFactoryBean`, but static analysis can't see it. Add `@Component` on the interface to make the IDE recognize it:
+
+```java
+@RegisterArkClient(configKey = "user-api")
+@Component                  // ← satisfies IDE inspection; no runtime impact
+@HttpExchange("/users")
+public interface UserApi {
+    @GetExchange("/{id}")
+    User getUser(@PathVariable String id);
+}
+```
+
+Spring's default component scan skips interfaces, so there is **no double registration** — Ark's scanner is the only place the bean is registered. `@Component` is purely a hint for tooling.
+
+Alternative: configure IntelliJ to recognize `@RegisterArkClient` as a bean producer (`Settings → Editor → Inspections → Spring → Spring Core → Bean Autowiring Inspection`) — one-time setup per project, no annotation changes needed.
 
 See [Declarative Spring Clients](declarative-spring.md) for full details.
 

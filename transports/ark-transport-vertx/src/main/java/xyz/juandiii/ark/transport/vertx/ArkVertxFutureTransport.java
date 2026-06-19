@@ -1,0 +1,67 @@
+package xyz.juandiii.ark.transport.vertx;
+
+import io.vertx.core.Future;
+import io.vertx.core.buffer.Buffer;
+import io.vertx.core.http.HttpMethod;
+import io.vertx.ext.web.client.HttpResponse;
+import io.vertx.ext.web.client.WebClient;
+import xyz.juandiii.ark.core.exceptions.ArkException;
+import xyz.juandiii.ark.core.http.HeaderUtils;
+import xyz.juandiii.ark.core.http.RawResponse;
+import xyz.juandiii.ark.vertx.http.VertxHttpTransport;
+
+import java.net.URI;
+import java.time.Duration;
+import java.util.Map;
+import java.util.Objects;
+
+/**
+ * HTTP transport bridge using Vert.x WebClient with Future.
+ *
+ * @author Juan Diego Lopez V.
+ */
+public final class ArkVertxFutureTransport implements VertxHttpTransport {
+
+    private final WebClient webClient;
+
+    public ArkVertxFutureTransport(WebClient webClient) {
+        Objects.requireNonNull(webClient, "WebClient is required");
+        this.webClient = webClient;
+    }
+
+    @Override
+    public Future<RawResponse> send(String method, URI uri, Map<String, String> headers,
+                                    String body, Duration timeout) {
+        return execute(method, uri, headers, body != null ? Buffer.buffer(body) : null, timeout);
+    }
+
+    @Override
+    public Future<RawResponse> sendBinary(String method, URI uri, Map<String, String> headers,
+                                           byte[] body, Duration timeout) {
+        return execute(method, uri, headers, body != null ? Buffer.buffer(body) : null, timeout);
+    }
+
+    private Future<RawResponse> execute(String method, URI uri, Map<String, String> headers,
+                                         Buffer buffer, Duration timeout) {
+        var request = webClient.requestAbs(HttpMethod.valueOf(method), uri.toString());
+        headers.forEach(request::putHeader);
+
+        if (timeout != null) {
+            request.timeout(timeout.toMillis());
+        }
+
+        Future<HttpResponse<Buffer>> response = buffer != null
+                ? request.sendBuffer(buffer)
+                : request.send();
+
+        return response
+                .map(this::toRawResponse)
+                .otherwise(e -> {
+                    throw ArkException.fromThrowable(method, uri, e);
+                });
+    }
+
+    private RawResponse toRawResponse(HttpResponse<Buffer> r) {
+        return new RawResponse(r.statusCode(), HeaderUtils.toHeaderMap(r.headers()), r.bodyAsString());
+    }
+}

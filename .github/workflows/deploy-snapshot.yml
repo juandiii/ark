@@ -32,12 +32,6 @@ jobs:
           java-version: 25
           cache: maven
 
-      - name: Import GPG key
-        run: |
-          echo "${{ secrets.GPG_PRIVATE_KEY }}" | gpg --batch --import
-        env:
-          GPG_PRIVATE_KEY: ${{ secrets.GPG_PRIVATE_KEY }}
-
       - name: Deploy SNAPSHOT to Nexus
         run: ./mvnw clean deploy -Psnapshot-nexus -DskipTests
         env:

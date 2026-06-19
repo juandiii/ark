@@ -22,7 +22,7 @@ The extension registers the following CDI beans:
 | Bean | Scope | Description |
 |------|-------|-------------|
 | `JsonSerializer` | `@Singleton` | `JacksonClassicSerializer` using Quarkus-managed `ObjectMapper` |
-| `HttpTransport` | `@Singleton` | `ArkJdkHttpTransport` with default `HttpClient` |
+| `HttpTransport` | `@Singleton` | `ArkJdkSyncTransport` with default `HttpClient` |
 | `MutinyHttpTransport` | `@Singleton` | `ArkVertxMutinyTransport` with Quarkus-managed `Vertx` |
 | `ArkClient.Builder` | `@Dependent` | Pre-configured sync builder |
 | `MutinyArkClient.Builder` | `@Dependent` | Pre-configured Mutiny builder |
@@ -119,7 +119,7 @@ The default transport uses Java's `HttpClient`. You can override it or use a dif
 @Produces
 @Singleton
 public HttpTransport jdkTransport() {
-    return new ArkJdkHttpTransport(HttpClient.newBuilder()
+    return new ArkJdkSyncTransport(HttpClient.newBuilder()
         .version(HttpClient.Version.HTTP_2)
         .connectTimeout(Duration.ofSeconds(10))
         .build());
@@ -175,6 +175,8 @@ ark.client."user-api".headers.X-Api-Key=${API_KEY}
 ark.client."user-api".retry.max-attempts=3
 ark.client."user-api".retry.delay=500
 ```
+
+> ⚠️ `trust-all=true` disables certificate validation. Use only in local development. See [Security & TLS in README](../README.md#tls).
 
 See [Retry & Backoff](retry.md) for full retry configuration.
 

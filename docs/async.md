@@ -24,14 +24,14 @@ The `AsyncArk` client returns `CompletableFuture<T>` - non-blocking execution us
 ```java
 AsyncArk client = AsyncArkClient.builder()
     .serializer(new JacksonSerializer(new ObjectMapper()))
-    .transport(new ArkJdkHttpTransport(HttpClient.newBuilder().build()))
+    .transport(new ArkJdkAsyncTransport(HttpClient.newBuilder().build()))
     .baseUrl("https://api.example.com")
     .build();
 ```
 
 ## Transport
 
-`ArkJdkHttpTransport` supports both sync and async execution by implementing both `HttpTransport` and `AsyncHttpTransport`.
+`ArkJdkAsyncTransport` implements `Transport<CompletableFuture<RawResponse>>`. It is a sibling of `ArkJdkSyncTransport`: both can wrap the same underlying Java `HttpClient` if you want to share the connection pool between sync and async modes.
 
 ```java
 HttpClient httpClient = HttpClient.newBuilder()
@@ -41,7 +41,8 @@ HttpClient httpClient = HttpClient.newBuilder()
     .executor(Executors.newVirtualThreadPerTaskExecutor())
     .build();
 
-ArkJdkHttpTransport transport = new ArkJdkHttpTransport(httpClient);
+ArkJdkAsyncTransport asyncTransport = new ArkJdkAsyncTransport(httpClient);
+// ArkJdkSyncTransport syncTransport = new ArkJdkSyncTransport(httpClient);  // shares pool
 ```
 
 ---

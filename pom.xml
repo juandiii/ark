@@ -91,25 +91,25 @@
     </dependency>
   </dependencies>
   <modules>
-    <module>ark-bom</module>
-    <module>ark-core</module>
-    <module>ark-async</module>
-    <module>ark-jackson</module>
-    <module>ark-jackson-classic</module>
-    <module>ark-jsonb</module>
-    <module>ark-reactor</module>
-    <module>ark-transport-jdk</module>
-    <module>ark-transport-reactor</module>
-    <module>ark-vertx</module>
-    <module>ark-mutiny</module>
-    <module>ark-transport-vertx</module>
-    <module>ark-transport-apache</module>
-    <module>ark-transport-vertx-mutiny</module>
-    <module>ark-proxy-spring</module>
-    <module>ark-proxy-jaxrs</module>
-    <module>ark-spring-boot-starter</module>
-    <module>ark-spring-boot-starter-webflux</module>
-    <module>ark-quarkus-jackson</module>
+    <module>core/ark-bom</module>
+    <module>core/ark-core</module>
+    <module>execution-models/ark-async</module>
+    <module>execution-models/ark-reactor</module>
+    <module>execution-models/ark-mutiny</module>
+    <module>execution-models/ark-vertx</module>
+    <module>transports/ark-transport-jdk</module>
+    <module>transports/ark-transport-apache</module>
+    <module>transports/ark-transport-reactor</module>
+    <module>transports/ark-transport-vertx</module>
+    <module>transports/ark-transport-vertx-mutiny</module>
+    <module>serializers/ark-jackson</module>
+    <module>serializers/ark-jackson-classic</module>
+    <module>serializers/ark-jsonb</module>
+    <module>proxies/ark-proxy-spring</module>
+    <module>proxies/ark-proxy-jaxrs</module>
+    <module>starters/ark-spring-boot-starter</module>
+    <module>starters/ark-spring-boot-starter-webflux</module>
+    <module>extensions/ark-quarkus-jackson</module>
   </modules>
   <profiles>
     <profile>

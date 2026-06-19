@@ -1,0 +1,46 @@
+<?xml version="1.0"?>
+<project xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd" xmlns="http://maven.apache.org/POM/4.0.0"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <modelVersion>4.0.0</modelVersion>
+  <parent>
+    <groupId>xyz.juandiii</groupId>
+    <artifactId>ark</artifactId>
+    <version>1.0.7-SNAPSHOT</version>
+    <relativePath>../../pom.xml</relativePath>
+  </parent>
+  <artifactId>ark-core</artifactId>
+  <name>ark-core</name>
+  <description>Core module with fluent API, abstractions, and zero external dependencies</description>
+  <url>https://github.com/juandiii/ark</url>
+
+  <licenses>
+    <license>
+      <name>Apache License, Version 2.0</name>
+      <url>https://www.apache.org/licenses/LICENSE-2.0.txt</url>
+      <distribution>repo</distribution>
+    </license>
+  </licenses>
+
+  <developers>
+    <developer>
+      <name>Juan Diego</name>
+      <url>https://github.com/juandiii</url>
+    </developer>
+  </developers>
+
+  <scm>
+    <connection>scm:git:git://github.com/juandiii/ark.git</connection>
+    <developerConnection>scm:git:ssh://github.com:juandiii/ark.git</developerConnection>
+    <url>https://github.com/juandiii/ark</url>
+  </scm>
+  <build>
+    <resources>
+      <resource>
+        <directory>src/main/resources</directory>
+        <filtering>true</filtering>
+      </resource>
+    </resources>
+  </build>
+  <dependencies>
+  </dependencies>
+</project>

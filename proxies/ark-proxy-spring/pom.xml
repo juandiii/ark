@@ -1,0 +1,57 @@
+<?xml version="1.0"?>
+<project xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd" xmlns="http://maven.apache.org/POM/4.0.0"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <modelVersion>4.0.0</modelVersion>
+  <parent>
+    <groupId>xyz.juandiii</groupId>
+    <artifactId>ark</artifactId>
+    <version>1.0.7-SNAPSHOT</version>
+    <relativePath>../../pom.xml</relativePath>
+  </parent>
+  <artifactId>ark-proxy-spring</artifactId>
+  <name>ark-proxy-spring</name>
+  <description>Declarative proxy for Spring HttpExchange annotations</description>
+  <url>https://github.com/juandiii/ark</url>
+
+  <licenses>
+    <license>
+      <name>Apache License, Version 2.0</name>
+      <url>https://www.apache.org/licenses/LICENSE-2.0.txt</url>
+      <distribution>repo</distribution>
+    </license>
+  </licenses>
+
+  <developers>
+    <developer>
+      <name>Juan Diego</name>
+      <url>https://github.com/juandiii</url>
+    </developer>
+  </developers>
+
+  <scm>
+    <connection>scm:git:git://github.com/juandiii/ark.git</connection>
+    <developerConnection>scm:git:ssh://github.com:juandiii/ark.git</developerConnection>
+    <url>https://github.com/juandiii/ark</url>
+  </scm>
+
+  <dependencies>
+    <dependency>
+      <groupId>xyz.juandiii</groupId>
+      <artifactId>ark-core</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+
+    <dependency>
+      <groupId>org.springframework</groupId>
+      <artifactId>spring-web</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>xyz.juandiii</groupId>
+      <artifactId>ark-reactor</artifactId>
+      <version>${project.version}</version>
+      <optional>true</optional>
+    </dependency>
+
+  </dependencies>
+</project>
