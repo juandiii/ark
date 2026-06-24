@@ -75,7 +75,8 @@ public class ArkRecorder {
 
     private record ResolvedConfig(String clientName, String baseUrl, HttpVersion httpVersion,
                                    int connectTimeout, int readTimeout, String tlsConfigName,
-                                   boolean trustAll, Map<String, String> headers,
+                                   boolean trustAll, boolean throwOnError,
+                                   Map<String, String> headers,
                                    Class<?>[] interceptorClasses,
                                    RetryPolicy retryPolicy,
                                    LoggingInterceptor.Level loggingLevel) {}
@@ -91,6 +92,7 @@ public class ArkRecorder {
                 config != null ? config.readTimeout() : annotation.readTimeout(),
                 config != null ? config.tlsConfigurationName().orElse(null) : null,
                 config != null && config.trustAll(),
+                config == null || config.throwOnError(),
                 config != null ? config.headers() : Map.of(),
                 annotation != null ? annotation.interceptors() : new Class<?>[0],
                 resolveRetryPolicy(config),
@@ -147,6 +149,7 @@ public class ArkRecorder {
         InterceptorResolver.applyInterceptors(builder, rc.interceptorClasses(),
                 clazz -> Arc.container().instance(clazz).get());
         LoggingInterceptor.apply(builder, rc.loggingLevel());
+        builder.throwOnError(rc.throwOnError());
     }
 
     private static String resolveBaseUrl(ArkClientNamedConfig config, RegisterArkClient annotation) {
