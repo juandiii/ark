@@ -160,6 +160,9 @@ public class ArkClientFactoryBean<T> implements FactoryBean<T>, BeanFactoryAware
         InterceptorResolver.applyHeaders(builder, config != null ? config.headers() : null);
         InterceptorResolver.applyInterceptors(builder, annotation.interceptors(), beanFactory::getBean);
         LoggingInterceptor.apply(builder, arkProperties.logging().level());
+        if (config != null) {
+            builder.throwOnError(config.throwOnError());
+        }
     }
 
     @Override
