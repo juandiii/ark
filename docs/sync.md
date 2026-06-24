@@ -210,6 +210,31 @@ ArkResponse<User> response = permissive.get("/users/1").retrieve().toEntity(User
 
 ---
 
+## Capturing the raw response
+
+When you need the raw response — status, headers, and body as a String —
+without going through deserialization (e.g. to inspect an error body that
+doesn't match your typed schema), use `.raw()`:
+
+```java
+RawResponse raw = client.get("/users/1")
+        .noThrow()
+        .retrieve()
+        .raw();
+
+if (raw.isError()) {
+    log.warn("Error {}: {}", raw.statusCode(), raw.body());
+} else {
+    User user = serializer.deserialize(raw.body(), User.class);
+}
+```
+
+`.raw()` returns a `RawResponse` directly (no deserialization). Use it
+together with `.noThrow()` (or client-level `throwOnError(false)`) to
+inspect bodies on 4xx/5xx without exceptions.
+
+---
+
 ## Related
 
 - [Error Handling](error-handling.md) - full exception hierarchy

@@ -197,6 +197,10 @@ The chain composes **outside-in** — the last `.with(...)` is the outermost wra
 - **Permissive error handling** — opt out of throw-on-4xx/5xx per request
   (`.noThrow()`) or at the client level (`throwOnError(false)`). Useful
   when 4xx is business semantics (e.g. 404 = not found, not an error).
+- **Raw response access** — `.raw()` on every `*ClientResponse`, or declare
+  `RawResponse` as a proxy method return type. Bypasses deserialization
+  and auto-disables throw-on-error — useful for inspecting error bodies
+  or non-JSON responses.
 - Per-request timeout support
 - HTTP/2 by default
 - Spring Boot (sync + async + WebFlux) and Quarkus integration

@@ -235,6 +235,30 @@ See [Declarative JAX-RS Clients](declarative-jaxrs.md) for full details.
 
 ---
 
+## RawResponse as a return type
+
+Proxy methods can declare `RawResponse` (or `Uni<RawResponse>`) as the
+return type. This bypasses deserialization and auto-disables
+throw-on-error for that method — useful for inspecting error bodies that
+don't match a typed schema or for non-JSON responses.
+
+```java
+@RegisterArkClient(configKey = "users-api")
+@Path("/users")
+public interface UserApi {
+    @GET @Path("/{id}")
+    Uni<User> getUser(@PathParam("id") String id);            // type-safe, fails Uni on 4xx/5xx
+
+    @GET @Path("/{id}")
+    Uni<RawResponse> getUserRaw(@PathParam("id") String id);  // raw, never fails the Uni
+}
+```
+
+The raw method auto-disables throw-on-error for its requests — no need to
+set `throw-on-error=false` at the client level just for this method.
+
+---
+
 ## Native Image
 
 Supports GraalVM native image out of the box. The extension auto-discovers `@RegisterArkClient` interfaces at build time and registers JDK proxy definitions.

@@ -145,6 +145,33 @@ AsyncArk permissive = AsyncArkClient.builder()
 
 ---
 
+## Capturing the raw response
+
+When you need the raw response — status, headers, and body as a String —
+without going through deserialization (e.g. to inspect an error body that
+doesn't match your typed schema), use `.raw()`:
+
+```java
+CompletableFuture<RawResponse> futureRaw = client.get("/users/1")
+        .noThrow()
+        .retrieve()
+        .raw();
+
+futureRaw.thenAccept(raw -> {
+    if (raw.isError()) {
+        log.warn("Error {}: {}", raw.statusCode(), raw.body());
+    } else {
+        User user = serializer.deserialize(raw.body(), User.class);
+    }
+});
+```
+
+`.raw()` returns a `CompletableFuture<RawResponse>` (no deserialization).
+Use it together with `.noThrow()` (or client-level `throwOnError(false)`)
+to inspect bodies on 4xx/5xx without the future failing.
+
+---
+
 ## Related
 
 - [Error Handling](error-handling.md)

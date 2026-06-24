@@ -203,6 +203,33 @@ MutinyArk permissive = MutinyArkClient.builder()
 
 ---
 
+## Capturing the raw response
+
+When you need the raw response — status, headers, and body as a String —
+without going through deserialization (e.g. to inspect an error body that
+doesn't match your typed schema), use `.raw()`:
+
+```java
+Uni<RawResponse> raw = client.get("/users/1")
+        .noThrow()
+        .retrieve()
+        .raw();
+
+raw.onItem().transformToUni(r -> {
+    if (r.isError()) {
+        log.warn("Error {}: {}", r.statusCode(), r.body());
+        return Uni.createFrom().nullItem();
+    }
+    return Uni.createFrom().item(serializer.deserialize(r.body(), User.class));
+});
+```
+
+`.raw()` returns a `Uni<RawResponse>` (no deserialization). Use it
+together with `.noThrow()` (or client-level `throwOnError(false)`) to
+inspect bodies on 4xx/5xx without the Uni failing.
+
+---
+
 ## Related
 
 - [Quarkus Jackson Extension](quarkus-jackson.md)
