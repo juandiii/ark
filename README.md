@@ -1,11 +1,20 @@
-# Ark 🛳
+<h1 align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="assets/logo/ark-logo-dark.svg">
+    <img src="assets/logo/ark-logo.svg" alt="Ark" width="320">
+  </picture>
+</h1>
 
-[![Maven Central](https://img.shields.io/maven-central/v/xyz.juandiii/ark-core?label=Maven%20Central)](https://central.sonatype.com/namespace/xyz.juandiii)
-[![CI](https://github.com/juandiii/ark/actions/workflows/ci.yml/badge.svg)](https://github.com/juandiii/ark/actions/workflows/ci.yml)
-[![Java 17+](https://img.shields.io/badge/Java-17%2B-orange.svg)](https://adoptium.net/)
-[![License: Apache 2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
+<p align="center">
+  <strong>A modular HTTP client toolkit for Java 17+ with fluent and declarative APIs, pluggable transports, composable decorators, and support for sync, async, and reactive applications.</strong>
+</p>
 
-**A modular HTTP client toolkit for Java 17+ with fluent and declarative APIs, pluggable transports, composable decorators, and support for sync, async, and reactive applications.**
+<p align="center">
+  <a href="https://central.sonatype.com/namespace/xyz.juandiii"><img src="https://img.shields.io/maven-central/v/xyz.juandiii/ark-core?label=Maven%20Central" alt="Maven Central"></a>
+  <a href="https://github.com/juandiii/ark/actions/workflows/ci.yml"><img src="https://github.com/juandiii/ark/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
+  <a href="https://adoptium.net/"><img src="https://img.shields.io/badge/Java-17%2B-orange.svg" alt="Java 17+"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/License-Apache_2.0-blue.svg" alt="License: Apache 2.0"></a>
+</p>
 
 ---
 
