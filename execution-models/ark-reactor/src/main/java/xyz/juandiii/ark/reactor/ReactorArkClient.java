@@ -23,15 +23,18 @@ public class ReactorArkClient extends AbstractArkClient<DefaultReactorClientRequ
     private ReactorArkClient(ReactorHttpTransport transport, JsonSerializer serializer,
                              String userAgent, String baseUrl,
                              List<RequestInterceptor> requestInterceptors,
-                             List<ResponseInterceptor> responseInterceptors) {
-        super(serializer, userAgent, baseUrl, requestInterceptors, responseInterceptors);
+                             List<ResponseInterceptor> responseInterceptors,
+                             boolean throwOnErrorDefault) {
+        super(serializer, userAgent, baseUrl, requestInterceptors, responseInterceptors,
+                throwOnErrorDefault);
         this.transport = transport;
     }
 
     @Override
     protected DefaultReactorClientRequest createRequest(String method, String path) {
-        return new DefaultReactorClientRequest(method, baseUrl, path, transport, serializer,
-                requestInterceptors, responseInterceptors)
+        DefaultReactorClientRequest req = new DefaultReactorClientRequest(method, baseUrl, path, transport, serializer,
+                requestInterceptors, responseInterceptors);
+        return req.throwOnError(throwOnErrorDefault)
                 .header("User-Agent", userAgent);
     }
 
@@ -57,7 +60,8 @@ public class ReactorArkClient extends AbstractArkClient<DefaultReactorClientRequ
             Objects.requireNonNull(transport, "transport must not be null");
             logConfiguration("ReactorArkClient (Mono/Flux)", transport.getClass().getSimpleName());
             return new ReactorArkClient(transport, serializer, buildUserAgent(),
-                    baseUrl, requestInterceptors, responseInterceptors);
+                    baseUrl, requestInterceptors, responseInterceptors,
+                    throwOnErrorDefault);
         }
     }
 }

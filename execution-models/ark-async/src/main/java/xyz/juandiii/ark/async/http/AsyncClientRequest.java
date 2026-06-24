@@ -23,5 +23,14 @@ public interface AsyncClientRequest extends RequestContext {
 
     AsyncClientRequest timeout(Duration timeout);
 
+    /**
+     * Opt out of throwing {@link xyz.juandiii.ark.core.exceptions.ApiException}
+     * on HTTP error status codes (4xx/5xx). When called, the response is
+     * returned to the caller unchanged regardless of status.
+     *
+     * @return this request for chaining
+     */
+    AsyncClientRequest noThrow();
+
     AsyncClientResponse retrieve();
 }
