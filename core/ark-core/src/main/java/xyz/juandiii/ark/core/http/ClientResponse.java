@@ -55,4 +55,14 @@ public interface ClientResponse {
      * @return response wrapper with a {@code Void} body
      */
     ArkResponse<Void> toBodilessEntity();
+
+    /**
+     * Returns the raw HTTP response — status code, headers, and body as a String —
+     * without deserialization. Useful with {@link ClientRequest#noThrow()} (or
+     * client-level {@code throwOnError(false)}) to inspect error bodies that
+     * don't match a typed schema.
+     *
+     * @return the raw response wrapper produced by the transport
+     */
+    RawResponse raw();
 }

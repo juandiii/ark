@@ -50,4 +50,9 @@ public final class DefaultAsyncClientResponse implements AsyncClientResponse {
         return future.thenApply(raw ->
                 new ArkResponse<>(raw.statusCode(), raw.headers(), null));
     }
+
+    @Override
+    public CompletableFuture<RawResponse> raw() {
+        return future;
+    }
 }
