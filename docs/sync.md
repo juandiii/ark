@@ -176,6 +176,40 @@ try {
 
 ---
 
+## Permissive error handling
+
+By default, Ark throws an `ApiException` subtype for any HTTP 4xx/5xx
+status. When 4xx is a meaningful business outcome (e.g. 404 = "not
+found", not an error), opt out and inspect the response yourself.
+
+Per-request opt-out via `.noThrow()`:
+
+```java
+ArkResponse<User> response = client.get("/users/1")
+        .noThrow()
+        .retrieve()
+        .toEntity(User.class);
+
+if (response.statusCode() == 404) return Optional.empty();
+if (response.isSuccessful()) return Optional.of(response.body());
+```
+
+Client-level default via `throwOnError(false)`:
+
+```java
+Ark permissive = ArkClient.builder()
+        .serializer(serializer)
+        .transport(transport)
+        .baseUrl("https://api.example.com")
+        .throwOnError(false)
+        .build();
+
+// All requests on this client return responses regardless of status
+ArkResponse<User> response = permissive.get("/users/1").retrieve().toEntity(User.class);
+```
+
+---
+
 ## Related
 
 - [Error Handling](error-handling.md) - full exception hierarchy

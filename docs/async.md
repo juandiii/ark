@@ -109,6 +109,42 @@ client.get("/users/1")
 
 ---
 
+## Permissive error handling
+
+By default, Ark fails the `CompletableFuture` with an `ApiException`
+subtype for any HTTP 4xx/5xx status. When 4xx is a meaningful business
+outcome, opt out and inspect the response.
+
+Per-request opt-out via `.noThrow()`:
+
+```java
+CompletableFuture<ArkResponse<User>> response = client.get("/users/1")
+        .noThrow()
+        .retrieve()
+        .toEntity(User.class);
+
+response.thenAccept(r -> {
+    if (r.statusCode() == 404) {
+        // not found, treat as business outcome
+    } else if (r.isSuccessful()) {
+        User body = r.body();
+    }
+});
+```
+
+Client-level default via `throwOnError(false)`:
+
+```java
+AsyncArk permissive = AsyncArkClient.builder()
+        .serializer(serializer)
+        .transport(transport)
+        .baseUrl("https://api.example.com")
+        .throwOnError(false)
+        .build();
+```
+
+---
+
 ## Related
 
 - [Error Handling](error-handling.md)
