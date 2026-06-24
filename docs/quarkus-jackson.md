@@ -171,12 +171,15 @@ ark.client."user-api".connect-timeout=5
 ark.client."user-api".read-timeout=15
 ark.client."user-api".tls-configuration-name=my-cert
 ark.client."user-api".trust-all=false
+ark.client."user-api".throw-on-error=true
 ark.client."user-api".headers.X-Api-Key=${API_KEY}
 ark.client."user-api".retry.max-attempts=3
 ark.client."user-api".retry.delay=500
 ```
 
 > ⚠️ `trust-all=true` disables certificate validation. Use only in local development. See [Security & TLS in README](../README.md#tls).
+
+> Set `throw-on-error=false` to return HTTP 4xx/5xx responses instead of raising `ApiException`. See [Permissive error handling](sync.md#permissive-error-handling).
 
 See [Retry & Backoff](retry.md) for full retry configuration.
 
@@ -229,6 +232,30 @@ public class UserService {
 ```
 
 See [Declarative JAX-RS Clients](declarative-jaxrs.md) for full details.
+
+---
+
+## RawResponse as a return type
+
+Proxy methods can declare `RawResponse` (or `Uni<RawResponse>`) as the
+return type. This bypasses deserialization and auto-disables
+throw-on-error for that method — useful for inspecting error bodies that
+don't match a typed schema or for non-JSON responses.
+
+```java
+@RegisterArkClient(configKey = "users-api")
+@Path("/users")
+public interface UserApi {
+    @GET @Path("/{id}")
+    Uni<User> getUser(@PathParam("id") String id);            // type-safe, fails Uni on 4xx/5xx
+
+    @GET @Path("/{id}")
+    Uni<RawResponse> getUserRaw(@PathParam("id") String id);  // raw, never fails the Uni
+}
+```
+
+The raw method auto-disables throw-on-error for its requests — no need to
+set `throw-on-error=false` at the client level just for this method.
 
 ---
 

@@ -58,6 +58,17 @@ public interface ArkClientNamedConfig {
     boolean trustAll();
 
     /**
+     * If true (default), HTTP 4xx/5xx responses raise ApiException. If false,
+     * the response is returned to the caller regardless of status — useful
+     * when 4xx is expected business semantics (e.g. 404 = not found, not an
+     * error). Per-request .noThrow() can still opt out on a client where
+     * this is true.
+     */
+    @WithName("throw-on-error")
+    @WithDefault("true")
+    boolean throwOnError();
+
+    /**
      * Default headers to add to every request.
      */
     @WithName("headers")

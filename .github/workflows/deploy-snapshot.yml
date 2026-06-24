@@ -12,13 +12,40 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  preflight:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    outputs:
+      is-snapshot: ${{ steps.check.outputs.is-snapshot }}
+      version: ${{ steps.check.outputs.version }}
+    steps:
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10  # v6
+
+      - id: check
+        name: Check pom version is -SNAPSHOT
+        run: |
+          set -euo pipefail
+          VERSION=$(grep -m1 -oE '<version>[^<]+</version>' pom.xml | sed -E 's|</?version>||g')
+          echo "Detected project version: $VERSION"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          if [[ "$VERSION" == *-SNAPSHOT ]]; then
+            echo "is-snapshot=true" >> "$GITHUB_OUTPUT"
+            echo "::notice::Will deploy SNAPSHOT $VERSION to Nexus"
+          else
+            echo "is-snapshot=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::Skipping snapshot deploy — version $VERSION is not a SNAPSHOT (release-prep commit)"
+          fi
+
   test:
-    if: "!contains(github.event.head_commit.message, 'Release v')"
+    needs: preflight
+    if: needs.preflight.outputs.is-snapshot == 'true'
     uses: ./.github/workflows/test.yml
     secrets: inherit
 
   deploy:
-    needs: test
+    needs: [preflight, test]
+    if: needs.preflight.outputs.is-snapshot == 'true'
     runs-on: ubuntu-latest
     permissions:
       contents: read

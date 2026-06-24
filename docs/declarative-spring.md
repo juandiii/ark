@@ -132,10 +132,36 @@ Both `value` and `url` work: `@GetExchange("/users")` and `@GetExchange(url = "/
 | `T` | Deserializes response body |
 | `void` | Calls `toBodilessEntity()` |
 | `ArkResponse<T>` | Full response (status + headers + body) |
+| `RawResponse` | Raw status + headers + body String, auto-disables throw-on-error |
 | `String` | Raw response body |
 | `Mono<T>` | Reactor reactive (requires `ark-spring-boot-starter-webflux`) |
 | `Mono<ArkResponse<T>>` | Reactor full response |
+| `Mono<RawResponse>` | Reactor raw response, auto-disables throw-on-error |
 | `Flux<T>` | Reactor stream from JSON array |
+
+---
+
+## RawResponse as a return type
+
+Proxy methods can declare `RawResponse` (or `CompletableFuture<RawResponse>` /
+`Mono<RawResponse>`) as the return type. This bypasses deserialization and
+auto-disables throw-on-error for that method — useful for full access to
+the response regardless of status.
+
+```java
+@RegisterArkClient(configKey = "users-api")
+@HttpExchange("/users")
+public interface UserApi {
+    @GetExchange("/{id}")
+    User getUser(@PathVariable String id);                    // type-safe, throws on 4xx/5xx
+
+    @GetExchange("/{id}")
+    RawResponse getUserRaw(@PathVariable String id);          // raw, never throws
+}
+```
+
+The raw method auto-disables throw-on-error for its requests — no need to
+set `throw-on-error=false` at the client level just for this method.
 
 ---
 

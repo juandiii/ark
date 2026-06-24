@@ -56,8 +56,14 @@ jobs:
     uses: ./.github/workflows/test.yml
     secrets: inherit
 
+  compat:
+    needs: preflight
+    if: needs.preflight.outputs.skip != 'true'
+    uses: ./.github/workflows/compat-weekly.yml
+    secrets: inherit
+
   create-release-pr:
-    needs: [preflight, test]
+    needs: [preflight, test, compat]
     if: needs.preflight.outputs.skip != 'true'
     runs-on: ubuntu-latest
     permissions:

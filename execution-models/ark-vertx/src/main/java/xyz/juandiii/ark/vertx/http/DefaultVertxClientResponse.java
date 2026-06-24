@@ -49,4 +49,9 @@ public final class DefaultVertxClientResponse implements VertxClientResponse {
         return future.map(raw ->
                 new ArkResponse<>(raw.statusCode(), raw.headers(), null));
     }
+
+    @Override
+    public Future<RawResponse> raw() {
+        return future;
+    }
 }

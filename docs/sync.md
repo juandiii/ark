@@ -176,6 +176,65 @@ try {
 
 ---
 
+## Permissive error handling
+
+By default, Ark throws an `ApiException` subtype for any HTTP 4xx/5xx
+status. When 4xx is a meaningful business outcome (e.g. 404 = "not
+found", not an error), opt out and inspect the response yourself.
+
+Per-request opt-out via `.noThrow()`:
+
+```java
+ArkResponse<User> response = client.get("/users/1")
+        .noThrow()
+        .retrieve()
+        .toEntity(User.class);
+
+if (response.statusCode() == 404) return Optional.empty();
+if (response.isSuccessful()) return Optional.of(response.body());
+```
+
+Client-level default via `throwOnError(false)`:
+
+```java
+Ark permissive = ArkClient.builder()
+        .serializer(serializer)
+        .transport(transport)
+        .baseUrl("https://api.example.com")
+        .throwOnError(false)
+        .build();
+
+// All requests on this client return responses regardless of status
+ArkResponse<User> response = permissive.get("/users/1").retrieve().toEntity(User.class);
+```
+
+---
+
+## Capturing the raw response
+
+When you need the raw response — status, headers, and body as a String —
+without going through deserialization (e.g. to inspect an error body that
+doesn't match your typed schema), use `.raw()`:
+
+```java
+RawResponse raw = client.get("/users/1")
+        .noThrow()
+        .retrieve()
+        .raw();
+
+if (raw.isError()) {
+    log.warn("Error {}: {}", raw.statusCode(), raw.body());
+} else {
+    User user = serializer.deserialize(raw.body(), User.class);
+}
+```
+
+`.raw()` returns a `RawResponse` directly (no deserialization). Use it
+together with `.noThrow()` (or client-level `throwOnError(false)`) to
+inspect bodies on 4xx/5xx without exceptions.
+
+---
+
 ## Related
 
 - [Error Handling](error-handling.md) - full exception hierarchy

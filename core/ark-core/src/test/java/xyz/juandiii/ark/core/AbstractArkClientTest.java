@@ -25,7 +25,7 @@ class AbstractArkClientTest {
 
     private TestArkClient client() {
         return new TestArkClient(transport, serializer, "TestAgent/1.0",
-                "https://api.example.com", Collections.emptyList(), Collections.emptyList());
+                "https://api.example.com", Collections.emptyList(), Collections.emptyList(), true);
     }
 
     @Test
@@ -64,8 +64,10 @@ class AbstractArkClientTest {
 
         TestArkClient(HttpTransport transport, JsonSerializer serializer, String userAgent,
                       String baseUrl, List<RequestInterceptor> requestInterceptors,
-                      List<ResponseInterceptor> responseInterceptors) {
-            super(serializer, userAgent, baseUrl, requestInterceptors, responseInterceptors);
+                      List<ResponseInterceptor> responseInterceptors,
+                      boolean throwOnErrorDefault) {
+            super(serializer, userAgent, baseUrl, requestInterceptors, responseInterceptors,
+                    throwOnErrorDefault);
             this.transport = transport;
         }
 

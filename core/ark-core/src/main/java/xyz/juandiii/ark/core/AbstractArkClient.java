@@ -18,15 +18,18 @@ public abstract class AbstractArkClient<R extends AbstractClientRequest<R>> {
     protected final String baseUrl;
     protected final List<RequestInterceptor> requestInterceptors;
     protected final List<ResponseInterceptor> responseInterceptors;
+    protected final boolean throwOnErrorDefault;
 
     protected AbstractArkClient(JsonSerializer serializer, String userAgent, String baseUrl,
                                 List<RequestInterceptor> requestInterceptors,
-                                List<ResponseInterceptor> responseInterceptors) {
+                                List<ResponseInterceptor> responseInterceptors,
+                                boolean throwOnErrorDefault) {
         this.serializer = serializer;
         this.userAgent = userAgent;
         this.baseUrl = baseUrl;
         this.requestInterceptors = List.copyOf(requestInterceptors);
         this.responseInterceptors = List.copyOf(responseInterceptors);
+        this.throwOnErrorDefault = throwOnErrorDefault;
     }
 
     protected abstract R createRequest(String method, String path);

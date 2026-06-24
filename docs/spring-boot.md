@@ -186,6 +186,7 @@ ark.client.user-api.http-version=HTTP_2
 ark.client.user-api.connect-timeout=5
 ark.client.user-api.read-timeout=15
 ark.client.user-api.trust-all=false
+ark.client.user-api.throw-on-error=true
 ark.client.user-api.headers.Authorization=Bearer ${TOKEN}
 ark.client.user-api.tls-configuration-name=my-cert
 
@@ -194,6 +195,8 @@ spring.ssl.bundle.pem.my-cert.truststore.certificate=classpath:certs/ca.crt
 ```
 
 > ⚠️ `trust-all: true` disables certificate validation. Use only in local development. See [Security & TLS in README](../README.md#tls).
+
+> Set `throw-on-error=false` to return HTTP 4xx/5xx responses instead of raising `ApiException`. See [Permissive error handling](sync.md#permissive-error-handling).
 
 Same configuration structure as the sync starter. See [Declarative Spring Clients](declarative-spring.md) for full annotation details.
 
@@ -228,12 +231,15 @@ ark.client.user-api.connect-timeout=5
 ark.client.user-api.read-timeout=15
 ark.client.user-api.tls-configuration-name=my-cert
 ark.client.user-api.trust-all=false
+ark.client.user-api.throw-on-error=true
 ark.client.user-api.headers.X-Api-Key=${API_KEY}
 ark.client.user-api.retry.max-attempts=3
 ark.client.user-api.retry.delay=500
 ```
 
 > ⚠️ `trust-all: true` disables certificate validation. Use only in local development. See [Security & TLS in README](../README.md#tls).
+
+> Set `throw-on-error=false` to return HTTP 4xx/5xx responses instead of raising `ApiException`. See [Permissive error handling](sync.md#permissive-error-handling).
 
 See [Retry & Backoff](retry.md) for full retry configuration.
 

@@ -49,4 +49,9 @@ public final class DefaultReactorClientResponse implements ReactorClientResponse
         return mono.map(raw ->
                 new ArkResponse<>(raw.statusCode(), raw.headers(), null));
     }
+
+    @Override
+    public Mono<RawResponse> raw() {
+        return mono;
+    }
 }

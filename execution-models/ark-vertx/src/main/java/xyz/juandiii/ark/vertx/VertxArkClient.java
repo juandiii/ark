@@ -23,15 +23,18 @@ public class VertxArkClient extends AbstractArkClient<DefaultVertxClientRequest>
     private VertxArkClient(VertxHttpTransport transport, JsonSerializer serializer,
                            String userAgent, String baseUrl,
                            List<RequestInterceptor> requestInterceptors,
-                           List<ResponseInterceptor> responseInterceptors) {
-        super(serializer, userAgent, baseUrl, requestInterceptors, responseInterceptors);
+                           List<ResponseInterceptor> responseInterceptors,
+                           boolean throwOnErrorDefault) {
+        super(serializer, userAgent, baseUrl, requestInterceptors, responseInterceptors,
+                throwOnErrorDefault);
         this.transport = transport;
     }
 
     @Override
     protected DefaultVertxClientRequest createRequest(String method, String path) {
-        return new DefaultVertxClientRequest(method, baseUrl, path, transport, serializer,
-                requestInterceptors, responseInterceptors)
+        DefaultVertxClientRequest req = new DefaultVertxClientRequest(method, baseUrl, path, transport, serializer,
+                requestInterceptors, responseInterceptors);
+        return req.throwOnError(throwOnErrorDefault)
                 .header("User-Agent", userAgent);
     }
 
@@ -59,7 +62,8 @@ public class VertxArkClient extends AbstractArkClient<DefaultVertxClientRequest>
             Objects.requireNonNull(transport, "transport must not be null");
             logConfiguration("VertxArkClient (Future)", transport.getClass().getSimpleName());
             return new VertxArkClient(transport, serializer, buildUserAgent(),
-                    baseUrl, requestInterceptors, responseInterceptors);
+                    baseUrl, requestInterceptors, responseInterceptors,
+                    throwOnErrorDefault);
         }
     }
 }

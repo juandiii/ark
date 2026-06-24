@@ -4,6 +4,7 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import xyz.juandiii.ark.core.TypeRef;
 import xyz.juandiii.ark.core.http.ArkResponse;
+import xyz.juandiii.ark.core.http.RawResponse;
 
 import java.util.List;
 
@@ -35,4 +36,14 @@ public interface ReactorClientResponse {
     <T> Mono<ArkResponse<T>> toEntity(Class<T> type);
 
     Mono<ArkResponse<Void>> toBodilessEntity();
+
+    /**
+     * Returns the raw HTTP response — status code, headers, and body as a String —
+     * without deserialization. Useful with {@link ReactorClientRequest#noThrow()} (or
+     * client-level {@code throwOnError(false)}) to inspect error bodies that
+     * don't match a typed schema.
+     *
+     * @return Mono emitting the raw response wrapper produced by the transport
+     */
+    Mono<RawResponse> raw();
 }

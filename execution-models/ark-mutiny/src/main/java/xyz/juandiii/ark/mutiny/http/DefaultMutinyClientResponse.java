@@ -49,4 +49,9 @@ public final class DefaultMutinyClientResponse implements MutinyClientResponse {
         return uni.onItem().transform(raw ->
                 new ArkResponse<>(raw.statusCode(), raw.headers(), null));
     }
+
+    @Override
+    public Uni<RawResponse> raw() {
+        return uni;
+    }
 }

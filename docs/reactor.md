@@ -195,6 +195,67 @@ client.get("/users/1")
 
 ---
 
+## Permissive error handling
+
+By default, Ark signals an `ApiException` subtype on the `Mono` for any
+HTTP 4xx/5xx status. When 4xx is a meaningful business outcome, opt out
+and inspect the response.
+
+Per-request opt-out via `.noThrow()`:
+
+```java
+Mono<ArkResponse<User>> response = client.get("/users/1")
+        .noThrow()
+        .retrieve()
+        .toEntity(User.class);
+
+response.flatMap(r -> {
+    if (r.statusCode() == 404) return Mono.empty();
+    if (r.isSuccessful()) return Mono.just(r.body());
+    return Mono.error(new IllegalStateException("status " + r.statusCode()));
+});
+```
+
+Client-level default via `throwOnError(false)`:
+
+```java
+ReactorArk permissive = ReactorArkClient.builder()
+        .serializer(serializer)
+        .transport(transport)
+        .baseUrl("https://api.example.com")
+        .throwOnError(false)
+        .build();
+```
+
+---
+
+## Capturing the raw response
+
+When you need the raw response — status, headers, and body as a String —
+without going through deserialization (e.g. to inspect an error body that
+doesn't match your typed schema), use `.raw()`:
+
+```java
+Mono<RawResponse> raw = client.get("/users/1")
+        .noThrow()
+        .retrieve()
+        .raw();
+
+raw.flatMap(r -> {
+    if (r.isError()) {
+        log.warn("Error {}: {}", r.statusCode(), r.body());
+        return Mono.empty();
+    }
+    return Mono.just(serializer.deserialize(r.body(), User.class));
+});
+```
+
+`.raw()` returns a `Mono<RawResponse>` (no deserialization). Use it
+together with `.noThrow()` (or client-level `throwOnError(false)`) to
+inspect bodies on 4xx/5xx without the Mono failing.
+
+---
+
 ## Related
 
 - [Spring Boot Integration](spring-boot.md)

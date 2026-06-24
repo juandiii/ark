@@ -23,15 +23,18 @@ public class MutinyArkClient extends AbstractArkClient<DefaultMutinyClientReques
     private MutinyArkClient(MutinyHttpTransport transport, JsonSerializer serializer,
                             String userAgent, String baseUrl,
                             List<RequestInterceptor> requestInterceptors,
-                            List<ResponseInterceptor> responseInterceptors) {
-        super(serializer, userAgent, baseUrl, requestInterceptors, responseInterceptors);
+                            List<ResponseInterceptor> responseInterceptors,
+                            boolean throwOnErrorDefault) {
+        super(serializer, userAgent, baseUrl, requestInterceptors, responseInterceptors,
+                throwOnErrorDefault);
         this.transport = transport;
     }
 
     @Override
     protected DefaultMutinyClientRequest createRequest(String method, String path) {
-        return new DefaultMutinyClientRequest(method, baseUrl, path, transport, serializer,
-                requestInterceptors, responseInterceptors)
+        DefaultMutinyClientRequest req = new DefaultMutinyClientRequest(method, baseUrl, path, transport, serializer,
+                requestInterceptors, responseInterceptors);
+        return req.throwOnError(throwOnErrorDefault)
                 .header("User-Agent", userAgent);
     }
 
@@ -57,7 +60,8 @@ public class MutinyArkClient extends AbstractArkClient<DefaultMutinyClientReques
             Objects.requireNonNull(transport, "transport must not be null");
             logConfiguration("MutinyArkClient (Uni/Multi)", transport.getClass().getSimpleName());
             return new MutinyArkClient(transport, serializer, buildUserAgent(),
-                    baseUrl, requestInterceptors, responseInterceptors);
+                    baseUrl, requestInterceptors, responseInterceptors,
+                    throwOnErrorDefault);
         }
     }
 }

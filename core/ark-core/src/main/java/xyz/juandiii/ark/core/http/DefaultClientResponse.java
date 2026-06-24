@@ -43,4 +43,9 @@ public final class DefaultClientResponse implements ClientResponse {
     public ArkResponse<Void> toBodilessEntity() {
         return new ArkResponse<>(raw.statusCode(), raw.headers(), null);
     }
+
+    @Override
+    public RawResponse raw() {
+        return raw;
+    }
 }

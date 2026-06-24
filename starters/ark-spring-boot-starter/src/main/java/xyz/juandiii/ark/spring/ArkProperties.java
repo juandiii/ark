@@ -53,6 +53,7 @@ public record ArkProperties(
             @DefaultValue("30") int readTimeout,
             String tlsConfigurationName,
             @DefaultValue("false") boolean trustAll,
+            @DefaultValue("true") boolean throwOnError,
             @DefaultValue Map<String, String> headers,
             RetryProperties retry
     ) {
