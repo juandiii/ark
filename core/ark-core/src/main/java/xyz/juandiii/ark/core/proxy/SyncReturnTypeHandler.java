@@ -3,6 +3,7 @@ package xyz.juandiii.ark.core.proxy;
 import xyz.juandiii.ark.core.TypeRef;
 import xyz.juandiii.ark.core.http.ArkResponse;
 import xyz.juandiii.ark.core.http.ClientRequest;
+import xyz.juandiii.ark.core.http.RawResponse;
 import xyz.juandiii.ark.core.interceptor.RequestContext;
 
 import java.lang.reflect.ParameterizedType;
@@ -22,6 +23,10 @@ public final class SyncReturnTypeHandler implements ReturnTypeHandler {
         if (returnType == void.class || returnType == Void.class) {
             syncRequest.retrieve().toBodilessEntity();
             return null;
+        }
+
+        if (returnType == RawResponse.class) {
+            return syncRequest.noThrow().retrieve().raw();
         }
 
         if (returnType instanceof ParameterizedType pt

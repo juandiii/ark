@@ -4,6 +4,7 @@ import io.smallrye.mutiny.Multi;
 import io.smallrye.mutiny.Uni;
 import xyz.juandiii.ark.core.TypeRef;
 import xyz.juandiii.ark.core.http.ArkResponse;
+import xyz.juandiii.ark.core.http.RawResponse;
 import xyz.juandiii.ark.core.interceptor.RequestContext;
 import xyz.juandiii.ark.mutiny.http.MutinyClientRequest;
 import xyz.juandiii.ark.mutiny.http.MutinyClientResponse;
@@ -14,7 +15,8 @@ import java.lang.reflect.Type;
 
 /**
  * Dispatches Mutiny request execution based on method return type.
- * Supports Uni&lt;T&gt;, Uni&lt;ArkResponse&lt;T&gt;&gt;, Multi&lt;T&gt;, and void.
+ * Supports Uni&lt;T&gt;, Uni&lt;ArkResponse&lt;T&gt;&gt;, Uni&lt;RawResponse&gt;,
+ * Multi&lt;T&gt;, and void.
  *
  * @author Juan Diego Lopez V.
  */
@@ -23,22 +25,25 @@ public final class MutinyReturnTypeHandler implements ReturnTypeHandler {
     @Override
     public Object handle(RequestContext request, Type returnType) {
         MutinyClientRequest mutinyRequest = (MutinyClientRequest) request;
-        MutinyClientResponse response = mutinyRequest.retrieve();
 
         if (returnType == void.class || returnType == Void.class) {
-            return response.toBodilessEntity();
+            return mutinyRequest.retrieve().toBodilessEntity();
         }
 
         if (returnType instanceof ParameterizedType pt) {
             if (pt.getRawType() == Uni.class) {
-                return handleUniType(response, pt.getActualTypeArguments()[0]);
+                Type innerType = pt.getActualTypeArguments()[0];
+                if (innerType == RawResponse.class) {
+                    return mutinyRequest.noThrow().retrieve().raw();
+                }
+                return handleUniType(mutinyRequest.retrieve(), innerType);
             }
             if (pt.getRawType() == Multi.class) {
-                return handleMultiType(response, pt.getActualTypeArguments()[0]);
+                return handleMultiType(mutinyRequest.retrieve(), pt.getActualTypeArguments()[0]);
             }
         }
 
-        return response.body(TypeRef.of(returnType));
+        return mutinyRequest.retrieve().body(TypeRef.of(returnType));
     }
 
     private Object handleUniType(MutinyClientResponse response, Type innerType) {
