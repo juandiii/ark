@@ -30,6 +30,7 @@ public abstract class AbstractArkBuilder<B extends AbstractArkBuilder<B>> {
     protected HttpVersion httpVersion;
     protected int connectTimeoutSecs = -1;
     protected int readTimeoutSecs = -1;
+    protected boolean throwOnErrorDefault = true;
     protected final List<RequestInterceptor> requestInterceptors = new ArrayList<>();
     protected final List<ResponseInterceptor> responseInterceptors = new ArrayList<>();
 
@@ -123,6 +124,20 @@ public abstract class AbstractArkBuilder<B extends AbstractArkBuilder<B>> {
      */
     public B responseInterceptor(ResponseInterceptor interceptor) {
         this.responseInterceptors.add(interceptor);
+        return self();
+    }
+
+    /**
+     * Set the client-level default for HTTP error behavior. When {@code true}
+     * (the default), HTTP 4xx/5xx responses raise {@code ApiException}. When
+     * {@code false}, the response is returned unchanged regardless of status.
+     * Individual requests may still opt out via {@code request.noThrow()}.
+     *
+     * @param throwOnError {@code true} (default) to throw on HTTP error status, {@code false} to return the response
+     * @return this builder for chaining
+     */
+    public B throwOnError(boolean throwOnError) {
+        this.throwOnErrorDefault = throwOnError;
         return self();
     }
 

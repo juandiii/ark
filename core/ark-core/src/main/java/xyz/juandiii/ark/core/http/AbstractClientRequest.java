@@ -40,6 +40,7 @@ public abstract class AbstractClientRequest<T extends AbstractClientRequest<T>>
     protected final JsonSerializer serializer;
     protected final List<RequestInterceptor> requestInterceptors;
     protected final List<ResponseInterceptor> responseInterceptors;
+    private boolean throwOnError = true;
 
     protected AbstractClientRequest(String method, String baseUrl, String path,
                                     JsonSerializer serializer,
@@ -126,6 +127,35 @@ public abstract class AbstractClientRequest<T extends AbstractClientRequest<T>>
         return self();
     }
 
+    /**
+     * Opt out of throwing {@link xyz.juandiii.ark.core.exceptions.ApiException}
+     * on HTTP error status codes (4xx/5xx). When called, the response is
+     * returned to the caller unchanged regardless of status. Use
+     * {@link RawResponse#isError()} or
+     * {@code clientResponse.toEntity(...).isSuccessful()} to branch on outcome.
+     *
+     * @return this request for chaining
+     */
+    @SuppressWarnings("unchecked")
+    public T noThrow() {
+        this.throwOnError = false;
+        return (T) this;
+    }
+
+    /**
+     * Programmatic setter used by {@code AbstractArkClient} to apply the
+     * client-level {@code throwOnError} default to a freshly created request.
+     * Prefer the fluent {@link #noThrow()} on the request itself.
+     *
+     * @param throwOnError {@code true} to throw on HTTP error status (default), {@code false} to return the response
+     * @return this request for chaining
+     */
+    @SuppressWarnings("unchecked")
+    public T throwOnError(boolean throwOnError) {
+        this.throwOnError = throwOnError;
+        return (T) this;
+    }
+
     protected void applyInterceptors() {
         requestInterceptors.forEach(interceptor -> interceptor.intercept(this));
     }
@@ -148,6 +178,7 @@ public abstract class AbstractClientRequest<T extends AbstractClientRequest<T>>
     }
 
     protected void validateResponse(RawResponse raw) {
+        if (!throwOnError) return;
         if (raw.isError()) {
             throw ApiException.of(raw.statusCode(), raw.body());
         }
