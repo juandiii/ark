@@ -1,3 +1,5 @@
+<div align="center">
+
 <h1 align="center">
   <picture>
     <source media="(prefers-color-scheme: dark)" srcset="assets/logo/ark-logo-dark.svg">
@@ -5,116 +7,73 @@
   </picture>
 </h1>
 
-<p align="center">
-  <strong>A modular HTTP client toolkit for Java 17+ with fluent and declarative APIs, pluggable transports, composable decorators, and support for sync, async, and reactive applications.</strong>
-</p>
+### Modular HTTP client toolkit for Java 17+
 
-<p align="center">
-  <a href="https://central.sonatype.com/namespace/xyz.juandiii"><img src="https://img.shields.io/maven-central/v/xyz.juandiii/ark-core?label=Maven%20Central" alt="Maven Central"></a>
-  <a href="https://github.com/juandiii/ark/actions/workflows/ci.yml"><img src="https://github.com/juandiii/ark/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
-  <a href="https://adoptium.net/"><img src="https://img.shields.io/badge/Java-17%2B-orange.svg" alt="Java 17+"></a>
-  <a href="LICENSE"><img src="https://img.shields.io/badge/License-Apache_2.0-blue.svg" alt="License: Apache 2.0"></a>
-</p>
+One client model that survives framework changes, transport changes, and execution-model changes.
+Write **fluent** or **declarative** code; pick **JDK / Apache / Reactor Netty / Vert.x** under the
+hood; run **sync / async / reactive**; host on **Spring Boot**, **Quarkus**, or a plain `main()`.
+Compose **retry**, **metrics**, or your own behavior through `transport.with(...)` decorators.
 
----
+[![Maven Central](https://img.shields.io/maven-central/v/xyz.juandiii/ark-core?label=Maven%20Central)](https://central.sonatype.com/namespace/xyz.juandiii)
+[![CI](https://github.com/juandiii/ark/actions/workflows/ci.yml/badge.svg)](https://github.com/juandiii/ark/actions/workflows/ci.yml)
+[![Java 17+](https://img.shields.io/badge/Java-17%2B-orange.svg)](https://adoptium.net/)
+[![License: Apache 2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
 
-## The Problem
+[**Quick Start**](#quick-start) • [**Frameworks**](#frameworks) • [**Execution Models**](#execution-models) • [**Architecture**](#architecture) • [**Documentation**](#documentation)
 
-Java has no shortage of HTTP clients. But each one forces a trade-off:
+</div>
 
-- **JDK HttpClient** - low-level, no serialization, no interceptors, no declarative API
-- **Spring WebClient / RestClient** - optimized for Spring applications and programming models
-- **Quarkus REST Client** - tightly aligned with Quarkus and JAX-RS-style declarative clients
-- **OkHttp / Apache HttpClient** - transport only, you build everything else yourself
-- **Feign** - declarative only, no fluent API, limited reactive support
+<div align="center" style="margin-top: 1em;">
+<sub><i>Named after the</i> ark <i>- a vessel that carries safely across distance.</i></sub>
+</div>
 
-Ark gives you one client model that survives framework changes, transport changes, and execution-model changes.
+<br/>
 
-## The Solution
+## What is Ark?
 
-Ark separates the concerns that other clients bundle together:
+Ark is an HTTP client toolkit for Java that separates the concerns other clients bundle: how you
+**write** requests (fluent vs declarative), how they're **sent** (which transport), how they're
+**serialized** (which JSON library), how they **execute** (sync / async / reactive), and where
+they **run** (Spring / Quarkus / standalone). Each axis is pluggable - the rest stays the same.
 
-| Concern | Ark's approach |
-|---------|---------------|
-| **How to build requests** | Fluent API or declarative interfaces - your choice |
-| **How to send them** | Pluggable transports - JDK, Reactor Netty, Vert.x, Apache |
-| **How to serialize** | Pluggable serializers - Jackson, JSON-B, or your own |
-| **How to execute** | Sync, async, Reactor, Mutiny, Vert.x Future - same API |
-| **How to compose behavior** | Decorators chain via `transport.with(...)` - retry, metrics, your own |
-| **Where to run** | Spring Boot, Quarkus, or standalone - same code |
+**Core capabilities:**
 
-One mental model. Any stack. No lock-in.
-
-## Why Ark?
-
-- **One client model across stacks** - use Ark in Spring, Quarkus, and plain Java
-- **Fluent when you want control** - explicit request composition with full access to headers, params, and body
-- **Declarative when you want contracts** - `@RegisterArkClient` with Spring `@HttpExchange` or JAX-RS annotations
-- **Transport-agnostic** - plug in JDK, Reactor Netty, Vert.x, or Apache HttpClient
-- **Execution-model aware** - sync, async, Reactor, Mutiny, and Vert.x Future
-- **Generic `Transport<R>` contract** - every execution model implements the same interface parameterized on its return wrapper
-- **Composable decorators** - `transport.with(Retry.of(policy, ops))` chain works across all 5 models; bring your own (`Metrics`, `Cache`, `CircuitBreaker`)
-- **Production-ready features** - TLS, retry, redacted logging, typed exceptions, per-client config
-- **Async stacktraces include the caller site** - no more "lost" call frames in `CompletableFuture` failures
-- **Native-image friendly** - designed to work well in GraalVM-based deployments
+- 🧩 **Fluent + declarative** - the `Ark` builder API _or_ `@RegisterArkClient` interfaces with `@HttpExchange` / JAX-RS annotations
+- 🚢 **Pluggable transports** - JDK HttpClient, Apache HC5, Reactor Netty, Vert.x WebClient - swap without changing call sites
+- 🔌 **Composable decorators** - `transport.with(Retry.of(...))` chains retry, your metrics, your tracing - same pattern everywhere
+- ⚡ **Five execution models** - sync, async (`CompletableFuture`), Reactor (`Mono` / `Flux`), Mutiny (`Uni` / `Multi`), Vert.x (`Future`) - one API shape
+- 🍃 **Any host** - Spring Boot MVC, Spring Boot WebFlux, Quarkus (JVM + native), or standalone - one client model
+- 🛡️ **Permissive error handling** - `.noThrow()` per request _or_ `ark.client.<name>.throw-on-error=false` - inspect 4xx/5xx without exceptions
+- 🔍 **Raw response access** - `.raw()` on every `*ClientResponse` _or_ declare `RawResponse` as a proxy return type - bypass deserialization when needed
+- ⚙️ **GraalVM native** - reflection / proxy hints emitted automatically for both Spring Boot AOT and Quarkus build-time
+- 📊 **Verified compat** - upstream Spring Boot / Quarkus patches tested weekly via CI matrix
 
 ---
 
-## Client Styles
+## Quick Start
 
-Ark supports multiple ways to define HTTP clients.
+**1. Add Ark** - import the BOM and a host starter (Spring shown; [other frameworks](#frameworks) below):
 
-### Fluent API
+```xml
+<dependencyManagement>
+  <dependencies>
+    <dependency>
+      <groupId>xyz.juandiii</groupId>
+      <artifactId>ark-bom</artifactId>
+      <version>${ark.version}</version> <!-- ark-bom -->
+      <type>pom</type>
+      <scope>import</scope>
+    </dependency>
+  </dependencies>
+</dependencyManagement>
 
-Use the fluent API when you want full control over request composition.
-
-```java
-import org.springframework.http.MediaType;        // or jakarta.ws.rs.core.MediaType
-import xyz.juandiii.ark.core.Ark;
-import xyz.juandiii.ark.core.ArkClient;
-import xyz.juandiii.ark.jackson.JacksonSerializer;
-import xyz.juandiii.ark.transport.jdk.ArkJdkSyncTransport;
-import java.net.http.HttpClient;
-
-Ark client = ArkClient.builder()
-    .serializer(new JacksonSerializer(new ObjectMapper()))
-    .transport(new ArkJdkSyncTransport(HttpClient.newBuilder().build()))
-    .baseUrl("https://api.example.com")
-    .build();
-
-User user = client.get("/users/1")
-    .accept(MediaType.APPLICATION_JSON_VALUE)
-    .retrieve()
-    .body(User.class);
+<dependency>
+  <groupId>xyz.juandiii</groupId>
+  <artifactId>ark-spring-boot-starter</artifactId>
+</dependency>
 ```
 
-### Declarative Clients
-
-Define an interface with `@RegisterArkClient` and inject it directly:
-
-```java
-@RegisterArkClient(baseUrl = "${api.users.url}")
-@HttpExchange("/users")
-public interface UserApi {
-
-    @GetExchange("/{id}")
-    User getUser(@PathVariable String id);
-}
-```
-
-```java
-// Spring
-public UserController(UserApi userApi) { ... }
-
-// Quarkus
-@Inject UserApi userApi;
-```
-
-Supports Spring `@HttpExchange` and JAX-RS `@Path`/`@GET`/`@POST` annotations.
-
-### Spring Async — same `@RegisterArkClient`
-
-If any method on the interface returns `CompletableFuture<T>`, the Spring starter auto-wires an `AsyncArkClient` proxy instead of `ArkClient`. Zero extra configuration:
+**2. Write a declarative client:**
 
 ```java
 @RegisterArkClient(configKey = "users-api")
@@ -122,365 +81,231 @@ If any method on the interface returns `CompletableFuture<T>`, the Spring starte
 public interface UserApi {
 
     @GetExchange("/{id}")
-    CompletableFuture<User> getUser(@PathVariable String id);   // ← async
+    User getUser(@PathVariable String id);
+
+    @PostExchange
+    User createUser(@RequestBody User user);
 }
 ```
 
-> **IDE hint**: if IntelliJ reports `Could not autowire. No beans of 'UserApi' type found.`, the bean **does** exist at runtime — Ark registers it dynamically. Add `@org.springframework.stereotype.Component` on the interface alongside `@RegisterArkClient` to silence the warning. Spring's default scan skips interfaces, so no double-registration. See [docs/spring-boot.md → IDE autowiring hint](docs/spring-boot.md#ide-autowiring-hint).
+```properties
+ark.client.users-api.base-url=https://api.example.com
+ark.client.users-api.connect-timeout=5
+```
 
-### JAX-RS Example
+**3. Inject and call it:**
 
 ```java
-@RegisterArkClient(baseUrl = "${api.users.url}")
-@Path("/users")
-@Produces("application/json")
-public interface UserApi {
+@Service
+public class UserService {
+    private final UserApi api;
+    UserService(UserApi api) { this.api = api; }
 
-    @GET
-    @Path("/{id}")
-    User getUser(@PathParam("id") String id);
+    public User find(String id) { return api.getUser(id); }
 }
 ```
 
+Or use the **fluent** API directly — inject `ArkClient.Builder` (auto-configured by the starter):
+
 ```java
-// Quarkus
-@Inject UserApi userApi;
+@Service
+public class UserService {
+    private final Ark client;
+
+    UserService(ArkClient.Builder builder) {
+        this.client = builder.baseUrl("https://api.example.com").build();
+    }
+
+    public User find(String id) {
+        return client.get("/users/" + id)
+                .accept(MediaType.APPLICATION_JSON)
+                .retrieve()
+                .body(User.class);
+    }
+}
 ```
 
-### @RegisterArkClient Attributes
-
-| Attribute | Default | Description |
-|-----------|---------|-------------|
-| `configKey` | `""` | Key for per-client config in `application.properties` |
-| `baseUrl` | `""` | Base URL, supports `${property}` placeholders |
-| `httpVersion` | `HTTP_2` | HTTP/1.1 or HTTP/2 |
-| `connectTimeout` | `10` | Connection timeout (seconds) |
-| `readTimeout` | `30` | Read timeout (seconds) |
-| `interceptors` | `{}` | Interceptor classes (auto-detects Request/Response) |
+The same model runs on every supported host - only the registration differs.
 
 ---
 
-## Composable Decorators
+## Frameworks
 
-Every `Transport<R>` exposes a `.with(...)` method that composes decorators. Built-in decorator: `Retry<R>`. Custom decorators (metrics, caching, circuit breaker) plug in the same way.
+All coordinates under `groupId` **`xyz.juandiii`**, versioned by the [BOM](#quick-start). Pick a host:
+
+<details>
+<summary><b>Spring Boot</b> (sync / MVC)</summary>
+
+```xml
+<dependency>
+  <groupId>xyz.juandiii</groupId>
+  <artifactId>ark-spring-boot-starter</artifactId>
+</dependency>
+```
+
+Annotate interfaces with `@RegisterArkClient` + Spring's `@HttpExchange` family. The starter
+auto-configures `Ark`, `AsyncArk`, and the proxy factory; AOT hints are emitted for native image.
+
+</details>
+
+<details>
+<summary><b>Spring Boot</b> (reactive / WebFlux)</summary>
+
+```xml
+<dependency>
+  <groupId>xyz.juandiii</groupId>
+  <artifactId>ark-spring-boot-starter-webflux</artifactId>
+</dependency>
+```
+
+Proxy methods return `Mono<T>` / `Flux<T>`; transport is Reactor Netty by default. Same
+`@RegisterArkClient` interfaces work — just declare reactive return types.
+
+</details>
+
+<details>
+<summary><b>Quarkus</b> (JVM + native)</summary>
+
+```xml
+<dependency>
+  <groupId>xyz.juandiii</groupId>
+  <artifactId>ark-quarkus-jackson</artifactId>
+</dependency>
+```
+
+Annotate interfaces with `@RegisterArkClient` + JAX-RS (`@Path` / `@GET` / `@POST`) — or use
+Spring's `@HttpExchange` if you prefer. Build-time reflection + proxy hints emitted for native.
+
+</details>
+
+<details>
+<summary><b>Plain <code>main()</code></b></summary>
 
 ```java
-import xyz.juandiii.ark.core.http.decorator.Retry;
-import xyz.juandiii.ark.core.http.decorator.SyncRetryOps;
-
-Transport<RawResponse> resilient = new ArkJdkSyncTransport(HttpClient.newBuilder().build())
-    .with(Retry.of(retryPolicy, new SyncRetryOps()))
-    // .with(MyMetrics.of(registry))
-    // .with(MyCache.of(store));
-
 Ark client = ArkClient.builder()
-    .serializer(serializer)
-    .transport(resilient)
+    .serializer(new JacksonSerializer(new ObjectMapper()))
+    .transport(new ArkJdkSyncTransport(HttpClient.newHttpClient()))
     .baseUrl("https://api.example.com")
     .build();
 ```
 
-The chain composes **outside-in** — the last `.with(...)` is the outermost wrapper. `RetryOps<R>` strategies exist per execution model: `SyncRetryOps`, `AsyncRetryOps`, `ReactorRetryOps`, `MutinyRetryOps`, `VertxRetryOps`. See [Retry & Backoff](docs/retry.md) for ordering rules (e.g., `Metrics` outside `Retry` measures total wall-clock; inside, per-attempt).
+`ark-core` has zero framework dependencies — assemble it yourself.
 
----
-
-## Features
-
-- Java 17+
-- Fluent HTTP API
-- Declarative HTTP clients with **Spring `@HttpExchange`** or **JAX-RS `@Path`/`@GET`**
-- `@RegisterArkClient` for zero-boilerplate auto-registration and injection (sync + async)
-- Generic `Transport<R>` contract unified across all 5 execution models
-- Composable `.with(...)` decorator chain (built-in `Retry`; bring your own)
-- Pluggable transports (JDK, Reactor Netty, Vert.x, Apache HttpClient 5)
-- Pluggable serializers (Jackson, Jackson Classic, JSON-B)
-- Dedicated sync, async, Reactor, Mutiny, and Vert.x APIs
-- Type-safe per-client configuration (`ArkProperties` / `@ConfigMapping`)
-- Per-client interceptors and default headers via config
-- Retry with exponential backoff and jitter (`Retry<R>` decorator)
-- Async stacktraces preserve the caller site (suppressed exception, no lost frames)
-- TLS/SSL support (Spring SSL Bundles, Quarkus TLS Registry)
-- Trust-all SSL for development (with runtime warning)
-- Request/response logging with sensitive-header and credential-body redaction (`NONE`, `BASIC`, `HEADERS`, `BODY`)
-- Typed exception hierarchy (400-504 mapped to specific exceptions)
-- **Permissive error handling** — opt out of throw-on-4xx/5xx per request
-  (`.noThrow()`) or at the client level (`throwOnError(false)`). Useful
-  when 4xx is business semantics (e.g. 404 = not found, not an error).
-- **Raw response access** — `.raw()` on every `*ClientResponse`, or declare
-  `RawResponse` as a proxy method return type. Bypasses deserialization
-  and auto-disables throw-on-error — useful for inspecting error bodies
-  or non-JSON responses.
-- Per-request timeout support
-- HTTP/2 by default
-- Spring Boot (sync + async + WebFlux) and Quarkus integration
-- GraalVM native image support
-- Easy to test and mock
+</details>
 
 ---
 
 ## Execution Models
 
-Ark provides dedicated entry points for different execution models while preserving a consistent client experience.
+The **same** `@RegisterArkClient` interface works across all five execution models. Pick by return type:
 
-| Model | Client | Return Type |
-|-------|--------|-------------|
-| Sync | `ArkClient` | `T` |
-| Async | `AsyncArkClient` | `CompletableFuture<T>` |
-| Reactor | `ReactorArkClient` | `Mono<T>` |
-| Mutiny | `MutinyArkClient` | `Uni<T>` |
-| Vert.x | `VertxArkClient` | `Future<T>` |
-
-Same fluent API - only the return type changes:
+| Model | Module | Return type | Builder |
+|---|---|---|---|
+| **Sync** | `ark-core` | `T`, `ArkResponse<T>`, `RawResponse` | `ArkClient.builder()` |
+| **Async** | `ark-async` | `CompletableFuture<T>` | `AsyncArkClient.builder()` |
+| **Reactor** | `ark-reactor` | `Mono<T>` / `Flux<T>` | `ReactorArkClient.builder()` |
+| **Mutiny** | `ark-mutiny` | `Uni<T>` / `Multi<T>` | `MutinyArkClient.builder()` |
+| **Vert.x** | `ark-vertx` | `io.vertx.core.Future<T>` | `VertxArkClient.builder()` |
 
 ```java
-User user = client
-    .get("/users/1")
-    .retrieve()
-    .body(User.class);
-
-CompletableFuture<User> cf = asyncClient
-    .get("/users/1")
-    .retrieve()
-    .body(User.class);
-
-Mono<User> mono = reactorClient
-    .get("/users/1")
-    .retrieve()
-    .body(User.class);
-
-Uni<User> uni = mutinyClient
-    .get("/users/1")
-    .retrieve()
-    .body(User.class);
-
-Future<User> future = vertxClient
-    .get("/users/1")
-    .retrieve()
-    .body(User.class);
+@RegisterArkClient(configKey = "users-api")
+public interface UserApi {
+    @GetExchange("/{id}")  User                       getUserSync(String id);
+    @GetExchange("/{id}")  CompletableFuture<User>    getUserAsync(String id);
+    @GetExchange("/{id}")  Mono<User>                 getUserReactive(String id);
+    @GetExchange("/{id}")  RawResponse                getUserRaw(String id);     // bypass deserialization
+}
 ```
 
 ---
 
-## Installation
+## How it compares
 
-Import the BOM first:
-
-```xml
-<dependencyManagement>
-    <dependencies>
-        <dependency>
-            <groupId>xyz.juandiii</groupId>
-            <artifactId>ark-bom</artifactId>
-            <version>1.0.7</version> <!-- ark-bom -->
-            <type>pom</type>
-            <scope>import</scope>
-        </dependency>
-    </dependencies>
-</dependencyManagement>
-```
-
-Then choose the modules you need.
-
-### Core + Jackson + JDK transport
-
-```xml
-<dependencies>
-    <dependency>
-        <groupId>xyz.juandiii</groupId>
-        <artifactId>ark-core</artifactId>
-    </dependency>
-    <dependency>
-        <groupId>xyz.juandiii</groupId>
-        <artifactId>ark-jackson</artifactId>
-    </dependency>
-    <dependency>
-        <groupId>xyz.juandiii</groupId>
-        <artifactId>ark-transport-jdk</artifactId>
-    </dependency>
-</dependencies>
-```
-
-### Optional modules
-
-For async support:
-
-```xml
-<dependency>
-    <groupId>xyz.juandiii</groupId>
-    <artifactId>ark-async</artifactId>
-</dependency>
-```
-
-For Reactor support:
-
-```xml
-<dependency>
-    <groupId>xyz.juandiii</groupId>
-    <artifactId>ark-reactor</artifactId>
-</dependency>
-<dependency>
-    <groupId>xyz.juandiii</groupId>
-    <artifactId>ark-transport-reactor</artifactId>
-</dependency>
-```
-
-For Mutiny support:
-
-```xml
-<dependency>
-    <groupId>xyz.juandiii</groupId>
-    <artifactId>ark-mutiny</artifactId>
-</dependency>
-<dependency>
-    <groupId>xyz.juandiii</groupId>
-    <artifactId>ark-transport-vertx-mutiny</artifactId>
-</dependency>
-```
-
-For Vert.x `Future` support:
-
-```xml
-<dependency>
-    <groupId>xyz.juandiii</groupId>
-    <artifactId>ark-vertx</artifactId>
-</dependency>
-<dependency>
-    <groupId>xyz.juandiii</groupId>
-    <artifactId>ark-transport-vertx</artifactId>
-</dependency>
-```
-
-For Spring Boot:
-
-```xml
-<dependency>
-    <groupId>xyz.juandiii</groupId>
-    <artifactId>ark-spring-boot-starter</artifactId>
-</dependency>
-```
-
-For Spring WebFlux:
-
-```xml
-<dependency>
-    <groupId>xyz.juandiii</groupId>
-    <artifactId>ark-spring-boot-starter-webflux</artifactId>
-</dependency>
-```
-
-For Quarkus (Jackson):
-
-```xml
-<dependency>
-    <groupId>xyz.juandiii</groupId>
-    <artifactId>ark-quarkus-jackson</artifactId>
-</dependency>
-```
-
-Auto-configures `JsonSerializer` (Jackson 2.x), `ArkClient.Builder` (sync), and `MutinyArkClient.Builder` (reactive) as CDI beans.
+| | Ark | Apache HC5 | OkHttp | Spring RestClient | OpenFeign |
+|---|:---:|:---:|:---:|:---:|:---:|
+| Fluent API | ✅ | ⚠️ (Fluent ext) | ✅ | ✅ | ❌ |
+| Declarative interfaces | ✅ | ❌ | ❌ | ✅ (via `@HttpExchange`) | ✅ |
+| **Same interface across sync + async + reactive** | ✅ | ❌ | ❌ | ❌ <sub>(RestClient vs WebClient)</sub> | partial |
+| Pluggable transports without code changes | ✅ | ❌ | ❌ | ⚠️ <sub>(`ClientHttpRequestFactory`)</sub> | ⚠️ |
+| Decorator chain (`.with(...)`) | ✅ | ❌ | partial (interceptors) | ❌ | partial |
+| Spring **+** Quarkus **+** standalone host | ✅ | standalone | standalone | Spring only | Spring only |
+| Permissive error handling | ✅ | ✅ (manual) | ✅ (default) | partial (`onStatus`) | partial (`ErrorDecoder`) |
+| GraalVM native | ✅ | ⚠️ | partial | ✅ | partial |
 
 ---
 
-## Transport Model
+## Architecture
 
-Ark uses a **bridge pattern**.
+`ark-core` is plain Java with zero framework dependency. Hosts (Spring, Quarkus) plug in through
+thin SPIs: `JsonSerializer`, `HttpTransport`, `RequestInterceptor`. Decorators stack via
+`transport.with(...)` regardless of execution model.
 
-The transport layer is a thin adapter around an already configured HTTP client. Ark does not own connection pools, low-level HTTP tuning, or TLS setup. Those concerns stay in the underlying transport.
+```mermaid
+flowchart LR
+    code([Your code]):::io
 
-All transports implement a single generic contract `Transport<R>` where `R` is the return-type wrapper for the execution model. Decorators compose via `transport.with(...)`.
+    subgraph API["API surface"]
+        direction TB
+        FLUENT["Fluent builder<br/><small>client.get().retrieve()</small>"]:::surface
+        DECL["@RegisterArkClient<br/><small>interface-driven</small>"]:::surface
+    end
 
-Built-in transports include:
+    subgraph CORE["ark-core pipeline — same model across hosts"]
+        direction LR
+        BUILD["Build &amp; encode"]:::core
+        DECO["Decorator chain<br/><small>retry, your own</small>"]:::core
+        VAL["Validate &amp; decode<br/><small>or skip via .noThrow()</small>"]:::core
+    end
 
-- JDK `HttpClient` — split into `ArkJdkSyncTransport` (sync) and `ArkJdkAsyncTransport` (CompletableFuture); both can share the same underlying `HttpClient` for a shared connection pool
-- Reactor Netty (`ArkReactorNettyTransport`)
-- Vert.x Web Client (`ArkVertxFutureTransport`)
-- Vert.x Mutiny Web Client (`ArkVertxMutinyTransport`)
-- Apache HttpClient 5 (`ArkApacheTransport`)
+    transport([Transport · JDK · Apache · Netty · Vert.x]):::io
 
-You can also provide your own transport implementation or custom decorator — see [Transport Model](docs/transports.md).
+    code --> FLUENT
+    code --> DECL
+    FLUENT --> BUILD
+    DECL --> BUILD
+    BUILD --> DECO
+    DECO <-->|HTTP| transport
+    DECO --> VAL --> code
 
----
+    classDef surface fill:#e8f0fe,stroke:#4285f4,color:#202124;
+    classDef core fill:#e6f4ea,stroke:#34a853,color:#202124;
+    classDef io fill:#f1f3f4,stroke:#9aa0a6,color:#202124;
+```
 
-## Logging
-
-Ark logs requests and responses via `LoggingInterceptor` (sensitive headers and known credential body keys are redacted). Enable it per-client with `ark.logging.level=BASIC|HEADERS|BODY` (Spring / Quarkus) or programmatically via `LoggingInterceptor.apply(builder, Level.HEADERS)`.
-
-For raw wire-level transport debugging, enable the underlying client's own logger:
-
-- **JDK HttpClient**: `-Djdk.httpclient.HttpClient.log=all`
-- **Apache HttpClient 5**: set `org.apache.hc.client5.http` to DEBUG
-- **Reactor Netty**: set `reactor.netty.http.client.HttpClient` to DEBUG
-- **Vert.x WebClient**: set `io.vertx.core.http.impl` to DEBUG
-
----
-
-## Security
-
-Found a vulnerability? Please follow the disclosure process in [SECURITY.md](SECURITY.md) — do not open a public issue.
-
-### TLS
-
-Ark validates TLS certificates by default. To use a custom truststore (self-signed CA, mutual TLS), configure your SSL bundle (Spring) or TLS configuration (Quarkus) and reference it via `ark.client.<name>.tls-configuration-name`.
-
-> ⚠️ **`trust-all: true` disables ALL certificate validation.** Use only in local development against ephemeral environments. Setting `ark.client.<name>.trust-all=true` in production exposes your application to man-in-the-middle attacks. Ark logs a runtime WARNING when trust-all is active so accidental production use is visible.
+The full nine-axis breakdown — 19 modules under `core/`, `execution-models/`, `transports/`,
+`serializers/`, `proxies/`, `starters/`, `extensions/` — is in [`docs/design.md`](docs/design.md).
 
 ---
 
 ## Documentation
 
-- [CHANGELOG](CHANGELOG.md) - release notes and migration guidance
-- [Compatibility Matrix](docs/compatibility.md) - supported Spring Boot, Quarkus, and Java versions
-- [Getting Started](docs/getting-started.md)
-- [Sync Client](docs/sync.md)
-- [Async Client](docs/async.md)
-- [Reactor Client](docs/reactor.md)
-- [Mutiny Client](docs/mutiny.md)
-- [Vert.x Client](docs/vertx.md)
-- [Transport Model](docs/transports.md) - `Transport<R>` contract, built-in transports, custom transports, `.with(...)` decorator chain
-- [Retry & Backoff](docs/retry.md) - `Retry<R>` + per-model `RetryOps<R>` strategies; native operator alternatives
-- [Serialization](docs/serialization.md) - Jackson, JSON-B, custom
-- [Logging](docs/logging.md) - `LoggingInterceptor` with redaction, wire-level escape hatches
-- [Multipart Upload](docs/multipart.md) - file upload with binary fidelity
-- [Error Handling](docs/error-handling.md) - typed exception hierarchy
-- [Declarative Spring Clients](docs/declarative-spring.md)
-- [Declarative JAX-RS Clients](docs/declarative-jaxrs.md)
-- [Spring Boot Integration](docs/spring-boot.md) - sync + async + WebFlux, config, TLS, IDE autowiring hint
-- [Quarkus Integration](docs/quarkus.md)
-- [Quarkus Jackson Extension](docs/quarkus-jackson.md)
-- [Testing](docs/testing.md)
-- [Design Principles](docs/design.md)
+- [Getting Started](docs/getting-started.md) - fluent + declarative basics
+- [Sync](docs/sync.md) / [Async](docs/async.md) / [Reactor](docs/reactor.md) / [Mutiny](docs/mutiny.md) - per-execution-model guides
+- [Transport Model](docs/transports.md) - bridge pattern + decorator chain
+- [Spring Boot Integration](docs/spring-boot.md) - starter + properties + AOT
+- [Declarative Spring](docs/declarative-spring.md) - `@RegisterArkClient` + `@HttpExchange`
+- [Quarkus](docs/quarkus-jackson.md) - extension + native image
+- [Retry & Backoff](docs/retry.md) - decorator-based retry with per-model strategies
+- [Logging](docs/logging.md) - `LoggingInterceptor` levels and redaction
+- [Compatibility Matrix](docs/compatibility.md) - supported Spring Boot / Quarkus / Java versions
+- [`docs/design.md`](docs/design.md) - architecture, SPIs, and the module layout
 
 ---
 
-## Design Principles
+## Roadmap
 
-- Keep transport explicit
-- Keep serialization replaceable
-- Support fluent and declarative styles
-- Keep execution models separate at the API surface, unified at the transport contract
-- Stay framework-friendly
-- Prefer composition over lock-in (`transport.with(...)`)
-
----
-
-## Build
-
-```bash
-mvn clean install
-mvn clean install -DskipTests
-mvn test
-```
-
----
-
-## Contributing
-
-Contributions are welcome!
-
-Please read [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines on commit conventions, PR labels, and the release process.
+- [x] Modular layout (19 modules grouped under semantic subdirectories)
+- [x] Composable transport decorators (`transport.with(Retry.of(...))`) per execution model
+- [x] Permissive error handling — per-request `.noThrow()` + client-level `throw-on-error` property
+- [x] Raw response access — `.raw()` fluent + `RawResponse` as proxy return type
+- [x] Weekly upstream compat sweep (Spring Boot / Quarkus latest patches via CI matrix)
+- [ ] `RawResponse` return type for Vert.x proxies (handler stub pending)
+- [ ] Observability decorators — OpenTelemetry tracing, Micrometer metrics
+- [ ] Spring Cloud `@RefreshScope` support for hot-reload of `@RegisterArkClient` configs
+- [ ] Tests for `ark-spring-boot-starter*` and `ark-quarkus-jackson` (plan 012)
 
 ---
 
 ## License
 
-Apache 2.0
+Apache 2.0. See [LICENSE](LICENSE).
