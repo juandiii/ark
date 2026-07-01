@@ -102,6 +102,7 @@
     <module>starters/ark-spring-boot-starter</module>
     <module>starters/ark-spring-boot-starter-webflux</module>
     <module>extensions/ark-quarkus-jackson</module>
+    <module>extensions/ark-quarkus-jackson-vertx</module>
   </modules>
   <profiles>
     <profile>

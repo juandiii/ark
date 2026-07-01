@@ -1,0 +1,20 @@
+<?xml version="1.0"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <parent>
+    <groupId>xyz.juandiii</groupId>
+    <artifactId>ark</artifactId>
+    <version>1.0.8-SNAPSHOT</version>
+    <relativePath>../../pom.xml</relativePath>
+  </parent>
+  <artifactId>ark-quarkus-jackson-vertx-parent</artifactId>
+  <name>ark-quarkus-jackson-vertx</name>
+  <description>Quarkus extension parent for Ark Vert.x Mutiny transport add-on (adds Uni/Multi support to ark-quarkus-jackson)</description>
+  <packaging>pom</packaging>
+
+  <modules>
+    <module>runtime</module>
+    <module>deployment</module>
+  </modules>
+</project>
