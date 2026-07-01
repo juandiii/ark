@@ -166,10 +166,21 @@ Proxy methods return `Mono<T>` / `Flux<T>`; transport is Reactor Netty by defaul
 <details>
 <summary><b>Quarkus</b> (JVM + native)</summary>
 
+Slim (JDK transport only):
+
 ```xml
 <dependency>
   <groupId>xyz.juandiii</groupId>
   <artifactId>ark-quarkus-jackson</artifactId>
+</dependency>
+```
+
+With Vert.x Mutiny transport (adds `Uni<T>` / `Multi<T>` proxy method support):
+
+```xml
+<dependency>
+  <groupId>xyz.juandiii</groupId>
+  <artifactId>ark-quarkus-jackson-vertx</artifactId>
 </dependency>
 ```
 
