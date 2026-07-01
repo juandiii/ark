@@ -16,7 +16,6 @@ import org.jboss.jandex.*;
 import xyz.juandiii.ark.quarkus.ArkProducer;
 import xyz.juandiii.ark.quarkus.ArkRecorder;
 import xyz.juandiii.ark.quarkus.QuarkusTlsResolver;
-import xyz.juandiii.ark.quarkus.QuarkusVertxTlsResolver;
 
 import java.util.List;
 
@@ -40,8 +39,7 @@ public class ArkProcessor {
         return AdditionalBeanBuildItem.builder()
                 .addBeanClasses(
                         ArkProducer.class,
-                        QuarkusTlsResolver.class,
-                        QuarkusVertxTlsResolver.class
+                        QuarkusTlsResolver.class
                 )
                 .setUnremovable()
                 .build();
@@ -50,9 +48,7 @@ public class ArkProcessor {
     @BuildStep
     NativeImageResourceBuildItem nativeImageResources() {
         return new NativeImageResourceBuildItem(
-                "ark-version.properties",
-                "META-INF/vertx/vertx-version.txt",
-                "vertx-version.txt"
+                "ark-version.properties"
         );
     }
 
@@ -85,10 +81,7 @@ public class ArkProcessor {
                 "xyz.juandiii.ark.proxy.SyncExecutionModelProvider",
                 "xyz.juandiii.ark.proxy.jaxrs.JaxRsProxyProvider",
                 "xyz.juandiii.ark.proxy.jaxrs.JaxRsAnnotationResolver",
-                "xyz.juandiii.ark.jaxrs.JaxRsParameterBinder",
-                "xyz.juandiii.ark.mutiny.proxy.MutinyExecutionModelProvider",
-                "xyz.juandiii.ark.mutiny.proxy.MutinyDispatchers",
-                "xyz.juandiii.ark.mutiny.proxy.MutinyReturnTypeHandler"
+                "xyz.juandiii.ark.jaxrs.JaxRsParameterBinder"
         ).constructors(true)
                 .methods(true)
                 .build();

@@ -3,9 +3,6 @@ package xyz.juandiii.ark.quarkus;
 import io.quarkus.arc.Arc;
 import io.quarkus.runtime.RuntimeValue;
 import io.quarkus.runtime.annotations.Recorder;
-import io.vertx.ext.web.client.WebClientOptions;
-import io.vertx.mutiny.core.Vertx;
-import io.vertx.mutiny.ext.web.client.WebClient;
 import xyz.juandiii.ark.async.http.decorator.AsyncRetryOps;
 import xyz.juandiii.ark.core.ArkClient;
 import xyz.juandiii.ark.core.JsonSerializer;
@@ -16,19 +13,17 @@ import xyz.juandiii.ark.core.http.decorator.SyncRetryOps;
 import xyz.juandiii.ark.core.interceptor.LoggingInterceptor;
 import xyz.juandiii.ark.core.interceptor.RequestInterceptor;
 import xyz.juandiii.ark.core.proxy.InterceptorResolver;
-import xyz.juandiii.ark.mutiny.MutinyArkClient;
 import xyz.juandiii.ark.core.proxy.HttpVersion;
 import xyz.juandiii.ark.core.http.RetryPolicy;
 import xyz.juandiii.ark.core.ssl.InsecureSslContext;
+import xyz.juandiii.ark.core.proxy.ArkProxy;
 import xyz.juandiii.ark.core.proxy.PropertyResolver;
 import xyz.juandiii.ark.core.proxy.RegisterArkClient;
 import xyz.juandiii.ark.core.proxy.TlsResolver;
-import xyz.juandiii.ark.proxy.jaxrs.ArkJaxRsProxy;
 import xyz.juandiii.ark.quarkus.config.ArkClientNamedConfig;
 import xyz.juandiii.ark.quarkus.config.ArkClientsConfig;
 import xyz.juandiii.ark.transport.jdk.ArkJdkAsyncTransport;
 import xyz.juandiii.ark.transport.jdk.ArkJdkSyncTransport;
-import xyz.juandiii.ark.transport.vertx.mutiny.ArkVertxMutinyTransport;
 import xyz.juandiii.ark.core.util.StringUtils;
 
 import javax.net.ssl.SSLContext;
@@ -102,15 +97,10 @@ public class ArkRecorder {
 
     private static Object buildProxy(Class<?> iface, JsonSerializer serializer, ResolvedConfig rc) {
         if (usesReactiveReturnTypes(iface)) {
-            MutinyArkClient.Builder builder = MutinyArkClient.builder()
-                    .serializer(serializer)
-                    .transport(buildMutinyTransport(rc))
-                    .baseUrl(rc.baseUrl())
-                    .httpVersion(rc.httpVersion())
-                    .connectTimeout(rc.connectTimeout())
-                    .readTimeout(rc.readTimeout());
-            applyInterceptors(builder, rc);
-            return ArkJaxRsProxy.create(iface, builder.build());
+            throw new IllegalStateException(
+                    "Interface " + iface.getName() + " has methods returning Uni/Multi but "
+                            + "ark-quarkus-jackson-vertx is not on the classpath. Add the vertx add-on: "
+                            + "xyz.juandiii:ark-quarkus-jackson-vertx");
         } else if (usesAsyncReturnTypes(iface)) {
             SSLContext sslContext = resolveSslContext(rc.clientName(), rc.tlsConfigName(), rc.trustAll());
             var jdk = new ArkJdkAsyncTransport(buildHttpClient(rc.httpVersion(), rc.connectTimeout(), sslContext));
@@ -125,7 +115,7 @@ public class ArkRecorder {
                     .readTimeout(rc.readTimeout())
                     .requestInterceptor(defaultTimeout(rc.readTimeout()));
             applyInterceptors(builder, rc);
-            return ArkJaxRsProxy.create(iface, builder.build());
+            return ArkProxy.create(iface, builder.build());
         }
         SSLContext sslContext = resolveSslContext(rc.clientName(), rc.tlsConfigName(), rc.trustAll());
         var jdkTransport = new ArkJdkSyncTransport(buildHttpClient(rc.httpVersion(), rc.connectTimeout(), sslContext));
@@ -140,7 +130,7 @@ public class ArkRecorder {
                 .readTimeout(rc.readTimeout())
                 .requestInterceptor(defaultTimeout(rc.readTimeout()));
         applyInterceptors(builder, rc);
-        return ArkJaxRsProxy.create(iface, builder.build());
+        return ArkProxy.create(iface, builder.build());
     }
 
     private static <B extends AbstractArkBuilder<B>> void applyInterceptors(
@@ -194,29 +184,6 @@ public class ArkRecorder {
             httpBuilder.sslContext(sslContext);
         }
         return httpBuilder.build();
-    }
-
-    private static ArkVertxMutinyTransport buildMutinyTransport(ResolvedConfig rc) {
-        Vertx vertx = Arc.container().instance(Vertx.class).get();
-        WebClientOptions options = new WebClientOptions()
-                .setProtocolVersion(rc.httpVersion() == HttpVersion.HTTP_2
-                        ? io.vertx.core.http.HttpVersion.HTTP_2
-                        : io.vertx.core.http.HttpVersion.HTTP_1_1)
-                .setConnectTimeout(rc.connectTimeout() * 1000)
-                .setIdleTimeout(rc.readTimeout());
-
-        if (rc.trustAll()) {
-            InsecureSslContext.warnTrustAll(rc.clientName());
-            options.setSsl(true).setTrustAll(true).setVerifyHost(false);
-        } else if (StringUtils.isNotEmpty(rc.tlsConfigName())) {
-            VertxTlsResolver vertxTlsResolver =
-                    Arc.container().instance(VertxTlsResolver.class).get();
-            options.setSsl(true);
-            vertxTlsResolver.resolveTrustOptions(rc.tlsConfigName()).ifPresent(options::setTrustOptions);
-            vertxTlsResolver.resolveKeyCertOptions(rc.tlsConfigName()).ifPresent(options::setKeyCertOptions);
-        }
-
-        return new ArkVertxMutinyTransport(WebClient.create(vertx, options));
     }
 
     private static RequestInterceptor defaultTimeout(int readTimeout) {
