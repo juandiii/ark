@@ -20,6 +20,18 @@
 
 ## [Unreleased]
 
+### Breaking
+
+- **Quarkus extension split**: `ark-quarkus-jackson` no longer bundles the Vert.x Mutiny
+  transport. Users who relied on `Uni<T>`/`Multi<T>` proxy methods, `MutinyHttpTransport`,
+  `MutinyArkClient.Builder`, or `VertxTlsResolver`/`QuarkusVertxTlsResolver` must switch to
+  the new `ark-quarkus-jackson-vertx` artifact.
+- The classes `xyz.juandiii.ark.quarkus.VertxTlsResolver` and
+  `xyz.juandiii.ark.quarkus.QuarkusVertxTlsResolver` moved to package
+  `xyz.juandiii.ark.quarkus.vertx.*`. Update imports if you referenced them directly.
+- Slim `ark-quarkus-jackson` gets JDK-only transport and drops ~5-10 MB of transitive deps
+  (quarkus-vertx, ark-mutiny, ark-transport-vertx-mutiny).
+
 ### Changed
 
 - **Project structure**: Maven modules are now grouped under semantic

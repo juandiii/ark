@@ -1,15 +1,15 @@
 <?xml version="1.0"?>
-<project xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd" xmlns="http://maven.apache.org/POM/4.0.0"
-    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
   <parent>
     <groupId>xyz.juandiii</groupId>
-    <artifactId>ark-quarkus-jackson-parent</artifactId>
+    <artifactId>ark-quarkus-jackson-vertx-parent</artifactId>
     <version>1.0.8-SNAPSHOT</version>
   </parent>
-  <artifactId>ark-quarkus-jackson-deployment</artifactId>
-  <name>ark-quarkus-jackson - Deployment</name>
-  <description>Quarkus extension deployment for Ark HTTP client with Jackson</description>
+  <artifactId>ark-quarkus-jackson-vertx-deployment</artifactId>
+  <name>ark-quarkus-jackson-vertx - Deployment</name>
+  <description>Quarkus extension deployment for the Ark Vert.x Mutiny transport add-on</description>
   <url>https://github.com/juandiii/ark</url>
 
   <licenses>
@@ -36,7 +36,13 @@
   <dependencies>
     <dependency>
       <groupId>xyz.juandiii</groupId>
-      <artifactId>ark-quarkus-jackson</artifactId>
+      <artifactId>ark-quarkus-jackson-deployment</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+
+    <dependency>
+      <groupId>xyz.juandiii</groupId>
+      <artifactId>ark-quarkus-jackson-vertx</artifactId>
       <version>${project.version}</version>
     </dependency>
 
@@ -47,12 +53,7 @@
 
     <dependency>
       <groupId>io.quarkus</groupId>
-      <artifactId>quarkus-jackson-deployment</artifactId>
-    </dependency>
-
-    <dependency>
-      <groupId>io.quarkus</groupId>
-      <artifactId>quarkus-tls-registry-deployment</artifactId>
+      <artifactId>quarkus-vertx-deployment</artifactId>
     </dependency>
 
     <dependency>

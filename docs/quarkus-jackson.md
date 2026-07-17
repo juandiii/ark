@@ -4,6 +4,35 @@ The `ark-quarkus-jackson` extension auto-configures Ark HTTP clients for Quarkus
 
 ---
 
+## Which extension?
+
+Ark ships two Quarkus extensions:
+
+| Extension | Includes | When to pick |
+|---|---|---|
+| `ark-quarkus-jackson` | JDK transport (sync + async), Jackson, TLS registry, proxy scanning | Default. Lean, no Vert.x, smaller native images. |
+| `ark-quarkus-jackson-vertx` | Everything above PLUS Vert.x Mutiny transport, Vert.x TLS resolver, Mutiny client builder | Add when you have proxy methods returning `Uni<T>`/`Multi<T>` or you want the native Vert.x event-loop integration. |
+
+Add exactly ONE of the two:
+
+```xml
+<!-- Slim -->
+<dependency>
+  <groupId>xyz.juandiii</groupId>
+  <artifactId>ark-quarkus-jackson</artifactId>
+</dependency>
+
+<!-- OR: JDK + Vert.x Mutiny -->
+<dependency>
+  <groupId>xyz.juandiii</groupId>
+  <artifactId>ark-quarkus-jackson-vertx</artifactId>
+</dependency>
+```
+
+The vertx add-on transitively depends on the slim extension — you don't need both.
+
+---
+
 ## Installation
 
 ```xml
@@ -17,14 +46,19 @@ The `ark-quarkus-jackson` extension auto-configures Ark HTTP clients for Quarkus
 
 ## What It Provides
 
-The extension registers the following CDI beans:
+The slim `ark-quarkus-jackson` extension registers the following CDI beans:
 
 | Bean | Scope | Description |
 |------|-------|-------------|
 | `JsonSerializer` | `@Singleton` | `JacksonClassicSerializer` using Quarkus-managed `ObjectMapper` |
 | `HttpTransport` | `@Singleton` | `ArkJdkSyncTransport` with default `HttpClient` |
-| `MutinyHttpTransport` | `@Singleton` | `ArkVertxMutinyTransport` with Quarkus-managed `Vertx` |
 | `ArkClient.Builder` | `@Dependent` | Pre-configured sync builder |
+
+Add the `ark-quarkus-jackson-vertx` add-on to additionally get:
+
+| Bean | Scope | Description |
+|------|-------|-------------|
+| `MutinyHttpTransport` | `@Singleton` | `ArkVertxMutinyTransport` with Quarkus-managed `Vertx` |
 | `MutinyArkClient.Builder` | `@Dependent` | Pre-configured Mutiny builder |
 
 All beans use `@DefaultBean` - define your own to override any of them.

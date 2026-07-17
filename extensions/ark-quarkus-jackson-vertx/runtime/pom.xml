@@ -1,15 +1,15 @@
 <?xml version="1.0"?>
-<project xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd" xmlns="http://maven.apache.org/POM/4.0.0"
-    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
   <parent>
     <groupId>xyz.juandiii</groupId>
-    <artifactId>ark-quarkus-jackson-parent</artifactId>
+    <artifactId>ark-quarkus-jackson-vertx-parent</artifactId>
     <version>1.0.8-SNAPSHOT</version>
   </parent>
-  <artifactId>ark-quarkus-jackson</artifactId>
-  <name>ark-quarkus-jackson - Runtime</name>
-  <description>Quarkus extension runtime for Ark HTTP client with Jackson</description>
+  <artifactId>ark-quarkus-jackson-vertx</artifactId>
+  <name>ark-quarkus-jackson-vertx - Runtime</name>
+  <description>Quarkus extension runtime for Ark Vert.x Mutiny transport (add-on on top of ark-quarkus-jackson)</description>
   <url>https://github.com/juandiii/ark</url>
 
   <licenses>
@@ -34,47 +34,25 @@
 
   <dependencies>
     <dependency>
-      <groupId>io.quarkus</groupId>
-      <artifactId>quarkus-arc</artifactId>
-    </dependency>
-
-    <dependency>
-      <groupId>io.quarkus</groupId>
-      <artifactId>quarkus-jackson</artifactId>
+      <groupId>xyz.juandiii</groupId>
+      <artifactId>ark-quarkus-jackson</artifactId>
+      <version>${project.version}</version>
     </dependency>
 
     <dependency>
       <groupId>io.quarkus</groupId>
-      <artifactId>quarkus-tls-registry</artifactId>
+      <artifactId>quarkus-vertx</artifactId>
     </dependency>
 
     <dependency>
       <groupId>xyz.juandiii</groupId>
-      <artifactId>ark-core</artifactId>
+      <artifactId>ark-mutiny</artifactId>
       <version>${project.version}</version>
     </dependency>
 
     <dependency>
       <groupId>xyz.juandiii</groupId>
-      <artifactId>ark-jackson-classic</artifactId>
-      <version>${project.version}</version>
-    </dependency>
-
-    <dependency>
-      <groupId>xyz.juandiii</groupId>
-      <artifactId>ark-proxy-jaxrs</artifactId>
-      <version>${project.version}</version>
-    </dependency>
-
-    <dependency>
-      <groupId>xyz.juandiii</groupId>
-      <artifactId>ark-async</artifactId>
-      <version>${project.version}</version>
-    </dependency>
-
-    <dependency>
-      <groupId>xyz.juandiii</groupId>
-      <artifactId>ark-transport-jdk</artifactId>
+      <artifactId>ark-transport-vertx-mutiny</artifactId>
       <version>${project.version}</version>
     </dependency>
   </dependencies>
@@ -93,7 +71,7 @@
               <goal>extension-descriptor</goal>
             </goals>
             <configuration>
-              <deployment>${project.groupId}:ark-quarkus-jackson-deployment:${project.version}</deployment>
+              <deployment>${project.groupId}:ark-quarkus-jackson-vertx-deployment:${project.version}</deployment>
             </configuration>
           </execution>
         </executions>
@@ -112,6 +90,5 @@
         </configuration>
       </plugin>
     </plugins>
-
   </build>
 </project>

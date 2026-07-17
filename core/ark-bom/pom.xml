@@ -187,6 +187,16 @@
                 <artifactId>ark-quarkus-jackson-deployment</artifactId>
                 <version>1.0.8-SNAPSHOT</version>
             </dependency>
+            <dependency>
+                <groupId>xyz.juandiii</groupId>
+                <artifactId>ark-quarkus-jackson-vertx</artifactId>
+                <version>1.0.8-SNAPSHOT</version>
+            </dependency>
+            <dependency>
+                <groupId>xyz.juandiii</groupId>
+                <artifactId>ark-quarkus-jackson-vertx-deployment</artifactId>
+                <version>1.0.8-SNAPSHOT</version>
+            </dependency>
         </dependencies>
     </dependencyManagement>
 </project>

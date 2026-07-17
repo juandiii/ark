@@ -1,4 +1,4 @@
-package xyz.juandiii.ark.quarkus;
+package xyz.juandiii.ark.quarkus.vertx;
 
 import io.vertx.core.net.KeyCertOptions;
 import io.vertx.core.net.TrustOptions;

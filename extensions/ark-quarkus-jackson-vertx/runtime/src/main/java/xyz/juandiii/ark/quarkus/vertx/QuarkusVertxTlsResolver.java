@@ -1,4 +1,4 @@
-package xyz.juandiii.ark.quarkus;
+package xyz.juandiii.ark.quarkus.vertx;
 
 import io.quarkus.tls.TlsConfiguration;
 import io.quarkus.tls.TlsConfigurationRegistry;

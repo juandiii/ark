@@ -1,55 +1,47 @@
-package xyz.juandiii.ark.quarkus;
+package xyz.juandiii.ark.quarkus.vertx;
 
 import io.quarkus.arc.Arc;
 import io.quarkus.runtime.RuntimeValue;
 import io.quarkus.runtime.annotations.Recorder;
-import xyz.juandiii.ark.async.http.decorator.AsyncRetryOps;
-import xyz.juandiii.ark.core.ArkClient;
-import xyz.juandiii.ark.core.JsonSerializer;
-import xyz.juandiii.ark.async.AsyncArkClient;
+import io.vertx.ext.web.client.WebClientOptions;
+import io.vertx.mutiny.core.Vertx;
+import io.vertx.mutiny.ext.web.client.WebClient;
 import xyz.juandiii.ark.core.AbstractArkBuilder;
-import xyz.juandiii.ark.core.http.decorator.Retry;
-import xyz.juandiii.ark.core.http.decorator.SyncRetryOps;
-import xyz.juandiii.ark.core.interceptor.LoggingInterceptor;
-import xyz.juandiii.ark.core.interceptor.RequestInterceptor;
-import xyz.juandiii.ark.core.proxy.InterceptorResolver;
-import xyz.juandiii.ark.core.proxy.HttpVersion;
+import xyz.juandiii.ark.core.JsonSerializer;
 import xyz.juandiii.ark.core.http.RetryPolicy;
-import xyz.juandiii.ark.core.ssl.InsecureSslContext;
+import xyz.juandiii.ark.core.interceptor.LoggingInterceptor;
 import xyz.juandiii.ark.core.proxy.ArkProxy;
+import xyz.juandiii.ark.core.proxy.HttpVersion;
+import xyz.juandiii.ark.core.proxy.InterceptorResolver;
 import xyz.juandiii.ark.core.proxy.PropertyResolver;
 import xyz.juandiii.ark.core.proxy.RegisterArkClient;
-import xyz.juandiii.ark.core.proxy.TlsResolver;
+import xyz.juandiii.ark.core.ssl.InsecureSslContext;
+import xyz.juandiii.ark.core.util.StringUtils;
+import xyz.juandiii.ark.mutiny.MutinyArkClient;
 import xyz.juandiii.ark.quarkus.config.ArkClientNamedConfig;
 import xyz.juandiii.ark.quarkus.config.ArkClientsConfig;
-import xyz.juandiii.ark.transport.jdk.ArkJdkAsyncTransport;
-import xyz.juandiii.ark.transport.jdk.ArkJdkSyncTransport;
-import xyz.juandiii.ark.core.util.StringUtils;
+import xyz.juandiii.ark.transport.vertx.mutiny.ArkVertxMutinyTransport;
 
-import javax.net.ssl.SSLContext;
-import java.lang.reflect.Method;
-import java.net.http.HttpClient;
 import java.time.Duration;
 import java.util.Map;
-import java.util.concurrent.CompletableFuture;
 import java.util.function.Supplier;
 
 /**
- * Quarkus recorder that creates Ark proxy client beans at runtime.
- * Uses typed @ConfigMapping configuration instead of manual property lookup.
+ * Quarkus recorder that creates Mutiny-based Ark proxy client beans at runtime for
+ * @RegisterArkClient interfaces whose methods return Uni/Multi.
  *
  * @author Juan Diego Lopez V.
  */
 @Recorder
-public class ArkRecorder {
+public class ArkVertxRecorder {
 
     private final RuntimeValue<ArkClientsConfig> clientsConfigValue;
 
-    public ArkRecorder(RuntimeValue<ArkClientsConfig> clientsConfigValue) {
+    public ArkVertxRecorder(RuntimeValue<ArkClientsConfig> clientsConfigValue) {
         this.clientsConfigValue = clientsConfigValue;
     }
 
-    public Supplier<?> createArkClient(String interfaceName, String configKey) {
+    public Supplier<?> createMutinyArkClient(String interfaceName, String configKey) {
         return () -> {
             try {
                 ArkClientsConfig clientsConfig = clientsConfigValue.getValue();
@@ -63,7 +55,7 @@ public class ArkRecorder {
                 ResolvedConfig resolved = resolveConfig(key, config, annotation, clientsConfig.loggingLevel());
                 return buildProxy(iface, serializer, resolved);
             } catch (ClassNotFoundException e) {
-                throw new RuntimeException("Failed to create Ark client for " + interfaceName, e);
+                throw new RuntimeException("Failed to create Mutiny Ark client for " + interfaceName, e);
             }
         };
     }
@@ -96,39 +88,13 @@ public class ArkRecorder {
     }
 
     private static Object buildProxy(Class<?> iface, JsonSerializer serializer, ResolvedConfig rc) {
-        if (usesReactiveReturnTypes(iface)) {
-            throw new IllegalStateException(
-                    "Interface " + iface.getName() + " has methods returning Uni/Multi but "
-                            + "ark-quarkus-jackson-vertx is not on the classpath. Add the vertx add-on: "
-                            + "xyz.juandiii:ark-quarkus-jackson-vertx");
-        } else if (usesAsyncReturnTypes(iface)) {
-            SSLContext sslContext = resolveSslContext(rc.clientName(), rc.tlsConfigName(), rc.trustAll());
-            var jdk = new ArkJdkAsyncTransport(buildHttpClient(rc.httpVersion(), rc.connectTimeout(), sslContext));
-            AsyncArkClient.Builder builder = AsyncArkClient.builder()
-                    .serializer(serializer)
-                    .transport(rc.retryPolicy() != null
-                            ? jdk.with(Retry.of(rc.retryPolicy(), new AsyncRetryOps()))
-                            : jdk)
-                    .baseUrl(rc.baseUrl())
-                    .httpVersion(rc.httpVersion())
-                    .connectTimeout(rc.connectTimeout())
-                    .readTimeout(rc.readTimeout())
-                    .requestInterceptor(defaultTimeout(rc.readTimeout()));
-            applyInterceptors(builder, rc);
-            return ArkProxy.create(iface, builder.build());
-        }
-        SSLContext sslContext = resolveSslContext(rc.clientName(), rc.tlsConfigName(), rc.trustAll());
-        var jdkTransport = new ArkJdkSyncTransport(buildHttpClient(rc.httpVersion(), rc.connectTimeout(), sslContext));
-        ArkClient.Builder builder = ArkClient.builder()
+        MutinyArkClient.Builder builder = MutinyArkClient.builder()
                 .serializer(serializer)
-                .transport(rc.retryPolicy() != null
-                        ? jdkTransport.with(Retry.of(rc.retryPolicy(), new SyncRetryOps()))
-                        : jdkTransport)
+                .transport(buildMutinyTransport(rc))
                 .baseUrl(rc.baseUrl())
                 .httpVersion(rc.httpVersion())
                 .connectTimeout(rc.connectTimeout())
-                .readTimeout(rc.readTimeout())
-                .requestInterceptor(defaultTimeout(rc.readTimeout()));
+                .readTimeout(rc.readTimeout());
         applyInterceptors(builder, rc);
         return ArkProxy.create(iface, builder.build());
     }
@@ -166,51 +132,26 @@ public class ArkRecorder {
                 .build();
     }
 
-    private static SSLContext resolveSslContext(String clientName, String tlsConfigName, boolean trustAll) {
-        if (trustAll) return InsecureSslContext.create(clientName);
-        if (StringUtils.isEmpty(tlsConfigName)) return null;
-        TlsResolver resolver = Arc.container().instance(TlsResolver.class).get();
-        return resolver.resolve(tlsConfigName);
-    }
+    private static ArkVertxMutinyTransport buildMutinyTransport(ResolvedConfig rc) {
+        Vertx vertx = Arc.container().instance(Vertx.class).get();
+        WebClientOptions options = new WebClientOptions()
+                .setProtocolVersion(rc.httpVersion() == HttpVersion.HTTP_2
+                        ? io.vertx.core.http.HttpVersion.HTTP_2
+                        : io.vertx.core.http.HttpVersion.HTTP_1_1)
+                .setConnectTimeout(rc.connectTimeout() * 1000)
+                .setIdleTimeout(rc.readTimeout());
 
-    private static HttpClient buildHttpClient(HttpVersion httpVersion, int connectTimeout,
-                                               SSLContext sslContext) {
-        HttpClient.Builder httpBuilder = HttpClient.newBuilder()
-                .version(httpVersion == HttpVersion.HTTP_2
-                        ? HttpClient.Version.HTTP_2
-                        : HttpClient.Version.HTTP_1_1)
-                .connectTimeout(Duration.ofSeconds(connectTimeout));
-        if (sslContext != null) {
-            httpBuilder.sslContext(sslContext);
+        if (rc.trustAll()) {
+            InsecureSslContext.warnTrustAll(rc.clientName());
+            options.setSsl(true).setTrustAll(true).setVerifyHost(false);
+        } else if (StringUtils.isNotEmpty(rc.tlsConfigName())) {
+            VertxTlsResolver vertxTlsResolver =
+                    Arc.container().instance(VertxTlsResolver.class).get();
+            options.setSsl(true);
+            vertxTlsResolver.resolveTrustOptions(rc.tlsConfigName()).ifPresent(options::setTrustOptions);
+            vertxTlsResolver.resolveKeyCertOptions(rc.tlsConfigName()).ifPresent(options::setKeyCertOptions);
         }
-        return httpBuilder.build();
-    }
 
-    private static RequestInterceptor defaultTimeout(int readTimeout) {
-        return ctx -> {
-            if (ctx.timeout() == null) {
-                ctx.timeout(Duration.ofSeconds(readTimeout));
-            }
-        };
-    }
-
-    private static boolean usesReactiveReturnTypes(Class<?> iface) {
-        for (Method method : iface.getMethods()) {
-            String name = method.getReturnType().getName();
-            if (name.equals("io.smallrye.mutiny.Uni")
-                    || name.equals("io.smallrye.mutiny.Multi")) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    private static boolean usesAsyncReturnTypes(Class<?> iface) {
-        for (Method method : iface.getMethods()) {
-            if (method.getReturnType() == CompletableFuture.class) {
-                return true;
-            }
-        }
-        return false;
+        return new ArkVertxMutinyTransport(WebClient.create(vertx, options));
     }
 }

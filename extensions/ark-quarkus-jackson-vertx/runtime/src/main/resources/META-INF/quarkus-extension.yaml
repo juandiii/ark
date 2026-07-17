@@ -1,0 +1,15 @@
+---
+name: "Ark HTTP - Vert.x Mutiny transport"
+description: "Vert.x Mutiny transport add-on for the Ark HTTP client Quarkus extension"
+metadata:
+  keywords:
+    - "ark"
+    - "http"
+    - "http-client"
+    - "vertx"
+    - "mutiny"
+    - "reactive"
+  categories:
+    - "web"
+  status: "stable"
+  guide: "https://github.com/juandiii/ark/blob/main/docs/quarkus-jackson.md"
