@@ -1,3 +1,17 @@
+## [v1.0.8](https://github.com/juandiii/ark/releases/tag/v1.0.8) — 2026-07-17
+
+### ✨ Features
+
+- Develop (#95) @juandiii
+
+### 🐛 Bug Fixes
+
+- Change brand (#96) @juandiii
+
+**Full Changelog**: https://github.com/juandiii/ark/compare/v1.0.7...v1.0.8
+
+---
+
 ## [v1.0.7](https://github.com/juandiii/ark/releases/tag/v1.0.7) — 2026-06-19
 
 ### ⚠️ Breaking Changes

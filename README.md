@@ -60,7 +60,7 @@ they **run** (Spring / Quarkus / standalone). Each axis is pluggable - the rest 
     <dependency>
       <groupId>xyz.juandiii</groupId>
       <artifactId>ark-bom</artifactId>
-      <version>${ark.version}</version> <!-- ark-bom -->
+      <version>1.0.8</version> <!-- ark-bom -->
       <type>pom</type>
       <scope>import</scope>
     </dependency>
