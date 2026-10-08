@@ -209,6 +209,7 @@ ark.client."user-api".tls-configuration-name=my-cert
 ark.client."user-api".trust-all=false
 ark.client."user-api".throw-on-error=true
 ark.client."user-api".follow-redirects=true
+ark.client."user-api".max-response-bytes=20971520
 ark.client."user-api".headers.X-Api-Key=${API_KEY}
 ark.client."user-api".retry.max-attempts=3
 ark.client."user-api".retry.delay=500
@@ -219,6 +220,8 @@ ark.client."user-api".retry.delay=500
 > Set `throw-on-error=false` to return HTTP 4xx/5xx responses instead of raising `ApiException`. See [Permissive error handling](sync.md#permissive-error-handling).
 
 > `follow-redirects` (default `true`) makes the default JDK `HttpClient` follow 3xx redirects, except https to http downgrades. Set it to `false` to receive 3xx responses as-is. If you supply your own `HttpClient`/`HttpTransport` bean, you set the redirect policy yourself (`HttpClient.newBuilder().followRedirects(HttpClient.Redirect.NORMAL)`).
+
+> `max-response-bytes` (default `0`, unlimited) caps the response body size. Larger bodies fail with `ResponseTooLargeException`.
 
 See [Retry & Backoff](retry.md) for full retry configuration.
 
@@ -233,6 +236,29 @@ public interface UserApi {
 ```
 
 Properties take precedence over annotation values. Quarkus map keys use quoted format: `ark.client."key-name".property`.
+
+---
+
+## Fluent clients with named configuration
+
+The `ark.client."<name>".*` properties also configure fluent (non-declarative) clients. Inject `ArkClients` and ask for a builder by key:
+
+```java
+@Inject ArkClients arkClients;
+
+Ark client = arkClients.builder("fxrates-sources").build();
+```
+
+```properties
+ark.client."fxrates-sources".base-url=https://api.example.com
+ark.client."fxrates-sources".connect-timeout=10
+ark.client."fxrates-sources".read-timeout=60
+ark.client."fxrates-sources".max-response-bytes=20971520
+```
+
+Base URL, timeouts, TLS, headers, retry, redirects, `throw-on-error` and `max-response-bytes` are applied. Use `arkClients.asyncBuilder("name")` for the `CompletableFuture` variant (`AsyncArkClient.Builder`).
+
+Each `builder(...)` call returns a fresh builder, so you can keep customizing it before `build()`. An unknown key throws `ArkException`.
 
 ---
 
