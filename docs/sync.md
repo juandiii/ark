@@ -233,6 +233,17 @@ if (raw.isError()) {
 together with `.noThrow()` (or client-level `throwOnError(false)`) to
 inspect bodies on 4xx/5xx without exceptions.
 
+### Binary responses
+
+For downloads such as spreadsheets or archives, read the bytes exactly as received:
+
+```java
+byte[] xlsx = client.get("/files/report.xlsx").retrieve().bodyAsBytes();
+// or, with status/headers:
+RawResponse raw = client.get("/files/report.xlsx").retrieve().raw();
+byte[] bytes = raw.bodyBytes();
+```
+
 ---
 
 ## Related

@@ -228,6 +228,8 @@ raw.onItem().transformToUni(r -> {
 together with `.noThrow()` (or client-level `throwOnError(false)`) to
 inspect bodies on 4xx/5xx without the Uni failing.
 
+`.retrieve().bodyAsBytes()` returns a `Uni<byte[]>` with the response bytes exactly as received (for example, file downloads).
+
 ---
 
 ## Related

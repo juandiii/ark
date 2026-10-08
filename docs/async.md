@@ -170,6 +170,8 @@ futureRaw.thenAccept(raw -> {
 Use it together with `.noThrow()` (or client-level `throwOnError(false)`)
 to inspect bodies on 4xx/5xx without the future failing.
 
+`.retrieve().bodyAsBytes()` returns a `CompletableFuture<byte[]>` with the response bytes exactly as received (for example, file downloads).
+
 ---
 
 ## Related

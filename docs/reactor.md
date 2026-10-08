@@ -254,6 +254,8 @@ raw.flatMap(r -> {
 together with `.noThrow()` (or client-level `throwOnError(false)`) to
 inspect bodies on 4xx/5xx without the Mono failing.
 
+`.retrieve().bodyAsBytes()` returns a `Mono<byte[]>` with the response bytes exactly as received (for example, file downloads).
+
 ---
 
 ## Related
