@@ -60,7 +60,7 @@ public final class ArkJdkSyncTransport implements HttpTransport {
 
     private RawResponse doSend(String method, URI uri, HttpRequest request) {
         try {
-            HttpResponse<byte[]> response = httpClient.send(request, ArkJdkRequestBuilder.bodyHandler(maxResponseBytes));
+            HttpResponse<byte[]> response = httpClient.send(request, ArkJdkRequestBuilder.bodyHandler(maxResponseBytes, method));
             return RawResponse.ofBytes(response.statusCode(), response.headers().map(), response.body());
         } catch (IOException e) {
             ResponseTooLargeException tooLarge = ArkJdkRequestBuilder.findTooLarge(e);

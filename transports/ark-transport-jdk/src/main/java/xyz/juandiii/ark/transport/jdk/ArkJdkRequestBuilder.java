@@ -28,13 +28,24 @@ final class ArkJdkRequestBuilder {
      * Creates a body handler that reads the body as {@code byte[]}, aborting with a
      * {@link ResponseTooLargeException} when it exceeds {@code maxBytes}.
      *
+     * <p>The declared {@code Content-Length} is used for early rejection only when the
+     * response can carry a body (not HEAD, 1xx, 204 or 304); the streamed byte count is
+     * always enforced.
+     *
      * @param maxBytes maximum body size in bytes; a value {@code <= 0} means no limit
+     * @param method   the HTTP method of the request
      * @return the body handler
      */
-    static HttpResponse.BodyHandler<byte[]> bodyHandler(long maxBytes) {
+    static HttpResponse.BodyHandler<byte[]> bodyHandler(long maxBytes, String method) {
         if (maxBytes <= 0) return HttpResponse.BodyHandlers.ofByteArray();
-        return info -> new LimitedByteArraySubscriber(maxBytes,
-                info.headers().firstValueAsLong("Content-Length").orElse(-1));
+        boolean head = "HEAD".equalsIgnoreCase(method);
+        return info -> {
+            int status = info.statusCode();
+            boolean bodiless = head || status < 200 || status == 204 || status == 304;
+            long contentLength = bodiless ? -1
+                    : info.headers().firstValueAsLong("Content-Length").orElse(-1);
+            return new LimitedByteArraySubscriber(maxBytes, contentLength);
+        };
     }
 
     /**
