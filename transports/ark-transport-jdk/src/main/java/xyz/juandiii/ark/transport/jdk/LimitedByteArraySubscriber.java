@@ -7,6 +7,7 @@ import java.nio.ByteBuffer;
 import java.util.List;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.Flow;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * Body subscriber that collects the body as {@code byte[]} but aborts with a
@@ -19,13 +20,19 @@ final class LimitedByteArraySubscriber implements HttpResponse.BodySubscriber<by
     private final HttpResponse.BodySubscriber<byte[]> delegate = HttpResponse.BodySubscribers.ofByteArray();
     private final long maxBytes;
     private final long contentLength;
+    private final AtomicBoolean exceeded;
     private Flow.Subscription subscription;
     private long total;
     private boolean done;
 
     LimitedByteArraySubscriber(long maxBytes, long contentLength) {
+        this(maxBytes, contentLength, new AtomicBoolean());
+    }
+
+    LimitedByteArraySubscriber(long maxBytes, long contentLength, AtomicBoolean exceeded) {
         this.maxBytes = maxBytes;
         this.contentLength = contentLength;
+        this.exceeded = exceeded;
     }
 
     @Override
@@ -69,7 +76,8 @@ final class LimitedByteArraySubscriber implements HttpResponse.BodySubscriber<by
 
     private void abort() {
         done = true;
-        subscription.cancel();
+        exceeded.set(true);
         delegate.onError(new ResponseTooLargeException(maxBytes));
+        subscription.cancel();
     }
 }

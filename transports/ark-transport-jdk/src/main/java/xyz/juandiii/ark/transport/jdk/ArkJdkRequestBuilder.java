@@ -7,6 +7,7 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.time.Duration;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * Package-private helper that builds {@link HttpRequest} instances shared by
@@ -37,6 +38,19 @@ final class ArkJdkRequestBuilder {
      * @return the body handler
      */
     static HttpResponse.BodyHandler<byte[]> bodyHandler(long maxBytes, String method) {
+        return bodyHandler(maxBytes, method, new AtomicBoolean());
+    }
+
+    /**
+     * Same as {@link #bodyHandler(long, String)} but records in {@code exceeded} when the limit trips,
+     * so callers do not depend on how the JDK wraps the resulting failure.
+     *
+     * @param maxBytes maximum body size, {@code <= 0} for unlimited
+     * @param method   the HTTP method
+     * @param exceeded per-request flag set when the limit is exceeded
+     * @return the body handler
+     */
+    static HttpResponse.BodyHandler<byte[]> bodyHandler(long maxBytes, String method, AtomicBoolean exceeded) {
         if (maxBytes <= 0) return HttpResponse.BodyHandlers.ofByteArray();
         boolean head = "HEAD".equalsIgnoreCase(method);
         return info -> {
@@ -44,7 +58,7 @@ final class ArkJdkRequestBuilder {
             boolean bodiless = head || status < 200 || status == 204 || status == 304;
             long contentLength = bodiless ? -1
                     : info.headers().firstValueAsLong("Content-Length").orElse(-1);
-            return new LimitedByteArraySubscriber(maxBytes, contentLength);
+            return new LimitedByteArraySubscriber(maxBytes, contentLength, exceeded);
         };
     }
 

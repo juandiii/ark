@@ -11,6 +11,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * Asynchronous HTTP transport bridge using Java's native {@link HttpClient}.
@@ -64,15 +65,16 @@ public final class ArkJdkAsyncTransport implements Transport<CompletableFuture<R
     }
 
     private CompletableFuture<RawResponse> doSendAsync(String method, URI uri, java.net.http.HttpRequest request) {
-        return httpClient.sendAsync(request, ArkJdkRequestBuilder.bodyHandler(maxResponseBytes, method))
+        AtomicBoolean exceeded = new AtomicBoolean();
+        return httpClient.sendAsync(request, ArkJdkRequestBuilder.bodyHandler(maxResponseBytes, method, exceeded))
                 .thenApplyAsync(response ->
                         RawResponse.ofBytes(response.statusCode(), response.headers().map(), response.body()),
                         executor)
                 .handle((response, error) -> {
                     if (error == null) return CompletableFuture.completedFuture(response);
-                    ResponseTooLargeException tooLarge = ArkJdkRequestBuilder.findTooLarge(error);
-                    return CompletableFuture.<RawResponse>failedFuture(tooLarge != null
-                            ? new ResponseTooLargeException(method, uri, tooLarge.limit())
+                    boolean tooLarge = exceeded.get() || ArkJdkRequestBuilder.findTooLarge(error) != null;
+                    return CompletableFuture.<RawResponse>failedFuture(tooLarge
+                            ? new ResponseTooLargeException(method, uri, maxResponseBytes)
                             : error);
                 })
                 .thenCompose(f -> f);

@@ -14,6 +14,7 @@ import java.net.http.HttpResponse;
 import java.time.Duration;
 import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * Synchronous HTTP transport bridge using Java's native {@link HttpClient}.
@@ -59,17 +60,18 @@ public final class ArkJdkSyncTransport implements HttpTransport {
     }
 
     private RawResponse doSend(String method, URI uri, HttpRequest request) {
+        AtomicBoolean exceeded = new AtomicBoolean();
         try {
-            HttpResponse<byte[]> response = httpClient.send(request, ArkJdkRequestBuilder.bodyHandler(maxResponseBytes, method));
+            HttpResponse<byte[]> response = httpClient.send(request,
+                    ArkJdkRequestBuilder.bodyHandler(maxResponseBytes, method, exceeded));
             return RawResponse.ofBytes(response.statusCode(), response.headers().map(), response.body());
         } catch (IOException e) {
-            ResponseTooLargeException tooLarge = ArkJdkRequestBuilder.findTooLarge(e);
-            if (tooLarge != null) {
-                throw new ResponseTooLargeException(method, uri, tooLarge.limit());
+            if (exceeded.get() || ArkJdkRequestBuilder.findTooLarge(e) != null) {
+                throw new ResponseTooLargeException(method, uri, maxResponseBytes);
             }
             throw ArkException.fromIOException(method, uri, e);
         } catch (ResponseTooLargeException e) {
-            throw new ResponseTooLargeException(method, uri, e.limit());
+            throw new ResponseTooLargeException(method, uri, maxResponseBytes);
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
             throw new RequestInterruptedException(method, uri, "Request interrupted", e);
