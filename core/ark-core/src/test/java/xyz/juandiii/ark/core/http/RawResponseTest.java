@@ -6,6 +6,7 @@ import org.junit.jupiter.params.provider.ValueSource;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -35,5 +36,28 @@ class RawResponseTest {
         assertEquals(200, raw.statusCode());
         assertEquals("body", raw.body());
         assertTrue(raw.headers().containsKey("Content-Type"));
+    }
+
+    @Test
+    void header_matchesCaseInsensitively() {
+        RawResponse raw = new RawResponse(200, Map.of("etag", List.of("\"abc\"")), "");
+        assertEquals(Optional.of("\"abc\""), raw.header("ETag"));
+    }
+
+    @Test
+    void header_returnsFirstValue() {
+        RawResponse raw = new RawResponse(200, Map.of("X-Multi", List.of("a", "b")), "");
+        assertEquals(Optional.of("a"), raw.header("X-Multi"));
+    }
+
+    @Test
+    void header_absent_returnsEmpty() {
+        RawResponse raw = new RawResponse(200, Map.of("X-Other", List.of("a")), "");
+        assertTrue(raw.header("ETag").isEmpty());
+    }
+
+    @Test
+    void header_nullHeadersMap_returnsEmpty() {
+        assertTrue(new RawResponse(200, null, "x").header("A").isEmpty());
     }
 }

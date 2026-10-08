@@ -2,6 +2,7 @@ package xyz.juandiii.ark.core.http;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 /**
  * Immutable raw HTTP response as produced by an {@link HttpTransport}. Contains
@@ -30,5 +31,23 @@ public record RawResponse(int statusCode, Map<String, List<String>> headers, Str
      */
     public boolean isError() {
         return isErrorStatus(statusCode);
+    }
+
+    /**
+     * Returns the first value of the given response header, matching the name
+     * case-insensitively (HTTP header names are case-insensitive per RFC 9110, and
+     * transports differ in how they store them).
+     *
+     * @param name header name, e.g. {@code "ETag"}
+     * @return the first value, or empty if the header is absent or {@link #headers()} is {@code null}
+     */
+    public Optional<String> header(String name) {
+        if (headers == null || name == null) return Optional.empty();
+        for (Map.Entry<String, List<String>> e : headers.entrySet()) {
+            if (name.equalsIgnoreCase(e.getKey()) && e.getValue() != null && !e.getValue().isEmpty()) {
+                return Optional.of(e.getValue().get(0));
+            }
+        }
+        return Optional.empty();
     }
 }
