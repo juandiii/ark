@@ -2,6 +2,7 @@ package xyz.juandiii.ark.transport.jdk;
 
 import xyz.juandiii.ark.core.exceptions.ArkException;
 import xyz.juandiii.ark.core.exceptions.RequestInterruptedException;
+import xyz.juandiii.ark.core.exceptions.ResponseTooLargeException;
 import xyz.juandiii.ark.core.http.HttpTransport;
 import xyz.juandiii.ark.core.http.RawResponse;
 
@@ -27,10 +28,20 @@ import java.util.Objects;
 public final class ArkJdkSyncTransport implements HttpTransport {
 
     private final HttpClient httpClient;
+    private final long maxResponseBytes;
 
     public ArkJdkSyncTransport(HttpClient httpClient) {
+        this(httpClient, 0);
+    }
+
+    /**
+     * @param httpClient       the pre-configured HTTP client
+     * @param maxResponseBytes maximum response body size in bytes; a value {@code <= 0} means no limit
+     */
+    public ArkJdkSyncTransport(HttpClient httpClient, long maxResponseBytes) {
         Objects.requireNonNull(httpClient, "HttpClient is required");
         this.httpClient = httpClient;
+        this.maxResponseBytes = maxResponseBytes;
     }
 
     @Override
@@ -49,10 +60,16 @@ public final class ArkJdkSyncTransport implements HttpTransport {
 
     private RawResponse doSend(String method, URI uri, HttpRequest request) {
         try {
-            HttpResponse<byte[]> response = httpClient.send(request, HttpResponse.BodyHandlers.ofByteArray());
+            HttpResponse<byte[]> response = httpClient.send(request, ArkJdkRequestBuilder.bodyHandler(maxResponseBytes));
             return RawResponse.ofBytes(response.statusCode(), response.headers().map(), response.body());
         } catch (IOException e) {
+            ResponseTooLargeException tooLarge = ArkJdkRequestBuilder.findTooLarge(e);
+            if (tooLarge != null) {
+                throw new ResponseTooLargeException(method, uri, tooLarge.limit());
+            }
             throw ArkException.fromIOException(method, uri, e);
+        } catch (ResponseTooLargeException e) {
+            throw new ResponseTooLargeException(method, uri, e.limit());
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
             throw new RequestInterruptedException(method, uri, "Request interrupted", e);
