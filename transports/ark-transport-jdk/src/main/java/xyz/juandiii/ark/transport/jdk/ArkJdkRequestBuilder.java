@@ -1,8 +1,8 @@
 package xyz.juandiii.ark.transport.jdk;
 
-import java.net.URI;
 import xyz.juandiii.ark.core.exceptions.ResponseTooLargeException;
 
+import java.net.URI;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.time.Duration;
