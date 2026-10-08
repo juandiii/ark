@@ -106,6 +106,13 @@ class ArkJdkHttpTransportTest {
             }
         });
 
+        server.createContext("/not-modified", exchange -> {
+            exchange.getResponseHeaders().add("ETag", "\"v1\"");
+            exchange.getResponseHeaders().add("Last-Modified", "Wed, 21 Oct 2015 07:28:00 GMT");
+            exchange.sendResponseHeaders(304, -1);
+            exchange.close();
+        });
+
         server.createContext("/no-body", exchange -> {
             exchange.sendResponseHeaders(204, -1);
             exchange.close();
@@ -167,6 +174,16 @@ class ArkJdkHttpTransportTest {
 
     @Nested
     class SyncSend {
+
+        @Test
+        void notModified_returns304WithConditionalHeaders() {
+            RawResponse response = transport().send("GET", baseUri.resolve("/not-modified"),
+                    Map.of("If-None-Match", "\"v1\""), null, null);
+
+            assertEquals(304, response.statusCode());
+            assertTrue(response.header("etag").isPresent());
+            assertTrue(response.header("last-modified").isPresent());
+        }
 
         @Test
         void givenSuccessEndpoint_whenSend_thenReturnsRawResponseWith200() {
