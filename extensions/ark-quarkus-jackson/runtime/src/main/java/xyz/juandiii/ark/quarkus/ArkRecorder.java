@@ -136,6 +136,7 @@ public class ArkRecorder {
                 .transport(rc.retryPolicy() != null
                         ? jdkTransport.with(Retry.of(rc.retryPolicy(), new SyncRetryOps()))
                         : jdkTransport)
+                .streamingTransport(jdkTransport)
                 .baseUrl(rc.baseUrl())
                 .httpVersion(rc.httpVersion())
                 .connectTimeout(rc.connectTimeout())

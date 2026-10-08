@@ -22,6 +22,7 @@ import java.util.Arrays;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class ArkClientsTest {
 
@@ -78,6 +79,22 @@ class ArkClientsTest {
     void givenMaxResponseBytes_whenBodyTooLarge_thenThrowsResponseTooLarge() {
         var client = arkClients.builder("src").build();
         assertThrows(ResponseTooLargeException.class, () -> client.get("/big").retrieve().raw());
+    }
+
+    @Test
+    void givenNamedConfig_whenRetrieveStream_thenAppliesLimitWhileReading() {
+        var client = arkClients.builder("src").build();
+        // Both outcomes are valid: with a Content-Length the limit trips before the response
+        // is returned; for a chunked body it trips while the stream is being read.
+        boolean observed = false;
+        try (var response = client.get("/big").noThrow().retrieveStream()) {
+            response.body().readAllBytes();
+        } catch (ResponseTooLargeException e) {
+            observed = true;
+        } catch (IOException e) {
+            throw new AssertionError(e);
+        }
+        assertTrue(observed, "expected ResponseTooLargeException");
     }
 
     @Test
