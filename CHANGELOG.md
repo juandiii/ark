@@ -20,6 +20,13 @@
 
 ## [Unreleased]
 
+### Behavior change
+
+- The JDK `HttpClient` built by the Spring Boot starter and the Quarkus extension now follows
+  redirects by default (`HttpClient.Redirect.NORMAL`; never https to http). 3xx responses that
+  previously reached the caller are now followed. Set `ark.client.<name>.follow-redirects=false`
+  to restore the old behavior.
+
 ### Breaking
 
 - **Quarkus extension split**: `ark-quarkus-jackson` no longer bundles the Vert.x Mutiny

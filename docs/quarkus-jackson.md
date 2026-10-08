@@ -206,6 +206,7 @@ ark.client."user-api".read-timeout=15
 ark.client."user-api".tls-configuration-name=my-cert
 ark.client."user-api".trust-all=false
 ark.client."user-api".throw-on-error=true
+ark.client."user-api".follow-redirects=true
 ark.client."user-api".headers.X-Api-Key=${API_KEY}
 ark.client."user-api".retry.max-attempts=3
 ark.client."user-api".retry.delay=500
@@ -214,6 +215,8 @@ ark.client."user-api".retry.delay=500
 > ⚠️ `trust-all=true` disables certificate validation. Use only in local development. See [Security & TLS in README](../README.md#tls).
 
 > Set `throw-on-error=false` to return HTTP 4xx/5xx responses instead of raising `ApiException`. See [Permissive error handling](sync.md#permissive-error-handling).
+
+> `follow-redirects` (default `true`) makes the default JDK `HttpClient` follow 3xx redirects, except https to http downgrades. Set it to `false` to receive 3xx responses as-is. If you supply your own `HttpClient`/`HttpTransport` bean, you set the redirect policy yourself (`HttpClient.newBuilder().followRedirects(HttpClient.Redirect.NORMAL)`).
 
 See [Retry & Backoff](retry.md) for full retry configuration.
 
