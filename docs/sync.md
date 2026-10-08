@@ -68,6 +68,8 @@ public class HttpClientsConfig {
 
 ## Making Requests
 
+> **Absolute URLs:** a full URL passed to `get/post/...` (for example `client.get("https://other-host/file")`) is used as-is and ignores `baseUrl`. Prefer `.queryParam()` for query values.
+
 ### GET
 
 ```java
