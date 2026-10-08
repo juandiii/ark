@@ -56,6 +56,13 @@ class ArkJdkHttpTransportTest {
             }
         });
 
+        server.createContext("/binary", exchange -> {
+            byte[] body = {0x50, 0x4B, 0x03, 0x04, (byte) 0xFF, (byte) 0xFE, 0x00};
+            exchange.getResponseHeaders().add("Content-Type", "application/octet-stream");
+            exchange.sendResponseHeaders(200, body.length);
+            try (OutputStream os = exchange.getResponseBody()) { os.write(body); }
+        });
+
         server.createContext("/not-found", exchange -> {
             byte[] body = "Resource not found".getBytes();
             exchange.sendResponseHeaders(404, body.length);
@@ -174,6 +181,14 @@ class ArkJdkHttpTransportTest {
 
     @Nested
     class SyncSend {
+
+        @Test
+        void binaryResponse_preservesBodyBytes() {
+            byte[] expected = {0x50, 0x4B, 0x03, 0x04, (byte) 0xFF, (byte) 0xFE, 0x00};
+            RawResponse raw = transport().send("GET", baseUri.resolve("/binary"), Map.of(), null, null);
+
+            assertArrayEquals(expected, raw.bodyBytes());
+        }
 
         @Test
         void notModified_returns304WithConditionalHeaders() {
@@ -408,6 +423,14 @@ class ArkJdkHttpTransportTest {
 
     @Nested
     class AsyncSendAsync {
+
+        @Test
+        void binaryResponse_preservesBodyBytes() throws Exception {
+            byte[] expected = {0x50, 0x4B, 0x03, 0x04, (byte) 0xFF, (byte) 0xFE, 0x00};
+            RawResponse raw = asyncTransport().send("GET", baseUri.resolve("/binary"), Map.of(), null, null).get();
+
+            assertArrayEquals(expected, raw.bodyBytes());
+        }
 
         @Test
         void givenSuccessEndpoint_whenSendAsync_thenReturnsRawResponseWith200() throws Exception {

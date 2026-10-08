@@ -49,8 +49,8 @@ public final class ArkJdkSyncTransport implements HttpTransport {
 
     private RawResponse doSend(String method, URI uri, HttpRequest request) {
         try {
-            HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
-            return new RawResponse(response.statusCode(), response.headers().map(), response.body());
+            HttpResponse<byte[]> response = httpClient.send(request, HttpResponse.BodyHandlers.ofByteArray());
+            return RawResponse.ofBytes(response.statusCode(), response.headers().map(), response.body());
         } catch (IOException e) {
             throw ArkException.fromIOException(method, uri, e);
         } catch (InterruptedException e) {

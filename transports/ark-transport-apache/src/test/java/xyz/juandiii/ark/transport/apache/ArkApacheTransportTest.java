@@ -45,6 +45,13 @@ class ArkApacheTransportTest {
             try (OutputStream os = exchange.getResponseBody()) { os.write(body); }
         });
 
+        server.createContext("/binary", exchange -> {
+            byte[] body = {0x50, 0x4B, 0x03, 0x04, (byte) 0xFF, (byte) 0xFE, 0x00};
+            exchange.getResponseHeaders().add("Content-Type", "application/octet-stream");
+            exchange.sendResponseHeaders(200, body.length);
+            try (OutputStream os = exchange.getResponseBody()) { os.write(body); }
+        });
+
         server.createContext("/not-found", exchange -> {
             byte[] body = "Not Found".getBytes();
             exchange.sendResponseHeaders(404, body.length);
@@ -141,6 +148,14 @@ class ArkApacheTransportTest {
 
     @Nested
     class SyncSend {
+
+        @Test
+        void binaryResponse_preservesBodyBytes() {
+            byte[] expected = {0x50, 0x4B, 0x03, 0x04, (byte) 0xFF, (byte) 0xFE, 0x00};
+            RawResponse raw = transport().send("GET", baseUri.resolve("/binary"), Map.of(), null, null);
+
+            assertArrayEquals(expected, raw.bodyBytes());
+        }
 
         @Test
         void notModified_returns304WithHeadersAndEmptyBody() {

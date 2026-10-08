@@ -53,9 +53,9 @@ public final class ArkJdkAsyncTransport implements Transport<CompletableFuture<R
     }
 
     private CompletableFuture<RawResponse> doSendAsync(java.net.http.HttpRequest request) {
-        return httpClient.sendAsync(request, HttpResponse.BodyHandlers.ofString())
+        return httpClient.sendAsync(request, HttpResponse.BodyHandlers.ofByteArray())
                 .thenApplyAsync(response ->
-                        new RawResponse(response.statusCode(), response.headers().map(), response.body()),
+                        RawResponse.ofBytes(response.statusCode(), response.headers().map(), response.body()),
                         executor);
     }
 }
