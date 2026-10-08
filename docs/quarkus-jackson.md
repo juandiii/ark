@@ -244,9 +244,14 @@ Properties take precedence over annotation values. Quarkus map keys use quoted f
 The `ark.client."<name>".*` properties also configure fluent (non-declarative) clients. Inject `ArkClients` and ask for a builder by key:
 
 ```java
-@Inject ArkClients arkClients;
+@ApplicationScoped
+public class RatesFetcher {
+    private final Ark client;
 
-Ark client = arkClients.builder("fxrates-sources").build();
+    RatesFetcher(ArkClients arkClients) {
+        this.client = arkClients.builder("fxrates-sources").build();
+    }
+}
 ```
 
 ```properties
@@ -259,6 +264,8 @@ ark.client."fxrates-sources".max-response-bytes=20971520
 Base URL, timeouts, TLS, headers, retry, redirects, `throw-on-error` and `max-response-bytes` are applied. Use `arkClients.asyncBuilder("name")` for the `CompletableFuture` variant (`AsyncArkClient.Builder`).
 
 Each `builder(...)` call returns a fresh builder, so you can keep customizing it before `build()`. An unknown key throws `ArkException`.
+
+Each call also creates a new underlying HTTP client (with its own connection pool and threads). Build the client once, for example in a field initialized in the constructor or in a `@PostConstruct` method of an `@ApplicationScoped` bean, and reuse it. Do not call `builder(...)` per request.
 
 ---
 
