@@ -52,14 +52,24 @@ final class ArkJdkRequestBuilder {
      */
     static HttpResponse.BodyHandler<byte[]> bodyHandler(long maxBytes, String method, AtomicBoolean exceeded) {
         if (maxBytes <= 0) return HttpResponse.BodyHandlers.ofByteArray();
-        boolean head = "HEAD".equalsIgnoreCase(method);
         return info -> {
-            int status = info.statusCode();
-            boolean bodiless = head || status < 200 || status == 204 || status == 304;
+            boolean bodiless = !mayHaveBody(method, info.statusCode());
             long contentLength = bodiless ? -1
                     : info.headers().firstValueAsLong("Content-Length").orElse(-1);
             return new LimitedByteArraySubscriber(maxBytes, contentLength, exceeded);
         };
+    }
+
+    /**
+     * Whether a response to this request can carry a body: not a HEAD request and
+     * the status is not 1xx, 204 or 304.
+     *
+     * @param method the HTTP method
+     * @param status the response status code
+     * @return {@code true} if a body may be present
+     */
+    static boolean mayHaveBody(String method, int status) {
+        return !"HEAD".equalsIgnoreCase(method) && status >= 200 && status != 204 && status != 304;
     }
 
     /**
