@@ -3,6 +3,7 @@ package xyz.juandiii.ark.core;
 import xyz.juandiii.ark.core.http.DefaultClientRequest;
 import xyz.juandiii.ark.core.http.HttpTransport;
 import xyz.juandiii.ark.core.http.RawResponse;
+import xyz.juandiii.ark.core.http.StreamingTransport;
 import xyz.juandiii.ark.core.http.Transport;
 import xyz.juandiii.ark.core.interceptor.RequestInterceptor;
 import xyz.juandiii.ark.core.interceptor.ResponseInterceptor;
@@ -24,8 +25,10 @@ import java.util.Objects;
 public class ArkClient extends AbstractArkClient<DefaultClientRequest> implements Ark {
 
     private final Transport<RawResponse> transport;
+    private final StreamingTransport streamingTransport;
 
-    private ArkClient(Transport<RawResponse> transport, JsonSerializer serializer, String userAgent,
+    private ArkClient(Transport<RawResponse> transport, StreamingTransport streamingTransport,
+                      JsonSerializer serializer, String userAgent,
                       String baseUrl,
                       List<RequestInterceptor> requestInterceptors,
                       List<ResponseInterceptor> responseInterceptors,
@@ -33,12 +36,13 @@ public class ArkClient extends AbstractArkClient<DefaultClientRequest> implement
         super(serializer, userAgent, baseUrl, requestInterceptors, responseInterceptors,
                 throwOnErrorDefault);
         this.transport = transport;
+        this.streamingTransport = streamingTransport;
     }
 
     @Override
     protected DefaultClientRequest createRequest(String method, String path) {
         DefaultClientRequest req = new DefaultClientRequest(method, baseUrl, path, transport, serializer,
-                requestInterceptors, responseInterceptors);
+                requestInterceptors, responseInterceptors, streamingTransport);
         return req.throwOnError(throwOnErrorDefault)
                 .header("User-Agent", userAgent);
     }
@@ -58,6 +62,8 @@ public class ArkClient extends AbstractArkClient<DefaultClientRequest> implement
     public static final class Builder extends AbstractArkBuilder<Builder> {
 
         private Transport<RawResponse> transport;
+        private StreamingTransport streamingTransport;
+        private boolean streamingExplicit;
 
         private Builder() {}
 
@@ -74,6 +80,24 @@ public class ArkClient extends AbstractArkClient<DefaultClientRequest> implement
          */
         public Builder transport(Transport<RawResponse> transport) {
             this.transport = transport;
+            if (!streamingExplicit) {
+                this.streamingTransport = transport instanceof StreamingTransport st ? st : null;
+            }
+            return this;
+        }
+
+        /**
+         * Set the transport used by {@code retrieveStream()}. Needed when the transport
+         * passed to {@link #transport(Transport)} is a decorator (e.g. retry) that does not
+         * itself implement {@link StreamingTransport}. An explicit value always wins,
+         * regardless of call order.
+         *
+         * @param streamingTransport the unwrapped streaming transport
+         * @return this builder for chaining
+         */
+        public Builder streamingTransport(StreamingTransport streamingTransport) {
+            this.streamingTransport = streamingTransport;
+            this.streamingExplicit = true;
             return this;
         }
 
@@ -87,7 +111,7 @@ public class ArkClient extends AbstractArkClient<DefaultClientRequest> implement
             Objects.requireNonNull(serializer, "serializer must not be null");
             Objects.requireNonNull(transport, "transport must not be null");
             logConfiguration("ArkClient (sync)", transport.getClass().getSimpleName());
-            return new ArkClient(transport, serializer, buildUserAgent(),
+            return new ArkClient(transport, streamingTransport, serializer, buildUserAgent(),
                     baseUrl, requestInterceptors, responseInterceptors,
                     throwOnErrorDefault);
         }

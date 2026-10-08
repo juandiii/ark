@@ -86,4 +86,22 @@ public interface ClientRequest extends RequestContext {
      * @throws xyz.juandiii.ark.core.exceptions.ApiException for HTTP status codes >= 400 (subtypes such as {@code BadRequestException}, {@code NotFoundException}, {@code ServiceUnavailableException}, etc.)
      */
     ClientResponse retrieve();
+
+    /**
+     * Execute the HTTP request and return the response with an unread body stream.
+     * Sibling of {@link #retrieve()} (which buffers the body); use it for large downloads.
+     *
+     * <p>Streaming requests are not retried, since a partially consumed stream cannot be
+     * replayed. Response interceptors (including response logging) are not applied;
+     * request interceptors run as usual. With {@code throwOnError} on (default) and a
+     * status of 400 or above, up to 64 KiB of the body is read, the stream is closed and
+     * an {@link xyz.juandiii.ark.core.exceptions.ApiException} is thrown. With
+     * {@link #noThrow()} the stream is returned whatever the status. A 304 never throws.
+     *
+     * @return the streaming response; the caller must close it (try-with-resources)
+     * @throws xyz.juandiii.ark.core.exceptions.ArkException for transport/IO failures
+     * @throws xyz.juandiii.ark.core.exceptions.ApiException for HTTP status codes >= 400 unless {@link #noThrow()} was used
+     * @throws UnsupportedOperationException if the client has no streaming transport, or the request has a binary body
+     */
+    StreamingResponse retrieveStream();
 }

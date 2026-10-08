@@ -178,6 +178,10 @@ public abstract class AbstractClientRequest<T extends AbstractClientRequest<T>>
         return new SerializedBody(serializer.serialize(body), null);
     }
 
+    protected boolean isThrowOnError() {
+        return throwOnError;
+    }
+
     protected void validateResponse(RawResponse raw) {
         if (!throwOnError) return;
         if (raw.isError()) {

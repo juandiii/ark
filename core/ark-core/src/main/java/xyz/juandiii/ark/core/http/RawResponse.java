@@ -78,7 +78,7 @@ public record RawResponse(int statusCode, Map<String, List<String>> headers, Str
         return firstHeader(headers, name);
     }
 
-    private static Optional<String> firstHeader(Map<String, List<String>> headers, String name) {
+    static Optional<String> firstHeader(Map<String, List<String>> headers, String name) {
         if (headers == null || name == null) return Optional.empty();
         for (Map.Entry<String, List<String>> e : headers.entrySet()) {
             if (name.equalsIgnoreCase(e.getKey()) && e.getValue() != null && !e.getValue().isEmpty()) {
