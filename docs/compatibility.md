@@ -15,6 +15,10 @@ to work, what is known not to, and what is untested.
 | 1.0.x       | 3.5.x or earlier  | any               | any        | ⚠️ Untested — likely incompatible (Spring 6.x vs 7.x APIs) |
 | 1.0.x       | any               | 3.15.x or earlier | any        | ⚠️ Untested                         |
 
+The Quarkus extensions declare `requires-quarkus-version=[3.33,)` in their
+metadata. Quarkus 3.33 LTS is the minimum supported Quarkus version; it is
+verified weekly and gates every release.
+
 Legend:
 - **Verified in CI** — full test suite passes on every PR.
 - **Untested** — may work, no guarantee.

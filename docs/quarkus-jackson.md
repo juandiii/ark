@@ -35,6 +35,8 @@ The vertx add-on transitively depends on the slim extension — you don't need b
 
 ## Installation
 
+Requires Quarkus 3.33 LTS or newer.
+
 ```xml
 <dependency>
     <groupId>xyz.juandiii</groupId>
