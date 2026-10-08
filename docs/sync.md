@@ -246,6 +246,35 @@ RawResponse raw = client.get("/files/report.xlsx").retrieve().raw();
 byte[] bytes = raw.bodyBytes();
 ```
 
+### Streaming responses (large downloads)
+
+`bodyBytes()` and `bodyAsBytes()` load the whole body onto the heap. For large downloads use
+`retrieveStream()`, a sibling of `retrieve()`, which returns a `StreamingResponse` whose `body()` is an `InputStream`:
+
+```java
+try (StreamingResponse r = client.get(url)
+        .header("If-None-Match", etag)
+        .noThrow()
+        .retrieveStream()) {
+    if (r.statusCode() == 304) return Optional.empty();
+    String sha = copyCapped(r.body(), tempFile);     // body() is an InputStream
+    String newEtag = r.header("ETag").orElse(null);
+}
+```
+
+- Always use try-with-resources; closing releases the connection, even if the body was not fully read.
+- `body()` is an `InputStream` that can be read once (empty for bodiless responses).
+- `max-response-bytes` / `new ArkJdkSyncTransport(http, max)` is enforced before returning when
+  `Content-Length` is known, and while reading otherwise, throwing `ResponseTooLargeException`.
+- Status 400 or above throws `ApiException` (with up to 64 KiB of the body) unless `noThrow()` is used.
+- 304 never throws.
+- Streaming requests are not retried, since a partially consumed stream cannot be replayed.
+- Response interceptors (including response logging) are not applied; request interceptors are.
+- `read-timeout` covers only receiving the headers. Body reads have no per-read timeout, so a stalled
+  server can block `read()`. To bound the total time, close the response from another thread
+  (for example from a scheduled task).
+- Currently available only on the sync client with the JDK transport. Request bodies must be text, not binary.
+
 ---
 
 ## Related

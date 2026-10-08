@@ -26,6 +26,9 @@
   builder pre-configured from `ark.client."name".*` properties.
 - Quarkus: new per-client property `ark.client."name".max-response-bytes` (default `0`, unlimited)
   for both declarative and fluent clients.
+- Sync client: `retrieveStream()` returns a `StreamingResponse` whose `body()` is an `InputStream`,
+  for large downloads without loading the body onto the heap. Available with the JDK transport;
+  honors `max-response-bytes`, is not retried, and skips response interceptors.
 
 ### Behavior change
 

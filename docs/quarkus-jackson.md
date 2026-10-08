@@ -263,6 +263,8 @@ ark.client."fxrates-sources".max-response-bytes=20971520
 
 Base URL, timeouts, TLS, headers, retry, redirects, `throw-on-error` and `max-response-bytes` are applied. Use `arkClients.asyncBuilder("name")` for the `CompletableFuture` variant (`AsyncArkClient.Builder`).
 
+`retrieveStream()` works with `ArkClients` builders (also when retry is configured) and honors `max-response-bytes`; see [Streaming responses](sync.md#streaming-responses-large-downloads).
+
 Each `builder(...)` call returns a fresh builder, so you can keep customizing it before `build()`. An unknown key throws `ArkException`.
 
 Each call also creates a new underlying HTTP client (with its own connection pool and threads). Build the client once, for example in a field initialized in the constructor or in a `@PostConstruct` method of an `@ApplicationScoped` bean, and reuse it. Do not call `builder(...)` per request.
