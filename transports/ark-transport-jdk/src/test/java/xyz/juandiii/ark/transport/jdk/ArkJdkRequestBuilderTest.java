@@ -13,6 +13,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Flow;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -107,5 +108,38 @@ class ArkJdkRequestBuilderTest {
         ExecutionException ex = assertThrows(ExecutionException.class, body::get);
         assertInstanceOf(ResponseTooLargeException.class, ex.getCause());
         assertTrue(subscription.cancelled.get());
+    }
+
+    @Test
+    void abort_setsExceededFlag() {
+        AtomicBoolean flag = new AtomicBoolean();
+        HttpResponse.BodySubscriber<byte[]> subscriber =
+                ArkJdkRequestBuilder.bodyHandler(1_000, "GET", flag).apply(info(200, "10000"));
+
+        subscriber.onSubscribe(new RecordingSubscription());
+
+        assertTrue(flag.get());
+    }
+
+    @Test
+    void abort_failsBodyBeforeCancel() {
+        AtomicReference<HttpResponse.BodySubscriber<byte[]>> holder = new AtomicReference<>();
+        AtomicBoolean failedAtCancel = new AtomicBoolean();
+        Flow.Subscription subscription = new Flow.Subscription() {
+            @Override
+            public void request(long n) {}
+
+            @Override
+            public void cancel() {
+                failedAtCancel.set(holder.get().getBody().toCompletableFuture().isCompletedExceptionally());
+            }
+        };
+        HttpResponse.BodySubscriber<byte[]> subscriber =
+                ArkJdkRequestBuilder.bodyHandler(1_000, "GET").apply(info(200, "10000"));
+        holder.set(subscriber);
+
+        subscriber.onSubscribe(subscription);
+
+        assertTrue(failedAtCancel.get());
     }
 }

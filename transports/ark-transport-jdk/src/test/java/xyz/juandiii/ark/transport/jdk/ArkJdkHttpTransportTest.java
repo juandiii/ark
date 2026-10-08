@@ -17,13 +17,16 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.URI;
 import java.net.http.HttpClient;
+import java.net.http.HttpHeaders;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.time.Duration;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
+import java.util.concurrent.Flow;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -682,6 +685,94 @@ class ArkJdkHttpTransportTest {
             ResponseTooLargeException cause = assertInstanceOf(ResponseTooLargeException.class, ex.getCause());
             assertNotNull(cause.uri());
             assertEquals(1_000, cause.limit());
+        }
+    }
+
+    @Nested
+    class Http2StreamCancel {
+
+        private static final URI H2_URI = URI.create("https://h2.example/file.zip");
+
+        private HttpResponse.ResponseInfo fakeInfo(int status, long contentLength) {
+            HttpHeaders headers = HttpHeaders.of(
+                    Map.of("Content-Length", List.of(String.valueOf(contentLength))), (a, b) -> true);
+            return new HttpResponse.ResponseInfo() {
+                @Override
+                public int statusCode() {
+                    return status;
+                }
+
+                @Override
+                public HttpHeaders headers() {
+                    return headers;
+                }
+
+                @Override
+                public HttpClient.Version version() {
+                    return HttpClient.Version.HTTP_2;
+                }
+            };
+        }
+
+        private Flow.Subscription noopSubscription() {
+            return new Flow.Subscription() {
+                @Override
+                public void request(long n) {}
+
+                @Override
+                public void cancel() {}
+            };
+        }
+
+        private void applyHandler(Object handlerArg, long contentLength) {
+            @SuppressWarnings("unchecked")
+            HttpResponse.BodyHandler<byte[]> handler = (HttpResponse.BodyHandler<byte[]>) handlerArg;
+            handler.apply(fakeInfo(200, contentLength)).onSubscribe(noopSubscription());
+        }
+
+        @Test
+        void sync_streamCancelWithoutCause_stillThrowsResponseTooLarge() throws Exception {
+            HttpClient client = mock(HttpClient.class);
+            when(client.send(any(), any())).thenAnswer(inv -> {
+                applyHandler(inv.getArgument(1), 10_000);
+                throw new IOException("Stream 1 cancelled");
+            });
+
+            ResponseTooLargeException ex = assertThrows(ResponseTooLargeException.class, () ->
+                    new ArkJdkSyncTransport(client, 1_000).send("GET", H2_URI, Map.of(), null, null));
+
+            assertEquals(1_000, ex.limit());
+            assertEquals(H2_URI, ex.uri());
+        }
+
+        @Test
+        void async_streamCancelWithoutCause_stillFailsWithResponseTooLarge() {
+            HttpClient client = mock(HttpClient.class);
+            when(client.sendAsync(any(), any())).thenAnswer(inv -> {
+                applyHandler(inv.getArgument(1), 10_000);
+                return CompletableFuture.failedFuture(new IOException("Stream 1 cancelled"));
+            });
+
+            ExecutionException ex = assertThrows(ExecutionException.class, () ->
+                    new ArkJdkAsyncTransport(client, Runnable::run, 1_000)
+                            .send("GET", H2_URI, Map.of(), null, null).get());
+
+            ResponseTooLargeException cause = assertInstanceOf(ResponseTooLargeException.class, ex.getCause());
+            assertNotNull(cause.uri());
+        }
+
+        @Test
+        void sync_streamCancelWithoutLimitTrip_staysGenericArkException() throws Exception {
+            HttpClient client = mock(HttpClient.class);
+            when(client.send(any(), any())).thenAnswer(inv -> {
+                applyHandler(inv.getArgument(1), 10);
+                throw new IOException("Stream 1 cancelled");
+            });
+
+            ArkException ex = assertThrows(ArkException.class, () ->
+                    new ArkJdkSyncTransport(client, 1_000).send("GET", H2_URI, Map.of(), null, null));
+
+            assertFalse(ex instanceof ResponseTooLargeException);
         }
     }
 
