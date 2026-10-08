@@ -29,6 +29,7 @@ public abstract class AbstractClientRequest<T extends AbstractClientRequest<T>>
         implements RequestContext {
 
     private static final Pattern DOUBLE_SLASH = Pattern.compile("(?<=[^:])//+");
+    private static final Pattern ABSOLUTE_URL = Pattern.compile("^[a-zA-Z][a-zA-Z0-9+.-]*://.*");
 
     protected final String method;
     protected final String baseUrl;
@@ -202,9 +203,13 @@ public abstract class AbstractClientRequest<T extends AbstractClientRequest<T>>
         return "POST".equals(method) || "PUT".equals(method) || "PATCH".equals(method);
     }
 
+    /** An absolute URL passed as the path is used as-is: baseUrl is ignored and slashes are not collapsed. */
     private String normalizedUrl() {
         String base = StringUtils.stripTrailingSlash(StringUtils.trimToEmpty(baseUrl));
         String trimmedPath = StringUtils.trimToEmpty(path);
+        if (ABSOLUTE_URL.matcher(trimmedPath).matches()) {
+            return trimmedPath;
+        }
         if (StringUtils.isEmpty(trimmedPath) || trimmedPath.equals("/")) {
             return base;
         }

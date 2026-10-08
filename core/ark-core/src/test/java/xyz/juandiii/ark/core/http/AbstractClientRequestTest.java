@@ -90,6 +90,31 @@ class AbstractClientRequestTest {
         }
 
         @Test
+        void givenAbsoluteUrl_whenEmptyBaseUrl_thenUsesUrlAsIs() {
+            assertEquals(URI.create("https://cdn.example.com/files/a.xlsx"),
+                    request("GET", "", "https://cdn.example.com/files/a.xlsx").buildUri());
+        }
+
+        @Test
+        void givenAbsoluteUrl_whenBaseUrlSet_thenIgnoresBaseUrl() {
+            assertEquals(URI.create("http://other.example.com/x"),
+                    request("GET", "https://api.example.com", "http://other.example.com/x").buildUri());
+        }
+
+        @Test
+        void givenAbsoluteUrl_whenQueryParamsAdded_thenAppendsQuery() {
+            URI uri = request("GET", "", "https://cdn.example.com/files/a.xlsx")
+                    .queryParam("a", "1").buildUri();
+            assertTrue(uri.toString().endsWith("?a=1"));
+        }
+
+        @Test
+        void givenNullBaseUrl_whenAbsoluteUrl_thenUsesUrlAsIs() {
+            assertEquals(URI.create("https://cdn.example.com/files/a.xlsx"),
+                    request("GET", null, "https://cdn.example.com/files/a.xlsx").buildUri());
+        }
+
+        @Test
         void givenMultipleSlashes_whenBuildUri_thenNormalizesToSingle() {
             assertEquals(URI.create("https://api.example.com/users"),
                     request("GET", "https://api.example.com///", "///users").buildUri());
