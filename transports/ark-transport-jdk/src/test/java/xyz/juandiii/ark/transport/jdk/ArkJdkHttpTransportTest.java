@@ -125,6 +125,29 @@ class ArkJdkHttpTransportTest {
             exchange.close();
         });
 
+        server.createContext("/big-known", exchange -> {
+            byte[] body = new byte[10_000];
+            exchange.sendResponseHeaders(200, body.length);
+            try (OutputStream os = exchange.getResponseBody()) {
+                os.write(body);
+            } catch (IOException ignored) {
+                // client aborted the download
+            }
+        });
+
+        server.createContext("/big-chunked", exchange -> {
+            exchange.sendResponseHeaders(200, 0);
+            try (OutputStream os = exchange.getResponseBody()) {
+                byte[] chunk = new byte[1_000];
+                for (int i = 0; i < 10; i++) {
+                    os.write(chunk);
+                    os.flush();
+                }
+            } catch (IOException ignored) {
+                // client aborted the download
+            }
+        });
+
         server.start();
         baseUri = URI.create("http://localhost:" + server.getAddress().getPort());
     }
@@ -607,6 +630,58 @@ class ArkJdkHttpTransportTest {
             RawResponse response = future.get();
             assertEquals(404, response.statusCode());
             assertTrue(response.isError());
+        }
+    }
+
+    @Nested
+    class MaxResponseBytes {
+
+        private ArkJdkSyncTransport limitedSync() {
+            return new ArkJdkSyncTransport(HttpClient.newBuilder().build(), 1_000);
+        }
+
+        private ArkJdkAsyncTransport limitedAsync() {
+            return new ArkJdkAsyncTransport(HttpClient.newBuilder().build(), Runnable::run, 1_000);
+        }
+
+        @Test
+        void limit_knownLength_rejected() {
+            ResponseTooLargeException ex = assertThrows(ResponseTooLargeException.class, () ->
+                    limitedSync().send("GET", baseUri.resolve("/big-known"), Map.of(), null, null));
+
+            assertEquals(1_000, ex.limit());
+            assertTrue(ex.uri().toString().endsWith("/big-known"));
+        }
+
+        @Test
+        void limit_chunked_rejectedWhileStreaming() {
+            assertThrows(ResponseTooLargeException.class, () ->
+                    limitedSync().send("GET", baseUri.resolve("/big-chunked"), Map.of(), null, null));
+        }
+
+        @Test
+        void limit_smallBody_passes() {
+            RawResponse response = limitedSync().send("GET", baseUri.resolve("/ok"), Map.of(), null, null);
+
+            assertEquals(200, response.statusCode());
+            assertEquals("{\"status\":\"ok\"}", response.body());
+        }
+
+        @Test
+        void noLimit_default_readsLargeBody() {
+            RawResponse response = transport().send("GET", baseUri.resolve("/big-known"), Map.of(), null, null);
+
+            assertEquals(10_000, response.bodyBytes().length);
+        }
+
+        @Test
+        void limit_async_failsWithResponseTooLarge() {
+            ExecutionException ex = assertThrows(ExecutionException.class, () ->
+                    limitedAsync().send("GET", baseUri.resolve("/big-known"), Map.of(), null, null).get());
+
+            ResponseTooLargeException cause = assertInstanceOf(ResponseTooLargeException.class, ex.getCause());
+            assertNotNull(cause.uri());
+            assertEquals(1_000, cause.limit());
         }
     }
 
