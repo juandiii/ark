@@ -70,7 +70,7 @@ public class ArkRecorder {
 
     private record ResolvedConfig(String clientName, String baseUrl, HttpVersion httpVersion,
                                    int connectTimeout, int readTimeout, String tlsConfigName,
-                                   boolean trustAll, boolean throwOnError,
+                                   boolean trustAll, boolean throwOnError, boolean followRedirects,
                                    Map<String, String> headers,
                                    Class<?>[] interceptorClasses,
                                    RetryPolicy retryPolicy,
@@ -88,6 +88,7 @@ public class ArkRecorder {
                 config != null ? config.tlsConfigurationName().orElse(null) : null,
                 config != null && config.trustAll(),
                 config == null || config.throwOnError(),
+                config == null || config.followRedirects(),
                 config != null ? config.headers() : Map.of(),
                 annotation != null ? annotation.interceptors() : new Class<?>[0],
                 resolveRetryPolicy(config),
@@ -103,7 +104,7 @@ public class ArkRecorder {
                             + "xyz.juandiii:ark-quarkus-jackson-vertx");
         } else if (usesAsyncReturnTypes(iface)) {
             SSLContext sslContext = resolveSslContext(rc.clientName(), rc.tlsConfigName(), rc.trustAll());
-            var jdk = new ArkJdkAsyncTransport(buildHttpClient(rc.httpVersion(), rc.connectTimeout(), sslContext));
+            var jdk = new ArkJdkAsyncTransport(buildHttpClient(rc.httpVersion(), rc.connectTimeout(), sslContext, rc.followRedirects()));
             AsyncArkClient.Builder builder = AsyncArkClient.builder()
                     .serializer(serializer)
                     .transport(rc.retryPolicy() != null
@@ -118,7 +119,7 @@ public class ArkRecorder {
             return ArkProxy.create(iface, builder.build());
         }
         SSLContext sslContext = resolveSslContext(rc.clientName(), rc.tlsConfigName(), rc.trustAll());
-        var jdkTransport = new ArkJdkSyncTransport(buildHttpClient(rc.httpVersion(), rc.connectTimeout(), sslContext));
+        var jdkTransport = new ArkJdkSyncTransport(buildHttpClient(rc.httpVersion(), rc.connectTimeout(), sslContext, rc.followRedirects()));
         ArkClient.Builder builder = ArkClient.builder()
                 .serializer(serializer)
                 .transport(rc.retryPolicy() != null
@@ -174,12 +175,13 @@ public class ArkRecorder {
     }
 
     private static HttpClient buildHttpClient(HttpVersion httpVersion, int connectTimeout,
-                                               SSLContext sslContext) {
+                                               SSLContext sslContext, boolean followRedirects) {
         HttpClient.Builder httpBuilder = HttpClient.newBuilder()
                 .version(httpVersion == HttpVersion.HTTP_2
                         ? HttpClient.Version.HTTP_2
                         : HttpClient.Version.HTTP_1_1)
-                .connectTimeout(Duration.ofSeconds(connectTimeout));
+                .connectTimeout(Duration.ofSeconds(connectTimeout))
+                .followRedirects(followRedirects ? HttpClient.Redirect.NORMAL : HttpClient.Redirect.NEVER);
         if (sslContext != null) {
             httpBuilder.sslContext(sslContext);
         }

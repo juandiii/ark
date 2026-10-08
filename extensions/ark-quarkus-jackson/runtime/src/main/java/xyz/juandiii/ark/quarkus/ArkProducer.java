@@ -33,7 +33,7 @@ public class ArkProducer {
     @Singleton
     @DefaultBean
     public HttpTransport httpTransport() {
-        return new ArkJdkSyncTransport(HttpClient.newBuilder().build());
+        return new ArkJdkSyncTransport(HttpClient.newBuilder().followRedirects(HttpClient.Redirect.NORMAL).build());
     }
 
     @Produces

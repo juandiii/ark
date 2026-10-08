@@ -69,6 +69,14 @@ public interface ArkClientNamedConfig {
     boolean throwOnError();
 
     /**
+     * If true (default), the JDK HttpClient follows 3xx redirects (HttpClient.Redirect.NORMAL:
+     * never https→http). If false, 3xx responses are returned to the caller.
+     */
+    @WithName("follow-redirects")
+    @WithDefault("true")
+    boolean followRedirects();
+
+    /**
      * Default headers to add to every request.
      */
     @WithName("headers")
