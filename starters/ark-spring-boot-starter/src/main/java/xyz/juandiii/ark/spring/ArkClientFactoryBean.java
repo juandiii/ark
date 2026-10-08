@@ -129,7 +129,7 @@ public class ArkClientFactoryBean<T> implements FactoryBean<T>, BeanFactoryAware
     private AsyncArkClient buildAsync(ArkProperties.ClientProperties config, String baseUrl,
                                        HttpVersion httpVersion, int connectTimeout, int readTimeout,
                                        String tlsConfigName, boolean trustAll, boolean followRedirects,
-                                 String configKey,
+                                       String configKey,
                                        RegisterArkClient annotation) {
         ArkJdkAsyncTransport baseTransport = resolveAsyncTransport(httpVersion, connectTimeout,
                 tlsConfigName, trustAll, followRedirects, configKey);
