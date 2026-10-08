@@ -71,7 +71,8 @@ public final class ArkApacheTransport implements HttpTransport {
         try {
             return httpClient.execute(builder.build(), context, response -> {
                 int statusCode = response.getCode();
-                String responseBody = EntityUtils.toString(response.getEntity());
+                HttpEntity responseEntity = response.getEntity();
+                String responseBody = responseEntity != null ? EntityUtils.toString(responseEntity) : "";
                 Map<String, List<String>> responseHeaders = HeaderUtils.toHeaderMap(
                         java.util.Arrays.stream(response.getHeaders())
                                 .map(h -> Map.entry(h.getName(), h.getValue()))
