@@ -187,7 +187,6 @@ ark.client.user-api.connect-timeout=5
 ark.client.user-api.read-timeout=15
 ark.client.user-api.trust-all=false
 ark.client.user-api.throw-on-error=true
-ark.client.user-api.follow-redirects=true
 ark.client.user-api.headers.Authorization=Bearer ${TOKEN}
 ark.client.user-api.tls-configuration-name=my-cert
 
@@ -198,8 +197,6 @@ spring.ssl.bundle.pem.my-cert.truststore.certificate=classpath:certs/ca.crt
 > ⚠️ `trust-all: true` disables certificate validation. Use only in local development. See [Security & TLS in README](../README.md#tls).
 
 > Set `throw-on-error=false` to return HTTP 4xx/5xx responses instead of raising `ApiException`. See [Permissive error handling](sync.md#permissive-error-handling).
-
-> `follow-redirects` (default `true`) makes the default JDK `HttpClient` follow 3xx redirects, except https to http downgrades. Set it to `false` to receive 3xx responses as-is. If you supply your own `HttpClient`/`HttpTransport` bean, you set the redirect policy yourself (`HttpClient.newBuilder().followRedirects(HttpClient.Redirect.NORMAL)`).
 
 Same configuration structure as the sync starter. See [Declarative Spring Clients](declarative-spring.md) for full annotation details.
 
