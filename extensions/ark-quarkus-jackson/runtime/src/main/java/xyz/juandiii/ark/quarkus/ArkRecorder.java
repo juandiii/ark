@@ -69,17 +69,17 @@ public class ArkRecorder {
     }
 
     record ResolvedConfig(String clientName, String baseUrl, HttpVersion httpVersion,
-                                   int connectTimeout, int readTimeout, String tlsConfigName,
-                                   boolean trustAll, boolean throwOnError, boolean followRedirects,
-                                   long maxResponseBytes,
-                                   Map<String, String> headers,
-                                   Class<?>[] interceptorClasses,
-                                   RetryPolicy retryPolicy,
-                                   LoggingInterceptor.Level loggingLevel) {}
+                          int connectTimeout, int readTimeout, String tlsConfigName,
+                          boolean trustAll, boolean throwOnError, boolean followRedirects,
+                          long maxResponseBytes,
+                          Map<String, String> headers,
+                          Class<?>[] interceptorClasses,
+                          RetryPolicy retryPolicy,
+                          LoggingInterceptor.Level loggingLevel) {}
 
     static ResolvedConfig resolveConfig(String clientName, ArkClientNamedConfig config,
-                                                 RegisterArkClient annotation,
-                                                 LoggingInterceptor.Level loggingLevel) {
+                                        RegisterArkClient annotation,
+                                        LoggingInterceptor.Level loggingLevel) {
         return new ResolvedConfig(
                 clientName,
                 resolveBaseUrl(config, annotation),

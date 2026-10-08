@@ -13,6 +13,9 @@ import xyz.juandiii.ark.quarkus.config.ArkClientsConfig;
  * Factory for fluent client builders pre-configured from
  * {@code ark.client."<configKey>".*} properties (base-url, timeouts, TLS,
  * headers, retry, max-response-bytes, ...).
+ * <p>
+ * Each builder creates a new underlying HTTP client, so build a client once and reuse it
+ * instead of calling the builder per request.
  *
  * @author Juan Diego Lopez V.
  */
@@ -27,7 +30,11 @@ public class ArkClients {
 
     /**
      * Fluent builder pre-configured from {@code ark.client."<configKey>".*}.
-     * Each call returns a new builder.
+     * Each call returns a new builder and a new underlying HTTP client.
+     *
+     * @param configKey the key under {@code ark.client."<configKey>".*}
+     * @return a configured sync builder
+     * @throws ArkException if no {@code ark.client."<configKey>".*} configuration exists
      */
     public ArkClient.Builder builder(String configKey) {
         ArkRecorder.ResolvedConfig rc = resolve(configKey);
@@ -36,6 +43,10 @@ public class ArkClients {
 
     /**
      * Async variant of {@link #builder(String)}.
+     *
+     * @param configKey the key under {@code ark.client."<configKey>".*}
+     * @return a configured async builder
+     * @throws ArkException if no {@code ark.client."<configKey>".*} configuration exists
      */
     public AsyncArkClient.Builder asyncBuilder(String configKey) {
         ArkRecorder.ResolvedConfig rc = resolve(configKey);
