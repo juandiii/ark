@@ -13,6 +13,7 @@ import io.quarkus.deployment.builditem.nativeimage.NativeImageResourceBuildItem;
 import io.quarkus.deployment.builditem.nativeimage.ReflectiveClassBuildItem;
 import jakarta.enterprise.context.ApplicationScoped;
 import org.jboss.jandex.*;
+import xyz.juandiii.ark.quarkus.ArkClients;
 import xyz.juandiii.ark.quarkus.ArkProducer;
 import xyz.juandiii.ark.quarkus.ArkRecorder;
 import xyz.juandiii.ark.quarkus.QuarkusTlsResolver;
@@ -41,6 +42,7 @@ public class ArkProcessor {
         return AdditionalBeanBuildItem.builder()
                 .addBeanClasses(
                         ArkProducer.class,
+                        ArkClients.class,
                         QuarkusTlsResolver.class
                 )
                 .setUnremovable()

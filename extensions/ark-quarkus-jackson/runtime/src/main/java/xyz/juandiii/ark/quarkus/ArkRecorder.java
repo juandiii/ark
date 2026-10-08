@@ -68,17 +68,18 @@ public class ArkRecorder {
         };
     }
 
-    private record ResolvedConfig(String clientName, String baseUrl, HttpVersion httpVersion,
-                                   int connectTimeout, int readTimeout, String tlsConfigName,
-                                   boolean trustAll, boolean throwOnError, boolean followRedirects,
-                                   Map<String, String> headers,
-                                   Class<?>[] interceptorClasses,
-                                   RetryPolicy retryPolicy,
-                                   LoggingInterceptor.Level loggingLevel) {}
+    record ResolvedConfig(String clientName, String baseUrl, HttpVersion httpVersion,
+                          int connectTimeout, int readTimeout, String tlsConfigName,
+                          boolean trustAll, boolean throwOnError, boolean followRedirects,
+                          long maxResponseBytes,
+                          Map<String, String> headers,
+                          Class<?>[] interceptorClasses,
+                          RetryPolicy retryPolicy,
+                          LoggingInterceptor.Level loggingLevel) {}
 
-    private static ResolvedConfig resolveConfig(String clientName, ArkClientNamedConfig config,
-                                                 RegisterArkClient annotation,
-                                                 LoggingInterceptor.Level loggingLevel) {
+    static ResolvedConfig resolveConfig(String clientName, ArkClientNamedConfig config,
+                                        RegisterArkClient annotation,
+                                        LoggingInterceptor.Level loggingLevel) {
         return new ResolvedConfig(
                 clientName,
                 resolveBaseUrl(config, annotation),
@@ -89,6 +90,7 @@ public class ArkRecorder {
                 config != null && config.trustAll(),
                 config == null || config.throwOnError(),
                 config == null || config.followRedirects(),
+                config != null ? config.maxResponseBytes() : 0,
                 config != null ? config.headers() : Map.of(),
                 annotation != null ? annotation.interceptors() : new Class<?>[0],
                 resolveRetryPolicy(config),
@@ -103,23 +105,32 @@ public class ArkRecorder {
                             + "ark-quarkus-jackson-vertx is not on the classpath. Add the vertx add-on: "
                             + "xyz.juandiii:ark-quarkus-jackson-vertx");
         } else if (usesAsyncReturnTypes(iface)) {
-            SSLContext sslContext = resolveSslContext(rc.clientName(), rc.tlsConfigName(), rc.trustAll());
-            var jdk = new ArkJdkAsyncTransport(buildHttpClient(rc.httpVersion(), rc.connectTimeout(), sslContext, rc.followRedirects()));
-            AsyncArkClient.Builder builder = AsyncArkClient.builder()
-                    .serializer(serializer)
-                    .transport(rc.retryPolicy() != null
-                            ? jdk.with(Retry.of(rc.retryPolicy(), new AsyncRetryOps()))
-                            : jdk)
-                    .baseUrl(rc.baseUrl())
-                    .httpVersion(rc.httpVersion())
-                    .connectTimeout(rc.connectTimeout())
-                    .readTimeout(rc.readTimeout())
-                    .requestInterceptor(defaultTimeout(rc.readTimeout()));
-            applyInterceptors(builder, rc);
-            return ArkProxy.create(iface, builder.build());
+            return ArkProxy.create(iface, asyncBuilder(serializer, rc).build());
         }
+        return ArkProxy.create(iface, syncBuilder(serializer, rc).build());
+    }
+
+    static AsyncArkClient.Builder asyncBuilder(JsonSerializer serializer, ResolvedConfig rc) {
         SSLContext sslContext = resolveSslContext(rc.clientName(), rc.tlsConfigName(), rc.trustAll());
-        var jdkTransport = new ArkJdkSyncTransport(buildHttpClient(rc.httpVersion(), rc.connectTimeout(), sslContext, rc.followRedirects()));
+        HttpClient httpClient = buildHttpClient(rc.httpVersion(), rc.connectTimeout(), sslContext, rc.followRedirects());
+        var jdk = new ArkJdkAsyncTransport(httpClient, httpClient.executor().orElse(Runnable::run), rc.maxResponseBytes());
+        AsyncArkClient.Builder builder = AsyncArkClient.builder()
+                .serializer(serializer)
+                .transport(rc.retryPolicy() != null
+                        ? jdk.with(Retry.of(rc.retryPolicy(), new AsyncRetryOps()))
+                        : jdk)
+                .baseUrl(rc.baseUrl())
+                .httpVersion(rc.httpVersion())
+                .connectTimeout(rc.connectTimeout())
+                .readTimeout(rc.readTimeout())
+                .requestInterceptor(defaultTimeout(rc.readTimeout()));
+        applyInterceptors(builder, rc);
+        return builder;
+    }
+
+    static ArkClient.Builder syncBuilder(JsonSerializer serializer, ResolvedConfig rc) {
+        SSLContext sslContext = resolveSslContext(rc.clientName(), rc.tlsConfigName(), rc.trustAll());
+        var jdkTransport = new ArkJdkSyncTransport(buildHttpClient(rc.httpVersion(), rc.connectTimeout(), sslContext, rc.followRedirects()), rc.maxResponseBytes());
         ArkClient.Builder builder = ArkClient.builder()
                 .serializer(serializer)
                 .transport(rc.retryPolicy() != null
@@ -131,7 +142,7 @@ public class ArkRecorder {
                 .readTimeout(rc.readTimeout())
                 .requestInterceptor(defaultTimeout(rc.readTimeout()));
         applyInterceptors(builder, rc);
-        return ArkProxy.create(iface, builder.build());
+        return builder;
     }
 
     private static <B extends AbstractArkBuilder<B>> void applyInterceptors(

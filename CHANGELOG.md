@@ -20,6 +20,13 @@
 
 ## [Unreleased]
 
+### Added
+
+- Quarkus: inject `ArkClients` and call `builder("name")` / `asyncBuilder("name")` to get a fluent
+  builder pre-configured from `ark.client."name".*` properties.
+- Quarkus: new per-client property `ark.client."name".max-response-bytes` (default `0`, unlimited)
+  for both declarative and fluent clients.
+
 ### Behavior change
 
 - The JDK `HttpClient` built by the Spring Boot starter and the Quarkus extension now follows

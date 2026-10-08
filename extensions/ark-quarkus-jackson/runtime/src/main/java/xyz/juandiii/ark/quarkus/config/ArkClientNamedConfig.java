@@ -77,6 +77,14 @@ public interface ArkClientNamedConfig {
     boolean followRedirects();
 
     /**
+     * Maximum response body size in bytes. 0 (default) means unlimited.
+     * Larger bodies fail with ResponseTooLargeException.
+     */
+    @WithName("max-response-bytes")
+    @WithDefault("0")
+    long maxResponseBytes();
+
+    /**
      * Default headers to add to every request.
      */
     @WithName("headers")
