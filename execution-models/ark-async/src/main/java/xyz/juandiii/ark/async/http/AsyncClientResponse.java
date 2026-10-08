@@ -32,4 +32,15 @@ public interface AsyncClientResponse {
      * @return future completed with the raw response wrapper produced by the transport
      */
     CompletableFuture<RawResponse> raw();
+
+    /**
+     * Returns the response body exactly as received, as bytes, skipping deserialization.
+     * Use this for binary payloads such as archives or spreadsheets. Combine with
+     * {@code noThrow()} to read the bytes of an error status.
+     *
+     * @return future completed with the response bytes
+     */
+    default CompletableFuture<byte[]> bodyAsBytes() {
+        return raw().thenApply(RawResponse::bodyBytes);
+    }
 }

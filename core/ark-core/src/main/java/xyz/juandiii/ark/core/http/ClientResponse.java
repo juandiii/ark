@@ -65,4 +65,15 @@ public interface ClientResponse {
      * @return the raw response wrapper produced by the transport
      */
     RawResponse raw();
+
+    /**
+     * Returns the response body exactly as received, as bytes, skipping deserialization.
+     * Use this for binary payloads such as archives or spreadsheets. Combine with
+     * {@code noThrow()} to read the bytes of an error status.
+     *
+     * @return the response bytes
+     */
+    default byte[] bodyAsBytes() {
+        return raw().bodyBytes();
+    }
 }

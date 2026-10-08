@@ -46,4 +46,15 @@ public interface ReactorClientResponse {
      * @return Mono emitting the raw response wrapper produced by the transport
      */
     Mono<RawResponse> raw();
+
+    /**
+     * Returns the response body exactly as received, as bytes, skipping deserialization.
+     * Use this for binary payloads such as archives or spreadsheets. Combine with
+     * {@code noThrow()} to read the bytes of an error status.
+     *
+     * @return Mono emitting the response bytes (empty if there is no body)
+     */
+    default Mono<byte[]> bodyAsBytes() {
+        return raw().mapNotNull(RawResponse::bodyBytes);
+    }
 }

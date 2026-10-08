@@ -43,6 +43,16 @@ class MutinyRawResponseAccessTest {
     }
 
     @Test
+    void bodyAsBytes_returnsTransportBytes() {
+        byte[] bin = {(byte) 0xFF, (byte) 0xFE, 0x01};
+        RawResponse r = RawResponse.ofBytes(200, Map.of(), bin);
+        when(transport.send(anyString(), any(), anyMap(), any(), any()))
+                .thenReturn(Uni.createFrom().item(r));
+
+        assertArrayEquals(bin, defaultClient().get("/f").retrieve().bodyAsBytes().await().indefinitely());
+    }
+
+    @Test
     void fluentRaw_200_returnsTransportRawResponse() {
         RawResponse expected = new RawResponse(200, Map.of(), "ok");
         when(transport.send(anyString(), any(), anyMap(), any(), any()))

@@ -46,4 +46,15 @@ public interface MutinyClientResponse {
      * @return Uni emitting the raw response wrapper produced by the transport
      */
     Uni<RawResponse> raw();
+
+    /**
+     * Returns the response body exactly as received, as bytes, skipping deserialization.
+     * Use this for binary payloads such as archives or spreadsheets. Combine with
+     * {@code noThrow()} to read the bytes of an error status.
+     *
+     * @return Uni emitting the response bytes
+     */
+    default Uni<byte[]> bodyAsBytes() {
+        return raw().onItem().transform(RawResponse::bodyBytes);
+    }
 }
