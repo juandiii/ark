@@ -214,7 +214,20 @@ public abstract class AbstractClientRequest<T extends AbstractClientRequest<T>>
             return base;
         }
         String p = StringUtils.ensureLeadingSlash(trimmedPath);
-        return DOUBLE_SLASH.matcher(base + p).replaceAll("/");
+        String full = base + p;
+        int cut = indexOfQueryOrFragment(full);
+        if (cut < 0) {
+            return DOUBLE_SLASH.matcher(full).replaceAll("/");
+        }
+        return DOUBLE_SLASH.matcher(full.substring(0, cut)).replaceAll("/") + full.substring(cut);
+    }
+
+    private static int indexOfQueryOrFragment(String url) {
+        int q = url.indexOf('?');
+        int h = url.indexOf('#');
+        if (q < 0) return h;
+        if (h < 0) return q;
+        return Math.min(q, h);
     }
 
     private String encode(String value) {

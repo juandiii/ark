@@ -115,6 +115,12 @@ class AbstractClientRequestTest {
         }
 
         @Test
+        void givenInlineQueryWithDoubleSlash_whenBuildUri_thenQueryPreserved() {
+            assertEquals("https://api.example.com/x?u=a//b",
+                    request("GET", "https://api.example.com", "/x?u=a//b").buildUri().toString());
+        }
+
+        @Test
         void givenMultipleSlashes_whenBuildUri_thenNormalizesToSingle() {
             assertEquals(URI.create("https://api.example.com/users"),
                     request("GET", "https://api.example.com///", "///users").buildUri());
