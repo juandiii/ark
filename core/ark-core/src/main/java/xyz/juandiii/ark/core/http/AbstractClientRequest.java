@@ -175,7 +175,20 @@ public abstract class AbstractClientRequest<T extends AbstractClientRequest<T>>
             headers.put("Content-Type", MultipartEncoder.contentType(mp));
             return new SerializedBody(null, MultipartEncoder.encode(mp));
         }
+        if (body instanceof byte[] bytes) {
+            if (!hasHeaderIgnoreCase("Content-Type")) {
+                headers.put("Content-Type", "application/octet-stream");
+            }
+            return new SerializedBody(null, bytes);   // same array: no copy, so callers can wipe it after send
+        }
         return new SerializedBody(serializer.serialize(body), null);
+    }
+
+    private boolean hasHeaderIgnoreCase(String name) {
+        for (String key : headers.keySet()) {
+            if (key.equalsIgnoreCase(name)) return true;
+        }
+        return false;
     }
 
     protected boolean isThrowOnError() {

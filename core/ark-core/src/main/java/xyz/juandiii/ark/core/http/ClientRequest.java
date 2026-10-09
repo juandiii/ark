@@ -55,6 +55,11 @@ public interface ClientRequest extends RequestContext {
      * {@link xyz.juandiii.ark.core.JsonSerializer}; {@code String} is sent as-is;
      * {@code byte[]} and {@link MultipartBody} are sent through the transport's
      * binary path.
+     * <p>
+     * A {@code byte[]} body is sent as-is and is not copied. {@code Content-Type}
+     * defaults to {@code application/octet-stream} only when it is not already set.
+     * The caller must not mutate the array until the response has completed, because
+     * async clients and retries resend the same array.
      *
      * @param body request body (may be {@code null} for bodiless methods)
      * @return this request for chaining

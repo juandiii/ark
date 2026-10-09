@@ -284,6 +284,83 @@ class AbstractClientRequestTest {
     }
 
     @Nested
+    class ByteArrayBody {
+
+        @SuppressWarnings("unchecked")
+        private ArgumentCaptor<Map<String, String>> captureHeaders(byte[] bytes) {
+            ArgumentCaptor<Map<String, String>> headers = ArgumentCaptor.forClass(Map.class);
+            verify(transport).sendBinary(eq("POST"), any(), headers.capture(), same(bytes), any());
+            return headers;
+        }
+
+        private void stubSendBinary() {
+            when(transport.sendBinary(anyString(), any(), anyMap(), any(), any()))
+                    .thenReturn(new RawResponse(200, Map.of(), ""));
+        }
+
+        @Test
+        void givenByteArrayBody_whenRetrieve_thenSendBinaryWithSameArray() {
+            stubSendBinary();
+            byte[] bytes = {1, 2, 3};
+
+            request("POST", "/").body(bytes).retrieve();
+
+            verify(transport).sendBinary(eq("POST"), any(), anyMap(), same(bytes), any());
+            verify(transport, never()).send(any(), any(), any(), any(), any());
+            verifyNoInteractions(serializer);
+        }
+
+        @Test
+        void givenByteArrayBody_whenNoContentType_thenDefaultsToOctetStream() {
+            stubSendBinary();
+            byte[] bytes = {1, 2, 3};
+
+            request("POST", "/").body(bytes).retrieve();
+
+            assertEquals("application/octet-stream",
+                    captureHeaders(bytes).getValue().get("Content-Type"));
+        }
+
+        @Test
+        void givenByteArrayBody_whenContentTypeSet_thenNotOverridden() {
+            stubSendBinary();
+            byte[] bytes = {1, 2, 3};
+
+            request("POST", "/").contentType("application/json").body(bytes).retrieve();
+
+            assertEquals("application/json",
+                    captureHeaders(bytes).getValue().get("Content-Type"));
+        }
+
+        @Test
+        void givenByteArrayBody_whenLowercaseContentTypeHeader_thenNotOverridden() {
+            stubSendBinary();
+            byte[] bytes = {1, 2, 3};
+
+            request("POST", "/").header("content-type", "application/json").body(bytes).retrieve();
+
+            Map<String, String> sent = captureHeaders(bytes).getValue();
+            List<String> matching = sent.keySet().stream()
+                    .filter(k -> k.equalsIgnoreCase("Content-Type")).toList();
+            assertEquals(1, matching.size());
+            assertEquals("application/json", sent.get(matching.get(0)));
+        }
+
+        @Test
+        void givenJsonBytes_whenRetrieve_thenTransportReceivesExactBytes() {
+            stubSendBinary();
+            byte[] json = "{\"a\":1}".getBytes(java.nio.charset.StandardCharsets.UTF_8);
+
+            request("POST", "/").body(json).retrieve();
+
+            ArgumentCaptor<byte[]> captured = ArgumentCaptor.forClass(byte[].class);
+            verify(transport).sendBinary(eq("POST"), any(), anyMap(), captured.capture(), any());
+            assertArrayEquals(json, captured.getValue());
+            assertEquals('{', captured.getValue()[0]);
+        }
+    }
+
+    @Nested
     class Interceptors {
 
         @Test
