@@ -568,6 +568,28 @@ class ArkJdkHttpTransportTest {
     }
 
     @Nested
+    class ByteArrayBodyEndToEnd {
+
+        @Test
+        void givenByteArrayBody_whenPost_thenServerReceivesExactBytes() {
+            xyz.juandiii.ark.core.JsonSerializer serializer = mock(xyz.juandiii.ark.core.JsonSerializer.class);
+            xyz.juandiii.ark.core.Ark client = xyz.juandiii.ark.core.ArkClient.builder()
+                    .serializer(serializer).transport(transport()).baseUrl(baseUri.toString()).build();
+            byte[] json = "{\"amount\":\"10.00\",\"n\":[1,2]}".getBytes(java.nio.charset.StandardCharsets.UTF_8);
+
+            byte[] echoed = client.post("/echo-body")
+                    .contentType("application/json")
+                    .body(json)
+                    .retrieve()
+                    .raw()
+                    .bodyBytes();
+
+            assertArrayEquals(json, echoed);
+            org.mockito.Mockito.verifyNoInteractions(serializer);
+        }
+    }
+
+    @Nested
     class SyncSendBinary {
 
         @Test
