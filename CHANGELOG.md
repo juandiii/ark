@@ -71,6 +71,12 @@
   (the typical case — relying on Spring Boot auto-configuration) are not
   affected.
 
+### Fixed
+
+- `body(byte[])` is now sent as raw bytes through the transport's binary path, as
+  documented. Previously it was JSON-serialized (a base64 string). Behavior change
+  for code that relied on the old output.
+
 ---
 
 ## [v1.0.6](https://github.com/juandiii/ark/releases/tag/v1.0.6) — 2026-04-22

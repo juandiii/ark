@@ -99,6 +99,22 @@ User created = client.post("/users")
     .body(User.class);
 ```
 
+#### Raw bytes
+
+A `byte[]` body is sent exactly as given (for example a pre-signed payload), through the
+transport's binary path. The array is not copied, and `Content-Type` defaults to
+`application/octet-stream` unless you set it. Do not mutate the array until the response
+has completed, because retries and async clients resend the same array.
+
+```java
+byte[] json = payload.getBytes(StandardCharsets.UTF_8);
+client.post("/payments")
+    .contentType(MediaType.APPLICATION_JSON)
+    .body(json)
+    .retrieve()
+    .raw();
+```
+
 ### PUT
 
 ```java
