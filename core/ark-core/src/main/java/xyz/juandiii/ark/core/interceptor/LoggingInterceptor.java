@@ -1,6 +1,7 @@
 package xyz.juandiii.ark.core.interceptor;
 
 import xyz.juandiii.ark.core.AbstractArkBuilder;
+import xyz.juandiii.ark.core.http.MultipartBody;
 import xyz.juandiii.ark.core.http.RawResponse;
 
 import java.net.URLEncoder;
@@ -109,10 +110,16 @@ public final class LoggingInterceptor {
         }
 
         if (level == Level.BODY && context.body() != null) {
-            sb.append("\n    ").append(redactBody(String.valueOf(context.body())));
+            sb.append("\n    ").append(renderBody(context.body()));
         }
 
         LOGGER.log(System.Logger.Level.DEBUG, sb.toString());
+    }
+
+    private static String renderBody(Object body) {
+        if (body instanceof byte[] bytes) return "<binary " + bytes.length + " bytes>";
+        if (body instanceof MultipartBody) return "<multipart body>";
+        return redactBody(String.valueOf(body));
     }
 
     private static void logResponse(RawResponse raw, Level level, long durationMs) {
