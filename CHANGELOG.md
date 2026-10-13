@@ -34,6 +34,23 @@
 
 ## [Unreleased]
 
+### Added
+
+- Quarkus: inject `ArkClients` and call `builder("name")` / `asyncBuilder("name")` to get a fluent
+  builder pre-configured from `ark.client."name".*` properties.
+- Quarkus: new per-client property `ark.client."name".max-response-bytes` (default `0`, unlimited)
+  for both declarative and fluent clients.
+- Sync client: `retrieveStream()` returns a `StreamingResponse` whose `body()` is an `InputStream`,
+  for large downloads without loading the body onto the heap. Available with the JDK transport;
+  honors `max-response-bytes`, is not retried, and skips response interceptors.
+
+### Behavior change
+
+- The JDK `HttpClient` built by the Spring Boot starter and the Quarkus extension now follows
+  redirects by default (`HttpClient.Redirect.NORMAL`; never https to http). 3xx responses that
+  previously reached the caller are now followed. Set `ark.client.<name>.follow-redirects=false`
+  to restore the old behavior.
+
 ### Breaking
 
 - **Quarkus extension split**: `ark-quarkus-jackson` no longer bundles the Vert.x Mutiny
@@ -67,6 +84,12 @@
   `ArkWebFluxProperties`. Users who only depend on the starter via Maven
   (the typical case — relying on Spring Boot auto-configuration) are not
   affected.
+
+### Fixed
+
+- `body(byte[])` is now sent as raw bytes through the transport's binary path, as
+  documented. Previously it was JSON-serialized (a base64 string). Behavior change
+  for code that relied on the old output.
 
 ---
 

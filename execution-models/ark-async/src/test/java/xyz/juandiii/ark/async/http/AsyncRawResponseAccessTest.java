@@ -45,6 +45,16 @@ class AsyncRawResponseAccessTest {
     }
 
     @Test
+    void bodyAsBytes_returnsTransportBytes() throws Exception {
+        byte[] bin = {(byte) 0xFF, (byte) 0xFE, 0x01};
+        RawResponse r = RawResponse.ofBytes(200, Map.of(), bin);
+        when(transport.send(anyString(), any(), anyMap(), any(), any()))
+                .thenReturn(CompletableFuture.completedFuture(r));
+
+        assertArrayEquals(bin, defaultClient().get("/f").retrieve().bodyAsBytes().get());
+    }
+
+    @Test
     void fluentRaw_200_returnsTransportRawResponse() throws Exception {
         RawResponse expected = new RawResponse(200, Map.of(), "ok");
         when(transport.send(anyString(), any(), anyMap(), any(), any()))

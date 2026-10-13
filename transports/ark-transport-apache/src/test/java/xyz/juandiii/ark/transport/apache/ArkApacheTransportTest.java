@@ -45,6 +45,13 @@ class ArkApacheTransportTest {
             try (OutputStream os = exchange.getResponseBody()) { os.write(body); }
         });
 
+        server.createContext("/binary", exchange -> {
+            byte[] body = {0x50, 0x4B, 0x03, 0x04, (byte) 0xFF, (byte) 0xFE, 0x00};
+            exchange.getResponseHeaders().add("Content-Type", "application/octet-stream");
+            exchange.sendResponseHeaders(200, body.length);
+            try (OutputStream os = exchange.getResponseBody()) { os.write(body); }
+        });
+
         server.createContext("/not-found", exchange -> {
             byte[] body = "Not Found".getBytes();
             exchange.sendResponseHeaders(404, body.length);
@@ -90,6 +97,17 @@ class ArkApacheTransportTest {
             try (OutputStream os = exchange.getResponseBody()) { os.write(body); }
         });
 
+        server.createContext("/not-modified", exchange -> {
+            exchange.getResponseHeaders().add("ETag", "\"v1\"");
+            exchange.sendResponseHeaders(304, -1);
+            exchange.close();
+        });
+
+        server.createContext("/no-body", exchange -> {
+            exchange.sendResponseHeaders(204, -1);
+            exchange.close();
+        });
+
         server.start();
         baseUri = URI.create("http://localhost:" + server.getAddress().getPort());
     }
@@ -130,6 +148,35 @@ class ArkApacheTransportTest {
 
     @Nested
     class SyncSend {
+
+        @Test
+        void binaryResponse_preservesBodyBytes() {
+            byte[] expected = {0x50, 0x4B, 0x03, 0x04, (byte) 0xFF, (byte) 0xFE, 0x00};
+            RawResponse raw = transport().send("GET", baseUri.resolve("/binary"), Map.of(), null, null);
+
+            assertArrayEquals(expected, raw.bodyBytes());
+        }
+
+        @Test
+        void notModified_returns304WithHeadersAndEmptyBody() {
+            RawResponse response = transport().send("GET", baseUri.resolve("/not-modified"),
+                    Map.of("If-None-Match", "\"v1\""), null, null);
+
+            assertEquals(304, response.statusCode());
+            assertEquals("", response.body());
+            boolean hasEtag = response.headers().entrySet().stream()
+                    .anyMatch(e -> e.getKey().equalsIgnoreCase("ETag") && e.getValue().contains("\"v1\""));
+            assertTrue(hasEtag);
+        }
+
+        @Test
+        void noContent_returns204WithEmptyBody() {
+            RawResponse response = transport().send("GET", baseUri.resolve("/no-body"),
+                    Map.of(), null, null);
+
+            assertEquals(204, response.statusCode());
+            assertEquals("", response.body());
+        }
 
         @Test
         void givenSuccessEndpoint_whenSend_thenReturnsRawResponseWith200() {

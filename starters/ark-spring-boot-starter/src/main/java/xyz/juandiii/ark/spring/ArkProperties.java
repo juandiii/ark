@@ -54,6 +54,7 @@ public record ArkProperties(
             String tlsConfigurationName,
             @DefaultValue("false") boolean trustAll,
             @DefaultValue("true") boolean throwOnError,
+            @DefaultValue("true") boolean followRedirects,
             @DefaultValue Map<String, String> headers,
             RetryProperties retry
     ) {

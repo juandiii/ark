@@ -31,4 +31,15 @@ public interface VertxClientResponse {
      * @return Future completed with the raw response wrapper produced by the transport
      */
     Future<RawResponse> raw();
+
+    /**
+     * Returns the response body exactly as received, as bytes, skipping deserialization.
+     * Use this for binary payloads such as archives or spreadsheets. Combine with
+     * {@code noThrow()} to read the bytes of an error status.
+     *
+     * @return Future completed with the response bytes
+     */
+    default Future<byte[]> bodyAsBytes() {
+        return raw().map(RawResponse::bodyBytes);
+    }
 }

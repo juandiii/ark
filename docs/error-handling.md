@@ -171,6 +171,21 @@ See [Retry & Backoff](retry.md) for configuration.
 
 ---
 
+## Conditional requests (304 Not Modified)
+
+Only 4xx and 5xx statuses throw. A `3xx` response, including `304 Not Modified`, is returned normally, so `.noThrow()` is not required.
+
+```java
+RawResponse raw = client.get("/rates.xlsx")
+        .header("If-None-Match", cachedEtag)
+        .retrieve()
+        .raw();
+if (raw.statusCode() == 304) { /* use cache */ }
+String etag = raw.header("ETag").orElse(null);
+```
+
+`header(name)` matches the header name case-insensitively, regardless of the transport in use.
+
 ## Related
 
 - [Retry & Backoff](retry.md)

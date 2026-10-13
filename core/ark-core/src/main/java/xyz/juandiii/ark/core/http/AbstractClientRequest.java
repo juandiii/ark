@@ -29,6 +29,7 @@ public abstract class AbstractClientRequest<T extends AbstractClientRequest<T>>
         implements RequestContext {
 
     private static final Pattern DOUBLE_SLASH = Pattern.compile("(?<=[^:])//+");
+    private static final Pattern ABSOLUTE_URL = Pattern.compile("^[a-zA-Z][a-zA-Z0-9+.-]*://.*");
 
     protected final String method;
     protected final String baseUrl;
@@ -174,7 +175,24 @@ public abstract class AbstractClientRequest<T extends AbstractClientRequest<T>>
             headers.put("Content-Type", MultipartEncoder.contentType(mp));
             return new SerializedBody(null, MultipartEncoder.encode(mp));
         }
+        if (body instanceof byte[] bytes) {
+            if (!hasHeaderIgnoreCase("Content-Type")) {
+                headers.put("Content-Type", "application/octet-stream");
+            }
+            return new SerializedBody(null, bytes);   // same array: no copy, so callers can wipe it after send
+        }
         return new SerializedBody(serializer.serialize(body), null);
+    }
+
+    private boolean hasHeaderIgnoreCase(String name) {
+        for (String key : headers.keySet()) {
+            if (key.equalsIgnoreCase(name)) return true;
+        }
+        return false;
+    }
+
+    protected boolean isThrowOnError() {
+        return throwOnError;
     }
 
     protected void validateResponse(RawResponse raw) {
@@ -202,14 +220,31 @@ public abstract class AbstractClientRequest<T extends AbstractClientRequest<T>>
         return "POST".equals(method) || "PUT".equals(method) || "PATCH".equals(method);
     }
 
+    /** An absolute URL passed as the path is used as-is: baseUrl is ignored and slashes are not collapsed. */
     private String normalizedUrl() {
         String base = StringUtils.stripTrailingSlash(StringUtils.trimToEmpty(baseUrl));
         String trimmedPath = StringUtils.trimToEmpty(path);
+        if (ABSOLUTE_URL.matcher(trimmedPath).matches()) {
+            return trimmedPath;
+        }
         if (StringUtils.isEmpty(trimmedPath) || trimmedPath.equals("/")) {
             return base;
         }
         String p = StringUtils.ensureLeadingSlash(trimmedPath);
-        return DOUBLE_SLASH.matcher(base + p).replaceAll("/");
+        String full = base + p;
+        int cut = indexOfQueryOrFragment(full);
+        if (cut < 0) {
+            return DOUBLE_SLASH.matcher(full).replaceAll("/");
+        }
+        return DOUBLE_SLASH.matcher(full.substring(0, cut)).replaceAll("/") + full.substring(cut);
+    }
+
+    private static int indexOfQueryOrFragment(String url) {
+        int q = url.indexOf('?');
+        int h = url.indexOf('#');
+        if (q < 0) return h;
+        if (h < 0) return q;
+        return Math.min(q, h);
     }
 
     private String encode(String value) {

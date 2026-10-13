@@ -47,6 +47,7 @@ public class ArkAutoConfiguration {
     public HttpTransport httpTransport() {
         return new ArkJdkSyncTransport(HttpClient.newBuilder()
                 .version(HttpClient.Version.HTTP_2)
+                .followRedirects(HttpClient.Redirect.NORMAL)
                 .build());
     }
 
@@ -55,6 +56,7 @@ public class ArkAutoConfiguration {
     public ArkJdkAsyncTransport asyncHttpTransport() {
         return new ArkJdkAsyncTransport(HttpClient.newBuilder()
                 .version(HttpClient.Version.HTTP_2)
+                .followRedirects(HttpClient.Redirect.NORMAL)
                 .build());
     }
 

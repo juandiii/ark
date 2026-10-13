@@ -91,22 +91,24 @@ public class ArkClientFactoryBean<T> implements FactoryBean<T>, BeanFactoryAware
         int readTimeout = config != null ? config.readTimeout() : annotation.readTimeout();
         String tlsConfigName = config != null ? config.tlsConfigurationName() : null;
         boolean trustAll = config != null && config.trustAll();
+        boolean followRedirects = config == null || config.followRedirects();
 
         Object arkClient = usesAsyncReturnTypes(clientInterface)
                 ? buildAsync(config, baseUrl, httpVersion, connectTimeout, readTimeout,
-                        tlsConfigName, trustAll, configKey, annotation)
+                        tlsConfigName, trustAll, followRedirects, configKey, annotation)
                 : buildSync(config, baseUrl, httpVersion, connectTimeout, readTimeout,
-                        tlsConfigName, trustAll, configKey, annotation);
+                        tlsConfigName, trustAll, followRedirects, configKey, annotation);
 
         return (T) ArkProxy.create(clientInterface, arkClient);
     }
 
     private ArkClient buildSync(ArkProperties.ClientProperties config, String baseUrl,
                                  HttpVersion httpVersion, int connectTimeout, int readTimeout,
-                                 String tlsConfigName, boolean trustAll, String configKey,
+                                 String tlsConfigName, boolean trustAll, boolean followRedirects,
+                                 String configKey,
                                  RegisterArkClient annotation) {
         HttpTransport baseTransport = resolveSyncTransport(httpVersion, connectTimeout,
-                tlsConfigName, trustAll, configKey);
+                tlsConfigName, trustAll, followRedirects, configKey);
         Transport<RawResponse> transport = (config != null && config.retry() != null)
                 ? baseTransport.with(Retry.of(config.retry().toRetryPolicy(), new SyncRetryOps()))
                 : baseTransport;
@@ -126,10 +128,11 @@ public class ArkClientFactoryBean<T> implements FactoryBean<T>, BeanFactoryAware
 
     private AsyncArkClient buildAsync(ArkProperties.ClientProperties config, String baseUrl,
                                        HttpVersion httpVersion, int connectTimeout, int readTimeout,
-                                       String tlsConfigName, boolean trustAll, String configKey,
+                                       String tlsConfigName, boolean trustAll, boolean followRedirects,
+                                       String configKey,
                                        RegisterArkClient annotation) {
         ArkJdkAsyncTransport baseTransport = resolveAsyncTransport(httpVersion, connectTimeout,
-                tlsConfigName, trustAll, configKey);
+                tlsConfigName, trustAll, followRedirects, configKey);
         Transport<CompletableFuture<RawResponse>> transport = (config != null && config.retry() != null)
                 ? baseTransport.with(Retry.of(config.retry().toRetryPolicy(), new AsyncRetryOps()))
                 : baseTransport;
@@ -172,15 +175,15 @@ public class ArkClientFactoryBean<T> implements FactoryBean<T>, BeanFactoryAware
 
     private HttpTransport resolveSyncTransport(HttpVersion httpVersion, int connectTimeout,
                                                 String tlsConfigName, boolean trustAll,
-                                                String clientName) {
-        HttpClient custom = customHttpClient(httpVersion, connectTimeout, tlsConfigName, trustAll, clientName);
+                                                boolean followRedirects, String clientName) {
+        HttpClient custom = customHttpClient(httpVersion, connectTimeout, tlsConfigName, trustAll, followRedirects, clientName);
         return custom != null ? new ArkJdkSyncTransport(custom) : defaultSyncTransport;
     }
 
     private ArkJdkAsyncTransport resolveAsyncTransport(HttpVersion httpVersion, int connectTimeout,
                                                         String tlsConfigName, boolean trustAll,
-                                                        String clientName) {
-        HttpClient custom = customHttpClient(httpVersion, connectTimeout, tlsConfigName, trustAll, clientName);
+                                                        boolean followRedirects, String clientName) {
+        HttpClient custom = customHttpClient(httpVersion, connectTimeout, tlsConfigName, trustAll, followRedirects, clientName);
         return custom != null ? new ArkJdkAsyncTransport(custom) : defaultAsyncTransport;
     }
 
@@ -189,21 +192,24 @@ public class ArkClientFactoryBean<T> implements FactoryBean<T>, BeanFactoryAware
      *         if the client should use the default transport bean.
      */
     private HttpClient customHttpClient(HttpVersion httpVersion, int connectTimeout,
-                                         String tlsConfigName, boolean trustAll, String clientName) {
+                                         String tlsConfigName, boolean trustAll,
+                                         boolean followRedirects, String clientName) {
         SSLContext sslContext = trustAll
                 ? InsecureSslContext.create(clientName)
                 : resolveSsl(tlsConfigName);
 
         boolean needsCustom = sslContext != null
                 || httpVersion != RegisterArkClient.DEFAULT_HTTP_VERSION
-                || connectTimeout != RegisterArkClient.DEFAULT_CONNECT_TIMEOUT;
+                || connectTimeout != RegisterArkClient.DEFAULT_CONNECT_TIMEOUT
+                || !followRedirects;
         if (!needsCustom) return null;
 
         HttpClient.Builder httpBuilder = HttpClient.newBuilder()
                 .version(httpVersion == HttpVersion.HTTP_2
                         ? HttpClient.Version.HTTP_2
                         : HttpClient.Version.HTTP_1_1)
-                .connectTimeout(Duration.ofSeconds(connectTimeout));
+                .connectTimeout(Duration.ofSeconds(connectTimeout))
+                .followRedirects(followRedirects ? HttpClient.Redirect.NORMAL : HttpClient.Redirect.NEVER);
         if (sslContext != null) {
             httpBuilder.sslContext(sslContext);
         }

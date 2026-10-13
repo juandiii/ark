@@ -57,6 +57,21 @@ ArkJdkSyncTransport syncTransport = new ArkJdkSyncTransport(httpClient);
 ArkJdkAsyncTransport asyncTransport = new ArkJdkAsyncTransport(httpClient);
 ```
 
+#### Response size limit
+
+Both JDK transports accept an optional maximum response body size. The default is unlimited.
+
+```java
+// Sync: abort bodies larger than 10 MiB
+ArkJdkSyncTransport limited = new ArkJdkSyncTransport(httpClient, 10 * 1024 * 1024);
+
+// Async: (httpClient, executor, maxResponseBytes)
+ArkJdkAsyncTransport limitedAsync =
+    new ArkJdkAsyncTransport(httpClient, httpClient.executor().orElse(Runnable::run), 10 * 1024 * 1024);
+```
+
+When the body exceeds the limit (checked against `Content-Length` up front, and while streaming for chunked responses), the download is cancelled and a `ResponseTooLargeException` (an `ArkException`) is thrown. A value `<= 0` means no limit. It is not retried by `Retry`.
+
 ### Reactor Netty
 
 ```xml

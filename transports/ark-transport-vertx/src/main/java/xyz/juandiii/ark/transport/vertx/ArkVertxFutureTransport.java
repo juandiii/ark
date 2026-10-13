@@ -62,6 +62,7 @@ public final class ArkVertxFutureTransport implements VertxHttpTransport {
     }
 
     private RawResponse toRawResponse(HttpResponse<Buffer> r) {
-        return new RawResponse(r.statusCode(), HeaderUtils.toHeaderMap(r.headers()), r.bodyAsString());
+        Buffer b = r.bodyAsBuffer();
+        return RawResponse.ofBytes(r.statusCode(), HeaderUtils.toHeaderMap(r.headers()), b != null ? b.getBytes() : null);
     }
 }

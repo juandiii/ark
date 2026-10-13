@@ -69,6 +69,22 @@ public interface ArkClientNamedConfig {
     boolean throwOnError();
 
     /**
+     * If true (default), the JDK HttpClient follows 3xx redirects (HttpClient.Redirect.NORMAL:
+     * never https→http). If false, 3xx responses are returned to the caller.
+     */
+    @WithName("follow-redirects")
+    @WithDefault("true")
+    boolean followRedirects();
+
+    /**
+     * Maximum response body size in bytes. 0 (default) means unlimited.
+     * Larger bodies fail with ResponseTooLargeException.
+     */
+    @WithName("max-response-bytes")
+    @WithDefault("0")
+    long maxResponseBytes();
+
+    /**
      * Default headers to add to every request.
      */
     @WithName("headers")

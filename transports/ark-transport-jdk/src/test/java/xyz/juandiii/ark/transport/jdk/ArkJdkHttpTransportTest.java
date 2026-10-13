@@ -17,13 +17,16 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.URI;
 import java.net.http.HttpClient;
+import java.net.http.HttpHeaders;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.time.Duration;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
+import java.util.concurrent.Flow;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -54,6 +57,13 @@ class ArkJdkHttpTransportTest {
             try (OutputStream os = exchange.getResponseBody()) {
                 os.write(body);
             }
+        });
+
+        server.createContext("/binary", exchange -> {
+            byte[] body = {0x50, 0x4B, 0x03, 0x04, (byte) 0xFF, (byte) 0xFE, 0x00};
+            exchange.getResponseHeaders().add("Content-Type", "application/octet-stream");
+            exchange.sendResponseHeaders(200, body.length);
+            try (OutputStream os = exchange.getResponseBody()) { os.write(body); }
         });
 
         server.createContext("/not-found", exchange -> {
@@ -106,9 +116,39 @@ class ArkJdkHttpTransportTest {
             }
         });
 
+        server.createContext("/not-modified", exchange -> {
+            exchange.getResponseHeaders().add("ETag", "\"v1\"");
+            exchange.getResponseHeaders().add("Last-Modified", "Wed, 21 Oct 2015 07:28:00 GMT");
+            exchange.sendResponseHeaders(304, -1);
+            exchange.close();
+        });
+
         server.createContext("/no-body", exchange -> {
             exchange.sendResponseHeaders(204, -1);
             exchange.close();
+        });
+
+        server.createContext("/big-known", exchange -> {
+            byte[] body = new byte[10_000];
+            exchange.sendResponseHeaders(200, body.length);
+            try (OutputStream os = exchange.getResponseBody()) {
+                os.write(body);
+            } catch (IOException ignored) {
+                // client aborted the download
+            }
+        });
+
+        server.createContext("/big-chunked", exchange -> {
+            exchange.sendResponseHeaders(200, 0);
+            try (OutputStream os = exchange.getResponseBody()) {
+                byte[] chunk = new byte[1_000];
+                for (int i = 0; i < 10; i++) {
+                    os.write(chunk);
+                    os.flush();
+                }
+            } catch (IOException ignored) {
+                // client aborted the download
+            }
         });
 
         server.start();
@@ -167,6 +207,24 @@ class ArkJdkHttpTransportTest {
 
     @Nested
     class SyncSend {
+
+        @Test
+        void binaryResponse_preservesBodyBytes() {
+            byte[] expected = {0x50, 0x4B, 0x03, 0x04, (byte) 0xFF, (byte) 0xFE, 0x00};
+            RawResponse raw = transport().send("GET", baseUri.resolve("/binary"), Map.of(), null, null);
+
+            assertArrayEquals(expected, raw.bodyBytes());
+        }
+
+        @Test
+        void notModified_returns304WithConditionalHeaders() {
+            RawResponse response = transport().send("GET", baseUri.resolve("/not-modified"),
+                    Map.of("If-None-Match", "\"v1\""), null, null);
+
+            assertEquals(304, response.statusCode());
+            assertTrue(response.header("etag").isPresent());
+            assertTrue(response.header("last-modified").isPresent());
+        }
 
         @Test
         void givenSuccessEndpoint_whenSend_thenReturnsRawResponseWith200() {
@@ -393,6 +451,14 @@ class ArkJdkHttpTransportTest {
     class AsyncSendAsync {
 
         @Test
+        void binaryResponse_preservesBodyBytes() throws Exception {
+            byte[] expected = {0x50, 0x4B, 0x03, 0x04, (byte) 0xFF, (byte) 0xFE, 0x00};
+            RawResponse raw = asyncTransport().send("GET", baseUri.resolve("/binary"), Map.of(), null, null).get();
+
+            assertArrayEquals(expected, raw.bodyBytes());
+        }
+
+        @Test
         void givenSuccessEndpoint_whenSendAsync_thenReturnsRawResponseWith200() throws Exception {
             CompletableFuture<RawResponse> future = asyncTransport().send("GET",
                     baseUri.resolve("/ok"), Map.of(), null, null);
@@ -502,6 +568,28 @@ class ArkJdkHttpTransportTest {
     }
 
     @Nested
+    class ByteArrayBodyEndToEnd {
+
+        @Test
+        void givenByteArrayBody_whenPost_thenServerReceivesExactBytes() {
+            xyz.juandiii.ark.core.JsonSerializer serializer = mock(xyz.juandiii.ark.core.JsonSerializer.class);
+            xyz.juandiii.ark.core.Ark client = xyz.juandiii.ark.core.ArkClient.builder()
+                    .serializer(serializer).transport(transport()).baseUrl(baseUri.toString()).build();
+            byte[] json = "{\"amount\":\"10.00\",\"n\":[1,2]}".getBytes(java.nio.charset.StandardCharsets.UTF_8);
+
+            byte[] echoed = client.post("/echo-body")
+                    .contentType("application/json")
+                    .body(json)
+                    .retrieve()
+                    .raw()
+                    .bodyBytes();
+
+            assertArrayEquals(json, echoed);
+            org.mockito.Mockito.verifyNoInteractions(serializer);
+        }
+    }
+
+    @Nested
     class SyncSendBinary {
 
         @Test
@@ -567,6 +655,146 @@ class ArkJdkHttpTransportTest {
             RawResponse response = future.get();
             assertEquals(404, response.statusCode());
             assertTrue(response.isError());
+        }
+    }
+
+    @Nested
+    class MaxResponseBytes {
+
+        private ArkJdkSyncTransport limitedSync() {
+            return new ArkJdkSyncTransport(HttpClient.newBuilder().build(), 1_000);
+        }
+
+        private ArkJdkAsyncTransport limitedAsync() {
+            return new ArkJdkAsyncTransport(HttpClient.newBuilder().build(), Runnable::run, 1_000);
+        }
+
+        @Test
+        void limit_knownLength_rejected() {
+            ResponseTooLargeException ex = assertThrows(ResponseTooLargeException.class, () ->
+                    limitedSync().send("GET", baseUri.resolve("/big-known"), Map.of(), null, null));
+
+            assertEquals(1_000, ex.limit());
+            assertTrue(ex.uri().toString().endsWith("/big-known"));
+        }
+
+        @Test
+        void limit_chunked_rejectedWhileStreaming() {
+            assertThrows(ResponseTooLargeException.class, () ->
+                    limitedSync().send("GET", baseUri.resolve("/big-chunked"), Map.of(), null, null));
+        }
+
+        @Test
+        void limit_smallBody_passes() {
+            RawResponse response = limitedSync().send("GET", baseUri.resolve("/ok"), Map.of(), null, null);
+
+            assertEquals(200, response.statusCode());
+            assertEquals("{\"status\":\"ok\"}", response.body());
+        }
+
+        @Test
+        void noLimit_default_readsLargeBody() {
+            RawResponse response = transport().send("GET", baseUri.resolve("/big-known"), Map.of(), null, null);
+
+            assertEquals(10_000, response.bodyBytes().length);
+        }
+
+        @Test
+        void limit_async_failsWithResponseTooLarge() {
+            ExecutionException ex = assertThrows(ExecutionException.class, () ->
+                    limitedAsync().send("GET", baseUri.resolve("/big-known"), Map.of(), null, null).get());
+
+            ResponseTooLargeException cause = assertInstanceOf(ResponseTooLargeException.class, ex.getCause());
+            assertNotNull(cause.uri());
+            assertEquals(1_000, cause.limit());
+        }
+    }
+
+    @Nested
+    class Http2StreamCancel {
+
+        private static final URI H2_URI = URI.create("https://h2.example/file.zip");
+
+        private HttpResponse.ResponseInfo fakeInfo(int status, long contentLength) {
+            HttpHeaders headers = HttpHeaders.of(
+                    Map.of("Content-Length", List.of(String.valueOf(contentLength))), (a, b) -> true);
+            return new HttpResponse.ResponseInfo() {
+                @Override
+                public int statusCode() {
+                    return status;
+                }
+
+                @Override
+                public HttpHeaders headers() {
+                    return headers;
+                }
+
+                @Override
+                public HttpClient.Version version() {
+                    return HttpClient.Version.HTTP_2;
+                }
+            };
+        }
+
+        private Flow.Subscription noopSubscription() {
+            return new Flow.Subscription() {
+                @Override
+                public void request(long n) {}
+
+                @Override
+                public void cancel() {}
+            };
+        }
+
+        private void applyHandler(Object handlerArg, long contentLength) {
+            @SuppressWarnings("unchecked")
+            HttpResponse.BodyHandler<byte[]> handler = (HttpResponse.BodyHandler<byte[]>) handlerArg;
+            handler.apply(fakeInfo(200, contentLength)).onSubscribe(noopSubscription());
+        }
+
+        @Test
+        void sync_streamCancelWithoutCause_stillThrowsResponseTooLarge() throws Exception {
+            HttpClient client = mock(HttpClient.class);
+            when(client.send(any(), any())).thenAnswer(inv -> {
+                applyHandler(inv.getArgument(1), 10_000);
+                throw new IOException("Stream 1 cancelled");
+            });
+
+            ResponseTooLargeException ex = assertThrows(ResponseTooLargeException.class, () ->
+                    new ArkJdkSyncTransport(client, 1_000).send("GET", H2_URI, Map.of(), null, null));
+
+            assertEquals(1_000, ex.limit());
+            assertEquals(H2_URI, ex.uri());
+        }
+
+        @Test
+        void async_streamCancelWithoutCause_stillFailsWithResponseTooLarge() {
+            HttpClient client = mock(HttpClient.class);
+            when(client.sendAsync(any(), any())).thenAnswer(inv -> {
+                applyHandler(inv.getArgument(1), 10_000);
+                return CompletableFuture.failedFuture(new IOException("Stream 1 cancelled"));
+            });
+
+            ExecutionException ex = assertThrows(ExecutionException.class, () ->
+                    new ArkJdkAsyncTransport(client, Runnable::run, 1_000)
+                            .send("GET", H2_URI, Map.of(), null, null).get());
+
+            ResponseTooLargeException cause = assertInstanceOf(ResponseTooLargeException.class, ex.getCause());
+            assertNotNull(cause.uri());
+        }
+
+        @Test
+        void sync_streamCancelWithoutLimitTrip_staysGenericArkException() throws Exception {
+            HttpClient client = mock(HttpClient.class);
+            when(client.send(any(), any())).thenAnswer(inv -> {
+                applyHandler(inv.getArgument(1), 10);
+                throw new IOException("Stream 1 cancelled");
+            });
+
+            ArkException ex = assertThrows(ArkException.class, () ->
+                    new ArkJdkSyncTransport(client, 1_000).send("GET", H2_URI, Map.of(), null, null));
+
+            assertFalse(ex instanceof ResponseTooLargeException);
         }
     }
 

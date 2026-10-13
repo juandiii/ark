@@ -413,6 +413,20 @@ class LoggingInterceptorTest {
         }
 
         @Test
+        void givenBodyLevel_whenByteArrayBody_thenLogsPlaceholderNotContent() {
+            var builder = new TestBuilder();
+            LoggingInterceptor.apply(builder, LoggingInterceptor.Level.BODY);
+
+            byte[] secret = "SECRET-TRACK2".getBytes(java.nio.charset.StandardCharsets.UTF_8);
+            builder.reqList.get(0).intercept(createContext("POST", "/pay", Map.of(), secret));
+
+            String logged = handler.lastMessage();
+            assertTrue(logged.contains("<binary 13 bytes>"), logged);
+            assertFalse(logged.contains("SECRET-TRACK2"), logged);
+            assertFalse(logged.contains("[B@"), logged);
+        }
+
+        @Test
         void givenJsonBodyWithPassword_whenLevelBody_thenPasswordRedacted() {
             var builder = new TestBuilder();
             LoggingInterceptor.apply(builder, LoggingInterceptor.Level.BODY);

@@ -55,11 +55,11 @@ public final class ArkReactorNettyTransport implements ReactorHttpTransport {
                 .uri(uri)
                 .send(bodyPublisher)
                 .responseSingle((response, content) ->
-                        content.asString().defaultIfEmpty("").map(responseBody ->
-                                new RawResponse(
+                        content.asByteArray().defaultIfEmpty(new byte[0]).map(bytes ->
+                                RawResponse.ofBytes(
                                         response.status().code(),
                                         HeaderUtils.toHeaderMap(response.responseHeaders()),
-                                        responseBody))
+                                        bytes))
                 );
 
         if (timeout != null) {

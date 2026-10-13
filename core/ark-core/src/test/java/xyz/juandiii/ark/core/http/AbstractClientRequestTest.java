@@ -90,6 +90,37 @@ class AbstractClientRequestTest {
         }
 
         @Test
+        void givenAbsoluteUrl_whenEmptyBaseUrl_thenUsesUrlAsIs() {
+            assertEquals(URI.create("https://cdn.example.com/files/a.xlsx"),
+                    request("GET", "", "https://cdn.example.com/files/a.xlsx").buildUri());
+        }
+
+        @Test
+        void givenAbsoluteUrl_whenBaseUrlSet_thenIgnoresBaseUrl() {
+            assertEquals(URI.create("http://other.example.com/x"),
+                    request("GET", "https://api.example.com", "http://other.example.com/x").buildUri());
+        }
+
+        @Test
+        void givenAbsoluteUrl_whenQueryParamsAdded_thenAppendsQuery() {
+            URI uri = request("GET", "", "https://cdn.example.com/files/a.xlsx")
+                    .queryParam("a", "1").buildUri();
+            assertTrue(uri.toString().endsWith("?a=1"));
+        }
+
+        @Test
+        void givenNullBaseUrl_whenAbsoluteUrl_thenUsesUrlAsIs() {
+            assertEquals(URI.create("https://cdn.example.com/files/a.xlsx"),
+                    request("GET", null, "https://cdn.example.com/files/a.xlsx").buildUri());
+        }
+
+        @Test
+        void givenInlineQueryWithDoubleSlash_whenBuildUri_thenQueryPreserved() {
+            assertEquals("https://api.example.com/x?u=a//b",
+                    request("GET", "https://api.example.com", "/x?u=a//b").buildUri().toString());
+        }
+
+        @Test
         void givenMultipleSlashes_whenBuildUri_thenNormalizesToSingle() {
             assertEquals(URI.create("https://api.example.com/users"),
                     request("GET", "https://api.example.com///", "///users").buildUri());
@@ -249,6 +280,83 @@ class AbstractClientRequestTest {
             request("GET", "/").timeout(Duration.ofSeconds(30)).retrieve();
 
             verify(transport).send(anyString(), any(), anyMap(), any(), eq(Duration.ofSeconds(30)));
+        }
+    }
+
+    @Nested
+    class ByteArrayBody {
+
+        @SuppressWarnings("unchecked")
+        private ArgumentCaptor<Map<String, String>> captureHeaders(byte[] bytes) {
+            ArgumentCaptor<Map<String, String>> headers = ArgumentCaptor.forClass(Map.class);
+            verify(transport).sendBinary(eq("POST"), any(), headers.capture(), same(bytes), any());
+            return headers;
+        }
+
+        private void stubSendBinary() {
+            when(transport.sendBinary(anyString(), any(), anyMap(), any(), any()))
+                    .thenReturn(new RawResponse(200, Map.of(), ""));
+        }
+
+        @Test
+        void givenByteArrayBody_whenRetrieve_thenSendBinaryWithSameArray() {
+            stubSendBinary();
+            byte[] bytes = {1, 2, 3};
+
+            request("POST", "/").body(bytes).retrieve();
+
+            verify(transport).sendBinary(eq("POST"), any(), anyMap(), same(bytes), any());
+            verify(transport, never()).send(any(), any(), any(), any(), any());
+            verifyNoInteractions(serializer);
+        }
+
+        @Test
+        void givenByteArrayBody_whenNoContentType_thenDefaultsToOctetStream() {
+            stubSendBinary();
+            byte[] bytes = {1, 2, 3};
+
+            request("POST", "/").body(bytes).retrieve();
+
+            assertEquals("application/octet-stream",
+                    captureHeaders(bytes).getValue().get("Content-Type"));
+        }
+
+        @Test
+        void givenByteArrayBody_whenContentTypeSet_thenNotOverridden() {
+            stubSendBinary();
+            byte[] bytes = {1, 2, 3};
+
+            request("POST", "/").contentType("application/json").body(bytes).retrieve();
+
+            assertEquals("application/json",
+                    captureHeaders(bytes).getValue().get("Content-Type"));
+        }
+
+        @Test
+        void givenByteArrayBody_whenLowercaseContentTypeHeader_thenNotOverridden() {
+            stubSendBinary();
+            byte[] bytes = {1, 2, 3};
+
+            request("POST", "/").header("content-type", "application/json").body(bytes).retrieve();
+
+            Map<String, String> sent = captureHeaders(bytes).getValue();
+            List<String> matching = sent.keySet().stream()
+                    .filter(k -> k.equalsIgnoreCase("Content-Type")).toList();
+            assertEquals(1, matching.size());
+            assertEquals("application/json", sent.get(matching.get(0)));
+        }
+
+        @Test
+        void givenJsonBytes_whenRetrieve_thenTransportReceivesExactBytes() {
+            stubSendBinary();
+            byte[] json = "{\"a\":1}".getBytes(java.nio.charset.StandardCharsets.UTF_8);
+
+            request("POST", "/").body(json).retrieve();
+
+            ArgumentCaptor<byte[]> captured = ArgumentCaptor.forClass(byte[].class);
+            verify(transport).sendBinary(eq("POST"), any(), anyMap(), captured.capture(), any());
+            assertArrayEquals(json, captured.getValue());
+            assertEquals('{', captured.getValue()[0]);
         }
     }
 

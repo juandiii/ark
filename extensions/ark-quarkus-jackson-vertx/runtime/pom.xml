@@ -72,6 +72,7 @@
             </goals>
             <configuration>
               <deployment>${project.groupId}:ark-quarkus-jackson-vertx-deployment:${project.version}</deployment>
+              <requiresQuarkusCore>[3.33,)</requiresQuarkusCore>
             </configuration>
           </execution>
         </executions>

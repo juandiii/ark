@@ -55,10 +55,13 @@ public final class ArkVertxMutinyTransport implements MutinyHttpTransport {
                 : request.send();
 
         return response.onItem()
-                .transform(r -> new RawResponse(
-                        r.statusCode(),
-                        HeaderUtils.toHeaderMap(r.headers().getDelegate()),
-                        r.bodyAsString()))
+                .transform(r -> {
+                    Buffer b = r.bodyAsBuffer();
+                    return RawResponse.ofBytes(
+                            r.statusCode(),
+                            HeaderUtils.toHeaderMap(r.headers().getDelegate()),
+                            b != null ? b.getBytes() : null);
+                })
                 .onFailure().transform(e -> ArkException.fromThrowable(method, uri, e));
     }
 }
