@@ -1,3 +1,13 @@
+## [v1.0.9](https://github.com/juandiii/ark/releases/tag/v1.0.9) — 2026-10-13
+
+### ✨ Features
+
+- Fix (#101) @juandiii
+
+**Full Changelog**: https://github.com/juandiii/ark/compare/v1.0.8...v1.0.9
+
+---
+
 ## [v1.0.8](https://github.com/juandiii/ark/releases/tag/v1.0.8) — 2026-07-17
 
 ### ✨ Features
