@@ -35,7 +35,7 @@ public class ArkWebFluxClientBeanRegistrar implements ImportBeanDefinitionRegist
                 try {
                     Class<?> iface = Class.forName(bd.getBeanClassName());
                     var annotation = iface.getAnnotation(RegisterArkClient.class);
-                    if (annotation == null) continue;
+                    if (annotation == null || !ArkWebFluxClientScanner.usesReactorReturnTypes(iface)) continue;
 
                     if (!registry.containsBeanDefinition(ArkWebFluxClientScanner.beanName(iface))) {
                         ArkWebFluxClientScanner.registerProxyBean(registry, iface);

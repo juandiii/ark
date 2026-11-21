@@ -87,7 +87,13 @@ public class ArkWebFluxClientFactoryBean<T> implements FactoryBean<T>, BeanFacto
                 .baseUrl(baseUrl)
                 .httpVersion(httpVersion)
                 .connectTimeout(connectTimeout)
-                .readTimeout(readTimeout);
+                .readTimeout(readTimeout)
+                // The shared default transport has no response timeout, so apply read-timeout per request
+                .requestInterceptor(ctx -> {
+                    if (ctx.timeout() == null) {
+                        ctx.timeout(Duration.ofSeconds(readTimeout));
+                    }
+                });
 
         InterceptorResolver.applyHeaders(builder, config != null ? config.headers() : null);
         InterceptorResolver.applyInterceptors(builder, annotation.interceptors(), beanFactory::getBean);

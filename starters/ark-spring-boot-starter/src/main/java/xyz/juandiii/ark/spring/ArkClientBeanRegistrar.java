@@ -35,7 +35,7 @@ public class ArkClientBeanRegistrar implements ImportBeanDefinitionRegistrar, En
                 try {
                     Class<?> iface = Class.forName(bd.getBeanClassName());
                     var annotation = iface.getAnnotation(RegisterArkClient.class);
-                    if (annotation == null) continue;
+                    if (annotation == null || ArkClientScanner.usesReactorReturnTypes(iface)) continue;
 
                     if (!registry.containsBeanDefinition(ArkClientScanner.beanName(iface))) {
                         ArkClientScanner.registerProxyBean(registry, iface);
