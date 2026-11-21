@@ -20,7 +20,6 @@ import org.springframework.beans.factory.BeanFactory;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.core.env.Environment;
 import org.springframework.boot.ssl.SslBundles;
-import xyz.juandiii.ark.core.exceptions.ArkException;
 
 import java.net.http.HttpClient;
 
@@ -94,15 +93,6 @@ public class ArkAutoConfiguration {
     @Bean
     @ConditionalOnMissingBean(TlsResolver.class)
     public TlsResolver arkTlsResolver(ObjectProvider<SslBundles> sslBundlesProvider) {
-        SslBundles sslBundles = sslBundlesProvider.getIfAvailable();
-        if (sslBundles != null) {
-            return new SpringTlsResolver(sslBundles);
-        }
-        return name -> {
-            throw new ArkException("TLS configuration '" + name
-                    + "' requested but no SSL bundles are available. "
-                    + "Configure spring.ssl.bundle.pem.\"" + name
-                    + "\".truststore.certificate in application.properties");
-        };
+        return SpringTlsResolver.of(sslBundlesProvider);
     }
 }

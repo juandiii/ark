@@ -99,6 +99,7 @@
     <module>serializers/ark-jsonb</module>
     <module>proxies/ark-proxy-spring</module>
     <module>proxies/ark-proxy-jaxrs</module>
+    <module>starters/ark-spring-boot-common</module>
     <module>starters/ark-spring-boot-starter</module>
     <module>starters/ark-spring-boot-starter-webflux</module>
     <module>extensions/ark-quarkus-jackson</module>

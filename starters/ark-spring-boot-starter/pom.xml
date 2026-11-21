@@ -37,6 +37,11 @@
   <dependencies>
     <dependency>
       <groupId>xyz.juandiii</groupId>
+      <artifactId>ark-spring-boot-common</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>xyz.juandiii</groupId>
       <artifactId>ark-core</artifactId>
       <version>${project.version}</version>
     </dependency>
