@@ -65,7 +65,7 @@ public record ArkProperties(
     }
 
     public record RetryProperties(
-            @DefaultValue("3") int maxAttempts,
+            @DefaultValue("0") int maxAttempts,
             @DefaultValue("500") long delay,
             @DefaultValue("2.0") double multiplier,
             @DefaultValue("30000") long maxDelay,
@@ -75,6 +75,13 @@ public record ArkProperties(
     ) {
         public RetryProperties {
             if (retryOn == null) retryOn = new LinkedHashSet<>(RetryPolicy.DEFAULT_RETRY_ON);
+        }
+
+        /**
+         * Retry is off unless max-attempts is above 1, matching the Quarkus extension.
+         */
+        public boolean enabled() {
+            return maxAttempts > 1;
         }
 
         public RetryPolicy toRetryPolicy() {

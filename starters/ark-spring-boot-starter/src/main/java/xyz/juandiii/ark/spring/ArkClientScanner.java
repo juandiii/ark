@@ -11,6 +11,8 @@ import org.springframework.core.env.Environment;
 import org.springframework.core.type.filter.AnnotationTypeFilter;
 import xyz.juandiii.ark.core.proxy.RegisterArkClient;
 
+import java.lang.reflect.Method;
+
 /**
  * Shared scanning and registration logic for @RegisterArkClient interfaces.
  *
@@ -57,6 +59,19 @@ final class ArkClientScanner {
         beanDef.setLazyInit(true);
 
         registry.registerBeanDefinition(beanName(iface), beanDef);
+    }
+
+    /**
+     * Interfaces returning Mono/Flux belong to the webflux starter; this starter skips them.
+     */
+    static boolean usesReactorReturnTypes(Class<?> iface) {
+        for (Method method : iface.getMethods()) {
+            String name = method.getReturnType().getName();
+            if (name.equals("reactor.core.publisher.Mono") || name.equals("reactor.core.publisher.Flux")) {
+                return true;
+            }
+        }
+        return false;
     }
 
     static String beanName(Class<?> iface) {

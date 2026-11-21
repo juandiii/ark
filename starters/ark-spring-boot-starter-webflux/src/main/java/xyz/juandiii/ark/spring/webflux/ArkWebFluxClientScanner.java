@@ -9,7 +9,11 @@ import org.springframework.context.annotation.ClassPathScanningCandidateComponen
 import org.springframework.core.ResolvableType;
 import org.springframework.core.env.Environment;
 import org.springframework.core.type.filter.AnnotationTypeFilter;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 import xyz.juandiii.ark.core.proxy.RegisterArkClient;
+
+import java.lang.reflect.Method;
 
 /**
  * Shared scanning and registration logic for reactive @RegisterArkClient interfaces.
@@ -55,6 +59,18 @@ final class ArkWebFluxClientScanner {
         beanDef.setLazyInit(true);
 
         registry.registerBeanDefinition(beanName(iface), beanDef);
+    }
+
+    /**
+     * Only interfaces returning Mono/Flux are reactive clients; the sync starter owns the rest.
+     */
+    static boolean usesReactorReturnTypes(Class<?> iface) {
+        for (Method method : iface.getMethods()) {
+            if (method.getReturnType() == Mono.class || method.getReturnType() == Flux.class) {
+                return true;
+            }
+        }
+        return false;
     }
 
     static String beanName(Class<?> iface) {

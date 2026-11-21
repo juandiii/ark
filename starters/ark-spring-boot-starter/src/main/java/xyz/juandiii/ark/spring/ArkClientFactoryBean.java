@@ -109,7 +109,7 @@ public class ArkClientFactoryBean<T> implements FactoryBean<T>, BeanFactoryAware
                                  RegisterArkClient annotation) {
         HttpTransport baseTransport = resolveSyncTransport(httpVersion, connectTimeout,
                 tlsConfigName, trustAll, followRedirects, configKey);
-        Transport<RawResponse> transport = (config != null && config.retry() != null)
+        Transport<RawResponse> transport = (config != null && config.retry() != null && config.retry().enabled())
                 ? baseTransport.with(Retry.of(config.retry().toRetryPolicy(), new SyncRetryOps()))
                 : baseTransport;
 
@@ -133,7 +133,7 @@ public class ArkClientFactoryBean<T> implements FactoryBean<T>, BeanFactoryAware
                                        RegisterArkClient annotation) {
         ArkJdkAsyncTransport baseTransport = resolveAsyncTransport(httpVersion, connectTimeout,
                 tlsConfigName, trustAll, followRedirects, configKey);
-        Transport<CompletableFuture<RawResponse>> transport = (config != null && config.retry() != null)
+        Transport<CompletableFuture<RawResponse>> transport = (config != null && config.retry() != null && config.retry().enabled())
                 ? baseTransport.with(Retry.of(config.retry().toRetryPolicy(), new AsyncRetryOps()))
                 : baseTransport;
 
