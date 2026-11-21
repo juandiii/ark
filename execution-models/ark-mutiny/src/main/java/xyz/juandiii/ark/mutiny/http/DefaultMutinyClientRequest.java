@@ -4,6 +4,7 @@ import io.smallrye.mutiny.Uni;
 import xyz.juandiii.ark.core.JsonSerializer;
 import xyz.juandiii.ark.core.http.AbstractClientRequest;
 import xyz.juandiii.ark.core.http.RawResponse;
+import xyz.juandiii.ark.core.http.Transport;
 import xyz.juandiii.ark.core.interceptor.RequestInterceptor;
 import xyz.juandiii.ark.core.interceptor.ResponseInterceptor;
 
@@ -17,10 +18,10 @@ import java.util.List;
 public final class DefaultMutinyClientRequest extends AbstractClientRequest<DefaultMutinyClientRequest>
         implements MutinyClientRequest {
 
-    private final MutinyHttpTransport transport;
+    private final Transport<Uni<RawResponse>> transport;
 
     public DefaultMutinyClientRequest(String method, String baseUrl, String path,
-                               MutinyHttpTransport transport, JsonSerializer serializer,
+                               Transport<Uni<RawResponse>> transport, JsonSerializer serializer,
                                List<RequestInterceptor> requestInterceptors,
                                List<ResponseInterceptor> responseInterceptors) {
         super(method, baseUrl, path, serializer, requestInterceptors, responseInterceptors);

@@ -4,6 +4,7 @@ import reactor.core.publisher.Mono;
 import xyz.juandiii.ark.core.JsonSerializer;
 import xyz.juandiii.ark.core.http.AbstractClientRequest;
 import xyz.juandiii.ark.core.http.RawResponse;
+import xyz.juandiii.ark.core.http.Transport;
 import xyz.juandiii.ark.core.interceptor.RequestInterceptor;
 import xyz.juandiii.ark.core.interceptor.ResponseInterceptor;
 
@@ -17,10 +18,10 @@ import java.util.List;
 public final class DefaultReactorClientRequest extends AbstractClientRequest<DefaultReactorClientRequest>
         implements ReactorClientRequest {
 
-    private final ReactorHttpTransport transport;
+    private final Transport<Mono<RawResponse>> transport;
 
     public DefaultReactorClientRequest(String method, String baseUrl, String path,
-                                ReactorHttpTransport transport, JsonSerializer serializer,
+                                Transport<Mono<RawResponse>> transport, JsonSerializer serializer,
                                 List<RequestInterceptor> requestInterceptors,
                                 List<ResponseInterceptor> responseInterceptors) {
         super(method, baseUrl, path, serializer, requestInterceptors, responseInterceptors);

@@ -10,6 +10,11 @@ import xyz.juandiii.ark.core.JsonSerializer;
 import xyz.juandiii.ark.reactor.http.ReactorClientRequest;
 import xyz.juandiii.ark.reactor.http.ReactorHttpTransport;
 import xyz.juandiii.ark.core.http.RawResponse;
+import xyz.juandiii.ark.core.http.RetryPolicy;
+import xyz.juandiii.ark.core.http.decorator.Retry;
+import xyz.juandiii.ark.reactor.http.decorator.ReactorRetryOps;
+
+import java.time.Duration;
 
 import java.util.Map;
 
@@ -53,6 +58,23 @@ class ReactorArkClientTest {
         void givenValidConfig_whenBuild_thenReturnsReactorArk() {
             assertNotNull(client());
             assertInstanceOf(ReactorArk.class, client());
+        }
+
+        @Test
+        void givenRetryWrappedTransport_whenRetrieve_thenRetriesThroughBuilder() {
+            when(transport.send(anyString(), any(), any(), any(), any()))
+                    .thenReturn(Mono.just(new RawResponse(503, Map.of(), "down")))
+                    .thenReturn(Mono.just(new RawResponse(200, Map.of(), "ok")));
+            RetryPolicy policy = RetryPolicy.builder().maxAttempts(3).delay(Duration.ofMillis(1)).build();
+
+            ReactorArk retrying = ReactorArkClient.builder()
+                    .serializer(serializer)
+                    .transport(Retry.of(policy, new ReactorRetryOps()).apply(transport))
+                    .baseUrl("https://api.example.com")
+                    .build();
+
+            assertEquals(200, retrying.get("/status").retrieve().raw().block().statusCode());
+            verify(transport, times(2)).send(anyString(), any(), any(), any(), any());
         }
     }
 

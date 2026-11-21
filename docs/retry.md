@@ -183,6 +183,26 @@ import xyz.juandiii.ark.reactor.http.decorator.ReactorRetryOps;
 
 Transport<Mono<RawResponse>> transport = new ArkReactorNettyTransport(httpClient)
     .with(Retry.of(policy, new ReactorRetryOps()));
+
+ReactorArk client = ReactorArkClient.builder()
+    .serializer(serializer)
+    .transport(transport)
+    .baseUrl("https://api.example.com")
+    .build();
+```
+
+**Mutiny (Ark's decorator):**
+```java
+import xyz.juandiii.ark.mutiny.http.decorator.MutinyRetryOps;
+
+Transport<Uni<RawResponse>> transport = new ArkVertxMutinyTransport(webClient)
+    .with(Retry.of(policy, new MutinyRetryOps()));
+
+MutinyArk client = MutinyArkClient.builder()
+    .serializer(serializer)
+    .transport(transport)
+    .baseUrl("https://api.example.com")
+    .build();
 ```
 
 **Reactor (native operator alternative):**
