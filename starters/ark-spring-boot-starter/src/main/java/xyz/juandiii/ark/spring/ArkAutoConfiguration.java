@@ -16,7 +16,9 @@ import xyz.juandiii.ark.core.http.HttpTransport;
 import xyz.juandiii.ark.core.proxy.TlsResolver;
 import xyz.juandiii.ark.transport.jdk.ArkJdkAsyncTransport;
 import xyz.juandiii.ark.transport.jdk.ArkJdkSyncTransport;
+import org.springframework.beans.factory.BeanFactory;
 import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.core.env.Environment;
 import org.springframework.boot.ssl.SslBundles;
 import xyz.juandiii.ark.core.exceptions.ArkException;
 
@@ -77,6 +79,16 @@ public class ArkAutoConfiguration {
         return AsyncArkClient.builder()
                 .serializer(serializer)
                 .transport(transport);
+    }
+
+    @Bean
+    @ConditionalOnMissingBean
+    public ArkClients arkClients(JsonSerializer serializer, HttpTransport httpTransport,
+                                 ArkJdkAsyncTransport asyncHttpTransport, Environment environment,
+                                 TlsResolver tlsResolver, ArkProperties arkProperties,
+                                 BeanFactory beanFactory) {
+        return new ArkClients(serializer, httpTransport, asyncHttpTransport, environment,
+                tlsResolver, arkProperties, beanFactory);
     }
 
     @Bean

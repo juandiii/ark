@@ -55,6 +55,7 @@ public record ArkProperties(
             @DefaultValue("false") boolean trustAll,
             @DefaultValue("true") boolean throwOnError,
             @DefaultValue("true") boolean followRedirects,
+            @DefaultValue("0") long maxResponseBytes,
             @DefaultValue Map<String, String> headers,
             RetryProperties retry
     ) {

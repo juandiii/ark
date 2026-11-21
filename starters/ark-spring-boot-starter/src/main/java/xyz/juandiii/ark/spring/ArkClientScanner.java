@@ -20,12 +20,7 @@ import java.lang.reflect.Method;
  */
 final class ArkClientScanner {
 
-    static final String SERIALIZER_BEAN = "jsonSerializer";
-    static final String TRANSPORT_BEAN = "httpTransport";
-    static final String ASYNC_TRANSPORT_BEAN = "asyncHttpTransport";
-    static final String ENVIRONMENT_BEAN = "environment";
-    static final String TLS_RESOLVER_BEAN = "arkTlsResolver";
-    static final String ARK_PROPERTIES_BEAN = "ark-" + ArkProperties.class.getName();
+    static final String ARK_CLIENTS_BEAN = "arkClients";
 
     private ArkClientScanner() {}
 
@@ -46,12 +41,7 @@ final class ArkClientScanner {
         AbstractBeanDefinition beanDef = BeanDefinitionBuilder
                 .genericBeanDefinition(ArkClientFactoryBean.class)
                 .addConstructorArgValue(iface)
-                .addConstructorArgReference(SERIALIZER_BEAN)
-                .addConstructorArgReference(TRANSPORT_BEAN)
-                .addConstructorArgReference(ASYNC_TRANSPORT_BEAN)
-                .addConstructorArgReference(ENVIRONMENT_BEAN)
-                .addConstructorArgReference(TLS_RESOLVER_BEAN)
-                .addConstructorArgReference(ARK_PROPERTIES_BEAN)
+                .addConstructorArgReference(ARK_CLIENTS_BEAN)
                 .getBeanDefinition();
 
         beanDef.setAttribute(FactoryBean.OBJECT_TYPE_ATTRIBUTE,
