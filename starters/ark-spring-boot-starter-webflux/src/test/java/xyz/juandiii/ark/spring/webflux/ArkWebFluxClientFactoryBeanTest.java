@@ -98,9 +98,8 @@ class ArkWebFluxClientFactoryBeanTest {
 
     @Test
     void returnsRedirectWhenFollowRedirectsIsFalse() {
-        // HTTP_1_1: a customized Reactor client with the default HTTP_2 cannot talk to a plain-http server
-        runner.withPropertyValues("ark.client.reactive-api.follow-redirects=false",
-                "ark.client.reactive-api.http-version=HTTP_1_1").run(ctx ->
+        // Also covers the default HTTP_2 on a customized client talking to a plain-http server
+        runner.withPropertyValues("ark.client.reactive-api.follow-redirects=false").run(ctx ->
                 assertEquals(302, ctx.getBean(ReactiveApi.class).redirect().block().statusCode()));
     }
 
