@@ -219,9 +219,9 @@ ark.client."user-api".retry.delay=500
 
 > Set `throw-on-error=false` to return HTTP 4xx/5xx responses instead of raising `ApiException`. See [Permissive error handling](sync.md#permissive-error-handling).
 
-> `follow-redirects` (default `true`) makes the default JDK `HttpClient` follow 3xx redirects, except https to http downgrades. Set it to `false` to receive 3xx responses as-is. If you supply your own `HttpClient`/`HttpTransport` bean, you set the redirect policy yourself (`HttpClient.newBuilder().followRedirects(HttpClient.Redirect.NORMAL)`).
+> `follow-redirects` (default `true`) makes the default JDK `HttpClient` follow 3xx redirects, except https to http downgrades. Set it to `false` to receive 3xx responses as-is. If you supply your own `HttpClient`/`HttpTransport` bean, you set the redirect policy yourself (`HttpClient.newBuilder().followRedirects(HttpClient.Redirect.NORMAL)`). `Uni`/`Multi` clients (vertx add-on) honor `follow-redirects` too, using Vert.x `WebClient`'s own redirect rules.
 
-> `max-response-bytes` (default `0`, unlimited) caps the response body size. Larger bodies fail with `ResponseTooLargeException`.
+> `max-response-bytes` (default `0`, unlimited) caps the response body size. Larger bodies fail with `ResponseTooLargeException`. JDK transport only: `Uni`/`Multi` clients ignore it and log a warning at startup.
 
 See [Retry & Backoff](retry.md) for full retry configuration.
 
