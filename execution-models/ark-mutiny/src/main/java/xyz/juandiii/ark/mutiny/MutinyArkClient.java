@@ -4,7 +4,9 @@ import xyz.juandiii.ark.core.AbstractArkClient;
 import xyz.juandiii.ark.core.AbstractArkBuilder;
 import xyz.juandiii.ark.core.JsonSerializer;
 import xyz.juandiii.ark.mutiny.http.DefaultMutinyClientRequest;
-import xyz.juandiii.ark.mutiny.http.MutinyHttpTransport;
+import io.smallrye.mutiny.Uni;
+import xyz.juandiii.ark.core.http.RawResponse;
+import xyz.juandiii.ark.core.http.Transport;
 import xyz.juandiii.ark.core.interceptor.RequestInterceptor;
 import xyz.juandiii.ark.core.interceptor.ResponseInterceptor;
 
@@ -18,9 +20,9 @@ import java.util.Objects;
  */
 public class MutinyArkClient extends AbstractArkClient<DefaultMutinyClientRequest> implements MutinyArk {
 
-    private final MutinyHttpTransport transport;
+    private final Transport<Uni<RawResponse>> transport;
 
-    private MutinyArkClient(MutinyHttpTransport transport, JsonSerializer serializer,
+    private MutinyArkClient(Transport<Uni<RawResponse>> transport, JsonSerializer serializer,
                             String userAgent, String baseUrl,
                             List<RequestInterceptor> requestInterceptors,
                             List<ResponseInterceptor> responseInterceptors,
@@ -46,11 +48,21 @@ public class MutinyArkClient extends AbstractArkClient<DefaultMutinyClientReques
 
     public static final class Builder extends AbstractArkBuilder<Builder> {
 
-        private MutinyHttpTransport transport;
+        private Transport<Uni<RawResponse>> transport;
 
         private Builder() {}
 
-        public Builder transport(MutinyHttpTransport transport) {
+        /**
+         * Set the HTTP transport. Required.
+         *
+         * <p>Accepts any {@code Transport<Uni<RawResponse>>} — a bare {@link xyz.juandiii.ark.mutiny.http.MutinyHttpTransport}
+         * or a decorator-chain result such as
+         * {@code transport.with(Retry.of(policy, new MutinyRetryOps()))}.
+         *
+         * @param transport configured transport instance
+         * @return this builder for chaining
+         */
+        public Builder transport(Transport<Uni<RawResponse>> transport) {
             this.transport = transport;
             return this;
         }

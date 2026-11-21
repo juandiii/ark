@@ -8,6 +8,11 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import xyz.juandiii.ark.core.JsonSerializer;
 import xyz.juandiii.ark.core.http.RawResponse;
+import xyz.juandiii.ark.core.http.RetryPolicy;
+import xyz.juandiii.ark.core.http.decorator.Retry;
+import xyz.juandiii.ark.mutiny.http.decorator.MutinyRetryOps;
+
+import java.time.Duration;
 import xyz.juandiii.ark.mutiny.http.MutinyClientRequest;
 import xyz.juandiii.ark.mutiny.http.MutinyHttpTransport;
 
@@ -53,6 +58,23 @@ class MutinyArkClientTest {
         void givenValidConfig_whenBuild_thenReturnsMutinyArk() {
             assertNotNull(client());
             assertInstanceOf(MutinyArk.class, client());
+        }
+
+        @Test
+        void givenRetryWrappedTransport_whenRetrieve_thenRetriesThroughBuilder() {
+            when(transport.send(anyString(), any(), any(), any(), any()))
+                    .thenReturn(Uni.createFrom().item(new RawResponse(503, Map.of(), "down")))
+                    .thenReturn(Uni.createFrom().item(new RawResponse(200, Map.of(), "ok")));
+            RetryPolicy policy = RetryPolicy.builder().maxAttempts(3).delay(Duration.ofMillis(1)).build();
+
+            MutinyArk retrying = MutinyArkClient.builder()
+                    .serializer(serializer)
+                    .transport(Retry.of(policy, new MutinyRetryOps()).apply(transport))
+                    .baseUrl("https://api.example.com")
+                    .build();
+
+            assertEquals(200, retrying.get("/status").retrieve().raw().await().indefinitely().statusCode());
+            verify(transport, times(2)).send(anyString(), any(), any(), any(), any());
         }
     }
 

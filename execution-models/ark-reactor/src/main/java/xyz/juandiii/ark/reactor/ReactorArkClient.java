@@ -4,7 +4,9 @@ import xyz.juandiii.ark.core.AbstractArkClient;
 import xyz.juandiii.ark.core.AbstractArkBuilder;
 import xyz.juandiii.ark.core.JsonSerializer;
 import xyz.juandiii.ark.reactor.http.DefaultReactorClientRequest;
-import xyz.juandiii.ark.reactor.http.ReactorHttpTransport;
+import reactor.core.publisher.Mono;
+import xyz.juandiii.ark.core.http.RawResponse;
+import xyz.juandiii.ark.core.http.Transport;
 import xyz.juandiii.ark.core.interceptor.RequestInterceptor;
 import xyz.juandiii.ark.core.interceptor.ResponseInterceptor;
 
@@ -18,9 +20,9 @@ import java.util.Objects;
  */
 public class ReactorArkClient extends AbstractArkClient<DefaultReactorClientRequest> implements ReactorArk {
 
-    private final ReactorHttpTransport transport;
+    private final Transport<Mono<RawResponse>> transport;
 
-    private ReactorArkClient(ReactorHttpTransport transport, JsonSerializer serializer,
+    private ReactorArkClient(Transport<Mono<RawResponse>> transport, JsonSerializer serializer,
                              String userAgent, String baseUrl,
                              List<RequestInterceptor> requestInterceptors,
                              List<ResponseInterceptor> responseInterceptors,
@@ -46,11 +48,21 @@ public class ReactorArkClient extends AbstractArkClient<DefaultReactorClientRequ
 
     public static final class Builder extends AbstractArkBuilder<Builder> {
 
-        private ReactorHttpTransport transport;
+        private Transport<Mono<RawResponse>> transport;
 
         private Builder() {}
 
-        public Builder transport(ReactorHttpTransport transport) {
+        /**
+         * Set the HTTP transport. Required.
+         *
+         * <p>Accepts any {@code Transport<Mono<RawResponse>>} — a bare {@link xyz.juandiii.ark.reactor.http.ReactorHttpTransport}
+         * or a decorator-chain result such as
+         * {@code transport.with(Retry.of(policy, new ReactorRetryOps()))}.
+         *
+         * @param transport configured transport instance
+         * @return this builder for chaining
+         */
+        public Builder transport(Transport<Mono<RawResponse>> transport) {
             this.transport = transport;
             return this;
         }
