@@ -8,8 +8,12 @@ import io.vertx.mutiny.core.Vertx;
 import io.vertx.mutiny.ext.web.client.WebClient;
 import xyz.juandiii.ark.core.AbstractArkBuilder;
 import xyz.juandiii.ark.core.JsonSerializer;
+import xyz.juandiii.ark.core.http.RawResponse;
 import xyz.juandiii.ark.core.http.RetryPolicy;
+import xyz.juandiii.ark.core.http.Transport;
+import xyz.juandiii.ark.core.http.decorator.Retry;
 import xyz.juandiii.ark.core.interceptor.LoggingInterceptor;
+import xyz.juandiii.ark.core.interceptor.RequestInterceptor;
 import xyz.juandiii.ark.core.proxy.ArkProxy;
 import xyz.juandiii.ark.core.proxy.HttpVersion;
 import xyz.juandiii.ark.core.proxy.InterceptorResolver;
@@ -17,7 +21,9 @@ import xyz.juandiii.ark.core.proxy.PropertyResolver;
 import xyz.juandiii.ark.core.proxy.RegisterArkClient;
 import xyz.juandiii.ark.core.ssl.InsecureSslContext;
 import xyz.juandiii.ark.core.util.StringUtils;
+import io.smallrye.mutiny.Uni;
 import xyz.juandiii.ark.mutiny.MutinyArkClient;
+import xyz.juandiii.ark.mutiny.http.decorator.MutinyRetryOps;
 import xyz.juandiii.ark.quarkus.config.ArkClientNamedConfig;
 import xyz.juandiii.ark.quarkus.config.ArkClientsConfig;
 import xyz.juandiii.ark.transport.vertx.mutiny.ArkVertxMutinyTransport;
@@ -34,6 +40,8 @@ import java.util.function.Supplier;
  */
 @Recorder
 public class ArkVertxRecorder {
+
+    private static final System.Logger LOGGER = System.getLogger(ArkVertxRecorder.class.getName());
 
     private final RuntimeValue<ArkClientsConfig> clientsConfigValue;
 
@@ -62,8 +70,8 @@ public class ArkVertxRecorder {
 
     private record ResolvedConfig(String clientName, String baseUrl, HttpVersion httpVersion,
                                    int connectTimeout, int readTimeout, String tlsConfigName,
-                                   boolean trustAll, boolean throwOnError,
-                                   Map<String, String> headers,
+                                   boolean trustAll, boolean throwOnError, boolean followRedirects,
+                                   long maxResponseBytes, Map<String, String> headers,
                                    Class<?>[] interceptorClasses,
                                    RetryPolicy retryPolicy,
                                    LoggingInterceptor.Level loggingLevel) {}
@@ -80,6 +88,8 @@ public class ArkVertxRecorder {
                 config != null ? config.tlsConfigurationName().orElse(null) : null,
                 config != null && config.trustAll(),
                 config == null || config.throwOnError(),
+                config == null || config.followRedirects(),
+                config != null ? config.maxResponseBytes() : 0,
                 config != null ? config.headers() : Map.of(),
                 annotation != null ? annotation.interceptors() : new Class<?>[0],
                 resolveRetryPolicy(config),
@@ -88,13 +98,22 @@ public class ArkVertxRecorder {
     }
 
     private static Object buildProxy(Class<?> iface, JsonSerializer serializer, ResolvedConfig rc) {
+        if (rc.maxResponseBytes() > 0) {
+            LOGGER.log(System.Logger.Level.WARNING, "ark.client.\"{0}\".max-response-bytes is ignored for "
+                    + "Uni/Multi clients: the Vert.x transport has no response size limit", rc.clientName());
+        }
+        ArkVertxMutinyTransport base = buildMutinyTransport(rc);
+        Transport<Uni<RawResponse>> transport = rc.retryPolicy() != null
+                ? base.with(Retry.of(rc.retryPolicy(), new MutinyRetryOps()))
+                : base;
         MutinyArkClient.Builder builder = MutinyArkClient.builder()
                 .serializer(serializer)
-                .transport(buildMutinyTransport(rc))
+                .transport(transport)
                 .baseUrl(rc.baseUrl())
                 .httpVersion(rc.httpVersion())
                 .connectTimeout(rc.connectTimeout())
-                .readTimeout(rc.readTimeout());
+                .readTimeout(rc.readTimeout())
+                .requestInterceptor(defaultTimeout(rc.readTimeout()));
         applyInterceptors(builder, rc);
         return ArkProxy.create(iface, builder.build());
     }
@@ -106,6 +125,14 @@ public class ArkVertxRecorder {
                 clazz -> Arc.container().instance(clazz).get());
         LoggingInterceptor.apply(builder, rc.loggingLevel());
         builder.throwOnError(rc.throwOnError());
+    }
+
+    private static RequestInterceptor defaultTimeout(int readTimeout) {
+        return ctx -> {
+            if (ctx.timeout() == null) {
+                ctx.timeout(Duration.ofSeconds(readTimeout));
+            }
+        };
     }
 
     private static String resolveBaseUrl(ArkClientNamedConfig config, RegisterArkClient annotation) {
@@ -139,7 +166,8 @@ public class ArkVertxRecorder {
                         ? io.vertx.core.http.HttpVersion.HTTP_2
                         : io.vertx.core.http.HttpVersion.HTTP_1_1)
                 .setConnectTimeout(rc.connectTimeout() * 1000)
-                .setIdleTimeout(rc.readTimeout());
+                .setIdleTimeout(rc.readTimeout())
+                .setFollowRedirects(rc.followRedirects());
 
         if (rc.trustAll()) {
             InsecureSslContext.warnTrustAll(rc.clientName());
