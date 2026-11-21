@@ -2,6 +2,11 @@ package xyz.juandiii.ark.spring.webflux;
 
 import io.netty.channel.ChannelOption;
 import io.netty.handler.codec.http.HttpHeaderNames;
+import io.netty.handler.ssl.ApplicationProtocolConfig;
+import io.netty.handler.ssl.ApplicationProtocolNames;
+import io.netty.handler.ssl.ClientAuth;
+import io.netty.handler.ssl.IdentityCipherSuiteFilter;
+import io.netty.handler.ssl.JdkSslContext;
 import io.netty.handler.ssl.SslContextBuilder;
 import io.netty.handler.ssl.util.InsecureTrustManagerFactory;
 import org.springframework.beans.factory.BeanFactory;
@@ -150,18 +155,31 @@ public class ArkWebFluxClientFactoryBean<T> implements FactoryBean<T>, BeanFacto
         if (!needsCustom) return defaultTransport;
 
         HttpClient httpClient = HttpClient.create()
-                .protocol(httpVersion == HttpVersion.HTTP_2 ? HttpProtocol.H2 : HttpProtocol.HTTP11)
+                // HTTP_2 offers h2 via ALPN over TLS and falls back to HTTP/1.1 (also on plain http),
+                // like the JDK client in the sync starter; H2 alone fails on plain http.
+                .protocol(httpVersion == HttpVersion.HTTP_2
+                        ? new HttpProtocol[]{HttpProtocol.H2, HttpProtocol.HTTP11}
+                        : new HttpProtocol[]{HttpProtocol.HTTP11})
                 .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, connectTimeout * 1000)
                 .responseTimeout(Duration.ofSeconds(readTimeout));
         if (followRedirects) {
             httpClient = httpClient.followRedirect(FOLLOW_REDIRECTS);
         }
 
+        // Over TLS, HTTP/2 is only used when ALPN offers h2; without it the server answers HTTP/1.1.
+        ApplicationProtocolConfig alpn = httpVersion == HttpVersion.HTTP_2
+                ? new ApplicationProtocolConfig(ApplicationProtocolConfig.Protocol.ALPN,
+                        ApplicationProtocolConfig.SelectorFailureBehavior.NO_ADVERTISE,
+                        ApplicationProtocolConfig.SelectedListenerFailureBehavior.ACCEPT,
+                        ApplicationProtocolNames.HTTP_2, ApplicationProtocolNames.HTTP_1_1)
+                : ApplicationProtocolConfig.DISABLED;
+
         if (trustAll) {
             InsecureSslContext.warnTrustAll(clientName);
             try {
                 var nettySslContext = SslContextBuilder.forClient()
                         .trustManager(InsecureTrustManagerFactory.INSTANCE)
+                        .applicationProtocolConfig(alpn)
                         .build();
                 httpClient = httpClient.secure(ssl -> ssl.sslContext(nettySslContext));
             } catch (Exception e) {
@@ -169,8 +187,8 @@ public class ArkWebFluxClientFactoryBean<T> implements FactoryBean<T>, BeanFacto
             }
         } else if (StringUtils.isNotEmpty(tlsConfigName)) {
             var jdkSslContext = tlsResolver.resolve(tlsConfigName);
-            var nettySslContext = new io.netty.handler.ssl.JdkSslContext(
-                    jdkSslContext, true, io.netty.handler.ssl.ClientAuth.NONE);
+            var nettySslContext = new JdkSslContext(jdkSslContext, true, null,
+                    IdentityCipherSuiteFilter.INSTANCE, alpn, ClientAuth.NONE);
             httpClient = httpClient.secure(ssl -> ssl.sslContext(nettySslContext));
         }
 
