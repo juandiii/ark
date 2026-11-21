@@ -6,30 +6,24 @@ import io.quarkus.runtime.annotations.Recorder;
 import io.vertx.ext.web.client.WebClientOptions;
 import io.vertx.mutiny.core.Vertx;
 import io.vertx.mutiny.ext.web.client.WebClient;
-import xyz.juandiii.ark.core.AbstractArkBuilder;
 import xyz.juandiii.ark.core.JsonSerializer;
 import xyz.juandiii.ark.core.http.RawResponse;
-import xyz.juandiii.ark.core.http.RetryPolicy;
 import xyz.juandiii.ark.core.http.Transport;
 import xyz.juandiii.ark.core.http.decorator.Retry;
-import xyz.juandiii.ark.core.interceptor.LoggingInterceptor;
-import xyz.juandiii.ark.core.interceptor.RequestInterceptor;
 import xyz.juandiii.ark.core.proxy.ArkProxy;
 import xyz.juandiii.ark.core.proxy.HttpVersion;
-import xyz.juandiii.ark.core.proxy.InterceptorResolver;
-import xyz.juandiii.ark.core.proxy.PropertyResolver;
 import xyz.juandiii.ark.core.proxy.RegisterArkClient;
 import xyz.juandiii.ark.core.ssl.InsecureSslContext;
 import xyz.juandiii.ark.core.util.StringUtils;
 import io.smallrye.mutiny.Uni;
 import xyz.juandiii.ark.mutiny.MutinyArkClient;
 import xyz.juandiii.ark.mutiny.http.decorator.MutinyRetryOps;
+import xyz.juandiii.ark.quarkus.ArkRecorder;
+import xyz.juandiii.ark.quarkus.ArkRecorder.ResolvedConfig;
 import xyz.juandiii.ark.quarkus.config.ArkClientNamedConfig;
 import xyz.juandiii.ark.quarkus.config.ArkClientsConfig;
 import xyz.juandiii.ark.transport.vertx.mutiny.ArkVertxMutinyTransport;
 
-import java.time.Duration;
-import java.util.Map;
 import java.util.function.Supplier;
 
 /**
@@ -60,41 +54,12 @@ public class ArkVertxRecorder {
                 ArkClientNamedConfig config = clientsConfig.client().get(key);
                 RegisterArkClient annotation = iface.getAnnotation(RegisterArkClient.class);
 
-                ResolvedConfig resolved = resolveConfig(key, config, annotation, clientsConfig.loggingLevel());
+                ResolvedConfig resolved = ArkRecorder.resolveConfig(key, config, annotation, clientsConfig.loggingLevel());
                 return buildProxy(iface, serializer, resolved);
             } catch (ClassNotFoundException e) {
                 throw new RuntimeException("Failed to create Mutiny Ark client for " + interfaceName, e);
             }
         };
-    }
-
-    private record ResolvedConfig(String clientName, String baseUrl, HttpVersion httpVersion,
-                                   int connectTimeout, int readTimeout, String tlsConfigName,
-                                   boolean trustAll, boolean throwOnError, boolean followRedirects,
-                                   long maxResponseBytes, Map<String, String> headers,
-                                   Class<?>[] interceptorClasses,
-                                   RetryPolicy retryPolicy,
-                                   LoggingInterceptor.Level loggingLevel) {}
-
-    private static ResolvedConfig resolveConfig(String clientName, ArkClientNamedConfig config,
-                                                 RegisterArkClient annotation,
-                                                 LoggingInterceptor.Level loggingLevel) {
-        return new ResolvedConfig(
-                clientName,
-                resolveBaseUrl(config, annotation),
-                config != null ? config.httpVersion() : annotation.httpVersion(),
-                config != null ? config.connectTimeout() : annotation.connectTimeout(),
-                config != null ? config.readTimeout() : annotation.readTimeout(),
-                config != null ? config.tlsConfigurationName().orElse(null) : null,
-                config != null && config.trustAll(),
-                config == null || config.throwOnError(),
-                config == null || config.followRedirects(),
-                config != null ? config.maxResponseBytes() : 0,
-                config != null ? config.headers() : Map.of(),
-                annotation != null ? annotation.interceptors() : new Class<?>[0],
-                resolveRetryPolicy(config),
-                loggingLevel
-        );
     }
 
     private static Object buildProxy(Class<?> iface, JsonSerializer serializer, ResolvedConfig rc) {
@@ -106,57 +71,8 @@ public class ArkVertxRecorder {
         Transport<Uni<RawResponse>> transport = rc.retryPolicy() != null
                 ? base.with(Retry.of(rc.retryPolicy(), new MutinyRetryOps()))
                 : base;
-        MutinyArkClient.Builder builder = MutinyArkClient.builder()
-                .serializer(serializer)
-                .transport(transport)
-                .baseUrl(rc.baseUrl())
-                .httpVersion(rc.httpVersion())
-                .connectTimeout(rc.connectTimeout())
-                .readTimeout(rc.readTimeout())
-                .requestInterceptor(defaultTimeout(rc.readTimeout()));
-        applyInterceptors(builder, rc);
-        return ArkProxy.create(iface, builder.build());
-    }
-
-    private static <B extends AbstractArkBuilder<B>> void applyInterceptors(
-            B builder, ResolvedConfig rc) {
-        InterceptorResolver.applyHeaders(builder, rc.headers());
-        InterceptorResolver.applyInterceptors(builder, rc.interceptorClasses(),
-                clazz -> Arc.container().instance(clazz).get());
-        LoggingInterceptor.apply(builder, rc.loggingLevel());
-        builder.throwOnError(rc.throwOnError());
-    }
-
-    private static RequestInterceptor defaultTimeout(int readTimeout) {
-        return ctx -> {
-            if (ctx.timeout() == null) {
-                ctx.timeout(Duration.ofSeconds(readTimeout));
-            }
-        };
-    }
-
-    private static String resolveBaseUrl(ArkClientNamedConfig config, RegisterArkClient annotation) {
-        if (config != null && config.baseUrl().isPresent()) {
-            return config.baseUrl().get();
-        }
-        if (annotation == null) return "";
-        return PropertyResolver.resolve(annotation.baseUrl(),
-                key -> org.eclipse.microprofile.config.ConfigProvider.getConfig()
-                        .getOptionalValue(key, String.class).orElse(null));
-    }
-
-    private static RetryPolicy resolveRetryPolicy(ArkClientNamedConfig config) {
-        if (config == null || config.retry().maxAttempts() <= 1) return null;
-        ArkClientNamedConfig.RetryConfig r = config.retry();
-        return RetryPolicy.builder()
-                .maxAttempts(r.maxAttempts())
-                .delay(Duration.ofMillis(r.delay()))
-                .multiplier(r.multiplier())
-                .maxDelay(Duration.ofMillis(r.maxDelay()))
-                .retryOn(r.retryOn())
-                .retryOnException(r.retryOnException())
-                .retryPost(r.retryPost())
-                .build();
+        return ArkProxy.create(iface,
+                ArkRecorder.configure(MutinyArkClient.builder().transport(transport), serializer, rc).build());
     }
 
     private static ArkVertxMutinyTransport buildMutinyTransport(ResolvedConfig rc) {

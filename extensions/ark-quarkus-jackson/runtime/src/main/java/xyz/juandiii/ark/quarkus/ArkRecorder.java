@@ -68,7 +68,7 @@ public class ArkRecorder {
         };
     }
 
-    record ResolvedConfig(String clientName, String baseUrl, HttpVersion httpVersion,
+    public record ResolvedConfig(String clientName, String baseUrl, HttpVersion httpVersion,
                           int connectTimeout, int readTimeout, String tlsConfigName,
                           boolean trustAll, boolean throwOnError, boolean followRedirects,
                           long maxResponseBytes,
@@ -77,7 +77,7 @@ public class ArkRecorder {
                           RetryPolicy retryPolicy,
                           LoggingInterceptor.Level loggingLevel) {}
 
-    static ResolvedConfig resolveConfig(String clientName, ArkClientNamedConfig config,
+    public static ResolvedConfig resolveConfig(String clientName, ArkClientNamedConfig config,
                                         RegisterArkClient annotation,
                                         LoggingInterceptor.Level loggingLevel) {
         return new ResolvedConfig(
@@ -114,45 +114,41 @@ public class ArkRecorder {
         SSLContext sslContext = resolveSslContext(rc.clientName(), rc.tlsConfigName(), rc.trustAll());
         HttpClient httpClient = buildHttpClient(rc.httpVersion(), rc.connectTimeout(), sslContext, rc.followRedirects());
         var jdk = new ArkJdkAsyncTransport(httpClient, httpClient.executor().orElse(Runnable::run), rc.maxResponseBytes());
-        AsyncArkClient.Builder builder = AsyncArkClient.builder()
-                .serializer(serializer)
+        return configure(AsyncArkClient.builder()
                 .transport(rc.retryPolicy() != null
                         ? jdk.with(Retry.of(rc.retryPolicy(), new AsyncRetryOps()))
-                        : jdk)
-                .baseUrl(rc.baseUrl())
-                .httpVersion(rc.httpVersion())
-                .connectTimeout(rc.connectTimeout())
-                .readTimeout(rc.readTimeout())
-                .requestInterceptor(defaultTimeout(rc.readTimeout()));
-        applyInterceptors(builder, rc);
-        return builder;
+                        : jdk), serializer, rc);
     }
 
     static ArkClient.Builder syncBuilder(JsonSerializer serializer, ResolvedConfig rc) {
         SSLContext sslContext = resolveSslContext(rc.clientName(), rc.tlsConfigName(), rc.trustAll());
         var jdkTransport = new ArkJdkSyncTransport(buildHttpClient(rc.httpVersion(), rc.connectTimeout(), sslContext, rc.followRedirects()), rc.maxResponseBytes());
-        ArkClient.Builder builder = ArkClient.builder()
-                .serializer(serializer)
+        return configure(ArkClient.builder()
                 .transport(rc.retryPolicy() != null
                         ? jdkTransport.with(Retry.of(rc.retryPolicy(), new SyncRetryOps()))
                         : jdkTransport)
-                .streamingTransport(jdkTransport)
+                .streamingTransport(jdkTransport), serializer, rc);
+    }
+
+    /**
+     * Applies the settings every execution model shares: serializer, base URL, HTTP version,
+     * timeouts (including the default per-request read timeout), headers, interceptors,
+     * logging and throw-on-error. Also used by the Vert.x add-on's recorder.
+     */
+    public static <B extends AbstractArkBuilder<B>> B configure(
+            B builder, JsonSerializer serializer, ResolvedConfig rc) {
+        builder.serializer(serializer)
                 .baseUrl(rc.baseUrl())
                 .httpVersion(rc.httpVersion())
                 .connectTimeout(rc.connectTimeout())
                 .readTimeout(rc.readTimeout())
                 .requestInterceptor(defaultTimeout(rc.readTimeout()));
-        applyInterceptors(builder, rc);
-        return builder;
-    }
-
-    private static <B extends AbstractArkBuilder<B>> void applyInterceptors(
-            B builder, ResolvedConfig rc) {
         InterceptorResolver.applyHeaders(builder, rc.headers());
         InterceptorResolver.applyInterceptors(builder, rc.interceptorClasses(),
                 clazz -> Arc.container().instance(clazz).get());
         LoggingInterceptor.apply(builder, rc.loggingLevel());
         builder.throwOnError(rc.throwOnError());
+        return builder;
     }
 
     private static String resolveBaseUrl(ArkClientNamedConfig config, RegisterArkClient annotation) {

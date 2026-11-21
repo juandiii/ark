@@ -12,11 +12,10 @@ import io.quarkus.deployment.builditem.nativeimage.NativeImageResourceBuildItem;
 import io.quarkus.deployment.builditem.nativeimage.ReflectiveClassBuildItem;
 import jakarta.enterprise.context.ApplicationScoped;
 import org.jboss.jandex.AnnotationInstance;
-import org.jboss.jandex.AnnotationValue;
 import org.jboss.jandex.ClassInfo;
 import org.jboss.jandex.DotName;
 import org.jboss.jandex.IndexView;
-import org.jboss.jandex.MethodInfo;
+import xyz.juandiii.ark.quarkus.deployment.ArkProcessor;
 import xyz.juandiii.ark.quarkus.vertx.ArkVertxProducer;
 import xyz.juandiii.ark.quarkus.vertx.ArkVertxRecorder;
 import xyz.juandiii.ark.quarkus.vertx.QuarkusVertxTlsResolver;
@@ -33,8 +32,6 @@ public class ArkVertxProcessor {
 
     private static final String FEATURE = "ark-jackson-vertx";
     private static final DotName ARK_CLIENT = DotName.createSimple("xyz.juandiii.ark.core.proxy.RegisterArkClient");
-    private static final DotName MUTINY_UNI = DotName.createSimple("io.smallrye.mutiny.Uni");
-    private static final DotName MUTINY_MULTI = DotName.createSimple("io.smallrye.mutiny.Multi");
 
     @BuildStep
     FeatureBuildItem feature() {
@@ -82,9 +79,9 @@ public class ArkVertxProcessor {
             ClassInfo classInfo = instance.target().asClass();
             // Only register interfaces with Uni/Multi return types — non-reactive
             // interfaces are registered by the slim ark-quarkus-jackson extension.
-            if (!hasReactiveReturnType(classInfo)) continue;
+            if (!ArkProcessor.hasReactiveReturnType(classInfo)) continue;
             String className = classInfo.name().toString();
-            String configKey = stringValue(instance, "configKey", "");
+            String configKey = ArkProcessor.stringValue(instance, "configKey", "");
 
             syntheticBeans.produce(
                     SyntheticBeanBuildItem.configure(DotName.createSimple(className))
@@ -95,20 +92,5 @@ public class ArkVertxProcessor {
                             .done()
             );
         }
-    }
-
-    private static boolean hasReactiveReturnType(ClassInfo classInfo) {
-        for (MethodInfo method : classInfo.methods()) {
-            DotName returnName = method.returnType().name();
-            if (MUTINY_UNI.equals(returnName) || MUTINY_MULTI.equals(returnName)) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    private static String stringValue(AnnotationInstance instance, String name, String defaultValue) {
-        AnnotationValue value = instance.value(name);
-        return value != null ? value.asString() : defaultValue;
     }
 }

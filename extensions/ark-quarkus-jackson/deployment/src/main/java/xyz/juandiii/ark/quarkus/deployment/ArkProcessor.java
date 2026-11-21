@@ -119,7 +119,8 @@ public class ArkProcessor {
         }
     }
 
-    private static boolean hasReactiveReturnType(ClassInfo classInfo) {
+    /** True if any method returns Uni/Multi; such interfaces belong to the Vert.x add-on. */
+    public static boolean hasReactiveReturnType(ClassInfo classInfo) {
         for (MethodInfo method : classInfo.methods()) {
             DotName returnName = method.returnType().name();
             if (MUTINY_UNI.equals(returnName) || MUTINY_MULTI.equals(returnName)) {
@@ -129,7 +130,7 @@ public class ArkProcessor {
         return false;
     }
 
-    private static String stringValue(AnnotationInstance instance, String name, String defaultValue) {
+    public static String stringValue(AnnotationInstance instance, String name, String defaultValue) {
         AnnotationValue value = instance.value(name);
         return value != null ? value.asString() : defaultValue;
     }
