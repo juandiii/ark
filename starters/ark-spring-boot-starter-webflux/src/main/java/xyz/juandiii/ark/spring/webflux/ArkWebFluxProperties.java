@@ -2,12 +2,16 @@ package xyz.juandiii.ark.spring.webflux;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.context.properties.bind.DefaultValue;
+import xyz.juandiii.ark.core.http.RetryPolicy;
 import xyz.juandiii.ark.core.interceptor.LoggingInterceptor;
 import xyz.juandiii.ark.core.proxy.HttpVersion;
 import xyz.juandiii.ark.core.proxy.RegisterArkClient;
 
+import java.time.Duration;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Type-safe configuration properties for reactive Ark HTTP clients.
@@ -39,11 +43,46 @@ public record ArkWebFluxProperties(
             String tlsConfigurationName,
             @DefaultValue("false") boolean trustAll,
             @DefaultValue("true") boolean throwOnError,
-            @DefaultValue Map<String, String> headers
+            @DefaultValue("true") boolean followRedirects,
+            @DefaultValue Map<String, String> headers,
+            RetryProperties retry
     ) {
         public ClientProperties {
             if (httpVersion == null) httpVersion = RegisterArkClient.DEFAULT_HTTP_VERSION;
             if (headers == null) headers = new LinkedHashMap<>();
+        }
+    }
+
+    public record RetryProperties(
+            @DefaultValue("0") int maxAttempts,
+            @DefaultValue("500") long delay,
+            @DefaultValue("2.0") double multiplier,
+            @DefaultValue("30000") long maxDelay,
+            @DefaultValue({"429", "502", "503", "504"}) Set<Integer> retryOn,
+            @DefaultValue("true") boolean retryOnException,
+            @DefaultValue("false") boolean retryPost
+    ) {
+        public RetryProperties {
+            if (retryOn == null) retryOn = new LinkedHashSet<>(RetryPolicy.DEFAULT_RETRY_ON);
+        }
+
+        /**
+         * Retry is off unless max-attempts is above 1, matching the sync starter and Quarkus.
+         */
+        public boolean enabled() {
+            return maxAttempts > 1;
+        }
+
+        public RetryPolicy toRetryPolicy() {
+            return RetryPolicy.builder()
+                    .maxAttempts(maxAttempts)
+                    .delay(Duration.ofMillis(delay))
+                    .multiplier(multiplier)
+                    .maxDelay(Duration.ofMillis(maxDelay))
+                    .retryOn(retryOn)
+                    .retryOnException(retryOnException)
+                    .retryPost(retryPost)
+                    .build();
         }
     }
 }

@@ -39,7 +39,8 @@ public class ArkWebFluxAutoConfiguration {
     @Bean
     @ConditionalOnMissingBean(ReactorHttpTransport.class)
     public ReactorHttpTransport reactorHttpTransport() {
-        return new ArkReactorNettyTransport(HttpClient.create());
+        return new ArkReactorNettyTransport(
+                HttpClient.create().followRedirect(ArkWebFluxClientFactoryBean.FOLLOW_REDIRECTS));
     }
 
     @Bean

@@ -187,8 +187,11 @@ ark.client.user-api.connect-timeout=5
 ark.client.user-api.read-timeout=15
 ark.client.user-api.trust-all=false
 ark.client.user-api.throw-on-error=true
+ark.client.user-api.follow-redirects=true
 ark.client.user-api.headers.Authorization=Bearer ${TOKEN}
 ark.client.user-api.tls-configuration-name=my-cert
+ark.client.user-api.retry.max-attempts=3
+ark.client.user-api.retry.delay=500
 
 # TLS bundle
 spring.ssl.bundle.pem.my-cert.truststore.certificate=classpath:certs/ca.crt
@@ -200,7 +203,9 @@ spring.ssl.bundle.pem.my-cert.truststore.certificate=classpath:certs/ca.crt
 
 Same configuration structure as the sync starter. See [Declarative Spring Clients](declarative-spring.md) for full annotation details.
 
-> **Note:** Retry is not configured via properties for reactive clients - use Reactor's built-in `.retryWhen()` instead. See [Retry & Backoff](retry.md#reactive-reactor--mutiny).
+> `follow-redirects` (default `true`) follows 301/302/303/307/308 redirects, except https to http downgrades. Set it to `false` to receive 3xx responses as-is. If you supply your own `ReactorHttpTransport` bean, you set the redirect policy yourself (`HttpClient.create().followRedirect(true)`); Reactor Netty does not follow redirects by default.
+
+> `retry.*` works as in the sync starter: retry is off unless `max-attempts` is above 1. Reactor's `.retryWhen()` still works on top. See [Retry & Backoff](retry.md).
 
 ### Custom @EnableArkWebFluxClients
 
