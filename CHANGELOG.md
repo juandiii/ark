@@ -1,3 +1,13 @@
+## [v1.0.10](https://github.com/juandiii/ark/releases/tag/v1.0.10) — 2026-11-22
+
+### ✨ Features
+
+- Deduplicate Spring/Quarkus code, Vert.x 5 support and Vert.x guide (#103) @juandiii
+
+**Full Changelog**: https://github.com/juandiii/ark/compare/v1.0.9...v1.0.10
+
+---
+
 ## [v1.0.9](https://github.com/juandiii/ark/releases/tag/v1.0.9) — 2026-10-13
 
 ### ✨ Features
