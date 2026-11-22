@@ -7,7 +7,7 @@ Ark provides two starters for Spring Boot:
 | `ark-spring-boot-starter` | Spring MVC (sync) | `JsonSerializer` + `HttpTransport` + `ArkClient.Builder` + `ArkProperties` + `TlsResolver` |
 | `ark-spring-boot-starter-webflux` | Spring WebFlux (reactive) | `JsonSerializer` + `ReactorHttpTransport` + `ReactorArkClient.Builder` + `ArkWebFluxProperties` + `TlsResolver` |
 
-Both starters support `@RegisterArkClient` declarative clients, per-client configuration, TLS/SSL, trust-all, headers, interceptors, and GraalVM native image.
+Both starters support `@RegisterArkClient` declarative clients, per-client configuration, TLS/SSL, trust-all, headers, interceptors, and GraalVM native image. The shared pieces (client scanning, SSL bundle `TlsResolver`, AOT proxy hints) live in `ark-spring-boot-common`, which both starters pull in transitively.
 
 ---
 

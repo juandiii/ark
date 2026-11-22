@@ -23,6 +23,7 @@ import java.net.Socket;
 import java.net.URI;
 import java.time.Duration;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -31,6 +32,7 @@ class ArkVertxMutinyTransportTest {
     private static HttpServer server;
     private static URI baseUri;
     private static Vertx vertx;
+    private static final AtomicInteger countRequests = new AtomicInteger();
 
     @BeforeAll
     static void startServer() throws IOException {
@@ -40,6 +42,12 @@ class ArkVertxMutinyTransportTest {
         server.createContext("/ok", exchange -> {
             exchange.getResponseHeaders().add("X-Custom", "mutiny-value");
             byte[] body = "{\"status\":\"ok\"}".getBytes();
+            exchange.sendResponseHeaders(200, body.length);
+            try (OutputStream os = exchange.getResponseBody()) { os.write(body); }
+        });
+
+        server.createContext("/count", exchange -> {
+            byte[] body = String.valueOf(countRequests.incrementAndGet()).getBytes();
             exchange.sendResponseHeaders(200, body.length);
             try (OutputStream os = exchange.getResponseBody()) { os.write(body); }
         });
@@ -138,6 +146,18 @@ class ArkVertxMutinyTransportTest {
             assertEquals(200, response.statusCode());
             assertEquals("{\"status\":\"ok\"}", response.body());
             assertFalse(response.isError());
+        }
+
+        @Test
+        void givenUni_whenSubscribedTwice_thenSendsOneRequestPerSubscription() {
+            // Retry re-subscribes to the same Uni, so nothing may be sent before subscription
+            // and each subscription must send its own request.
+            Uni<RawResponse> result = transport().send("GET", baseUri.resolve("/count"),
+                    Map.of(), null, null);
+            int before = countRequests.get();
+
+            assertEquals(String.valueOf(before + 1), result.await().atMost(Duration.ofSeconds(10)).body());
+            assertEquals(String.valueOf(before + 2), result.await().atMost(Duration.ofSeconds(10)).body());
         }
 
         @Test

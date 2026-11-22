@@ -15,6 +15,19 @@ to work, what is known not to, and what is untested.
 | 1.0.x       | 3.5.x or earlier  | any               | any        | ⚠️ Untested — likely incompatible (Spring 6.x vs 7.x APIs) |
 | 1.0.x       | any               | 3.15.x or earlier | any        | ⚠️ Untested                         |
 
+## Vert.x
+
+| Module | Vert.x 4.5.x | Vert.x 5.x |
+|--------|--------------|------------|
+| `ark-vertx`, `ark-transport-vertx` | ✅ Verified on every PR (default) | ✅ Verified on every PR (`vertx5` profile, 5.2.x) |
+| `ark-transport-vertx-mutiny` | ✅ with `smallrye-mutiny-vertx-web-client` 3.x | ✅ with `smallrye-mutiny-vertx-web-client` 4.x |
+| `ark-quarkus-jackson-vertx` | ✅ (Quarkus 3 runs on Vert.x 4) | ➖ Not applicable until Quarkus moves to Vert.x 5 |
+
+The same jars work on both: Ark is compiled against Vert.x 4 and only uses
+APIs whose signatures did not change in Vert.x 5. Bring your own Vert.x
+version; for Mutiny, pick the bindings generation that matches it
+(3.x for Vert.x 4, 4.x for Vert.x 5).
+
 The Quarkus extensions declare `requires-quarkus-version=[3.33,)` in their
 metadata. Quarkus 3.33 LTS is the minimum supported Quarkus version; it is
 verified weekly and gates every release.
@@ -32,6 +45,10 @@ Two GitHub Actions workflows in `.github/workflows/`:
    matrix (17, 21, 25) against the default Spring Boot and Quarkus
    versions pinned in root `pom.xml`. Catches Ark-code regressions
    immediately.
+
+   **`test.yml` → `vertx5` job** builds and tests the Vert.x modules with
+   `-Pvertx5`, which overrides Vert.x, Netty and the Mutiny bindings with
+   their Vert.x 5 versions.
 
 2. **`compat-weekly.yml` → `framework-matrix` job** — runs every Monday
    06:00 UTC (and on-demand via `workflow_dispatch`). Queries Maven

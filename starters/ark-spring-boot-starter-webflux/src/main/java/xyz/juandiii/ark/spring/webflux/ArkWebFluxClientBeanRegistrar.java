@@ -5,9 +5,7 @@ import org.springframework.context.EnvironmentAware;
 import org.springframework.context.annotation.ImportBeanDefinitionRegistrar;
 import org.springframework.core.env.Environment;
 import org.springframework.core.type.AnnotationMetadata;
-import xyz.juandiii.ark.core.proxy.RegisterArkClient;
-
-import java.util.Map;
+import xyz.juandiii.ark.spring.ArkClientRegistrations;
 
 /**
  * Scans for @RegisterArkClient interfaces in packages specified by @EnableArkWebFluxClients.
@@ -16,7 +14,6 @@ import java.util.Map;
  */
 public class ArkWebFluxClientBeanRegistrar implements ImportBeanDefinitionRegistrar, EnvironmentAware {
 
-    private static final System.Logger LOGGER = System.getLogger(ArkWebFluxClientBeanRegistrar.class.getName());
     private Environment environment;
 
     @Override
@@ -27,37 +24,10 @@ public class ArkWebFluxClientBeanRegistrar implements ImportBeanDefinitionRegist
     @Override
     public void registerBeanDefinitions(AnnotationMetadata importingClassMetadata,
                                         BeanDefinitionRegistry registry) {
-        String[] basePackages = resolveBasePackages(importingClassMetadata);
-        var scanner = ArkWebFluxClientScanner.createScanner(environment);
-
-        for (String basePackage : basePackages) {
-            for (var bd : scanner.findCandidateComponents(basePackage)) {
-                try {
-                    Class<?> iface = Class.forName(bd.getBeanClassName());
-                    var annotation = iface.getAnnotation(RegisterArkClient.class);
-                    if (annotation == null || !ArkWebFluxClientScanner.usesReactorReturnTypes(iface)) continue;
-
-                    if (!registry.containsBeanDefinition(ArkWebFluxClientScanner.beanName(iface))) {
-                        ArkWebFluxClientScanner.registerProxyBean(registry, iface);
-                    }
-                } catch (ClassNotFoundException e) {
-                    LOGGER.log(System.Logger.Level.WARNING,
-                            "Failed to load @RegisterArkClient class: " + bd.getBeanClassName(), e);
-                }
-            }
-        }
-    }
-
-    private String[] resolveBasePackages(AnnotationMetadata metadata) {
-        Map<String, Object> attrs = metadata.getAnnotationAttributes(EnableArkWebFluxClients.class.getName());
-        if (attrs != null) {
-            String[] packages = (String[]) attrs.get("basePackages");
-            if (packages != null && packages.length > 0 && !packages[0].isEmpty()) return packages;
-            packages = (String[]) attrs.get("value");
-            if (packages != null && packages.length > 0 && !packages[0].isEmpty()) return packages;
-        }
-        String className = metadata.getClassName();
-        int lastDot = className.lastIndexOf('.');
-        return new String[]{lastDot > 0 ? className.substring(0, lastDot) : ""};
+        ArkClientRegistrations.register(registry, environment,
+                ArkClientRegistrations.enabledPackages(importingClassMetadata, EnableArkWebFluxClients.class),
+                ArkClientRegistrations::usesReactorReturnTypes, ArkWebFluxClientFactoryBean.class,
+                "jsonSerializer", "reactorHttpTransport", "environment", "arkTlsResolver",
+                "ark-" + ArkWebFluxProperties.class.getName());
     }
 }

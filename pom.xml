@@ -99,12 +99,167 @@
     <module>serializers/ark-jsonb</module>
     <module>proxies/ark-proxy-spring</module>
     <module>proxies/ark-proxy-jaxrs</module>
+    <module>starters/ark-spring-boot-common</module>
     <module>starters/ark-spring-boot-starter</module>
     <module>starters/ark-spring-boot-starter-webflux</module>
     <module>extensions/ark-quarkus-jackson</module>
     <module>extensions/ark-quarkus-jackson-vertx</module>
   </modules>
   <profiles>
+    <!--
+      Builds and tests the Vert.x modules against Vert.x 5 instead of the Vert.x 4 that the
+      Quarkus BOM pins: mvn -Pvertx5 verify -pl execution-models/ark-vertx,transports/ark-transport-vertx,transports/ark-transport-vertx-mutiny -am
+      Explicit entries take precedence over the imported BOMs. The Quarkus extensions stay on
+      Vert.x 4 because Quarkus 3 runs on it.
+    -->
+    <profile>
+      <id>vertx5</id>
+      <properties>
+        <vertx5.version>5.2.3</vertx5.version>
+        <vertx5.netty.version>4.2.20.Final</vertx5.netty.version>
+        <mutiny-vertx5.version>4.1.1</mutiny-vertx5.version>
+        <mutiny-vertx5.mutiny.version>3.3.1</mutiny-vertx5.mutiny.version>
+      </properties>
+      <dependencyManagement>
+        <dependencies>
+          <dependency>
+            <groupId>io.vertx</groupId>
+            <artifactId>vertx-core</artifactId>
+            <version>${vertx5.version}</version>
+          </dependency>
+          <dependency>
+            <groupId>io.vertx</groupId>
+            <artifactId>vertx-web-client</artifactId>
+            <version>${vertx5.version}</version>
+          </dependency>
+          <dependency>
+            <groupId>io.vertx</groupId>
+            <artifactId>vertx-web-common</artifactId>
+            <version>${vertx5.version}</version>
+          </dependency>
+          <dependency>
+            <groupId>io.vertx</groupId>
+            <artifactId>vertx-uri-template</artifactId>
+            <version>${vertx5.version}</version>
+          </dependency>
+          <dependency>
+            <groupId>io.vertx</groupId>
+            <artifactId>vertx-auth-common</artifactId>
+            <version>${vertx5.version}</version>
+          </dependency>
+          <dependency>
+            <groupId>io.smallrye.reactive</groupId>
+            <artifactId>smallrye-mutiny-vertx-core</artifactId>
+            <version>${mutiny-vertx5.version}</version>
+          </dependency>
+          <dependency>
+            <groupId>io.smallrye.reactive</groupId>
+            <artifactId>smallrye-mutiny-vertx-runtime</artifactId>
+            <version>${mutiny-vertx5.version}</version>
+          </dependency>
+          <dependency>
+            <groupId>io.smallrye.reactive</groupId>
+            <artifactId>smallrye-mutiny-vertx-web-client</artifactId>
+            <version>${mutiny-vertx5.version}</version>
+          </dependency>
+          <dependency>
+            <groupId>io.smallrye.reactive</groupId>
+            <artifactId>smallrye-mutiny-vertx-web-common</artifactId>
+            <version>${mutiny-vertx5.version}</version>
+          </dependency>
+          <dependency>
+            <groupId>io.smallrye.reactive</groupId>
+            <artifactId>smallrye-mutiny-vertx-uri-template</artifactId>
+            <version>${mutiny-vertx5.version}</version>
+          </dependency>
+          <dependency>
+            <groupId>io.smallrye.reactive</groupId>
+            <artifactId>smallrye-mutiny-vertx-auth-common</artifactId>
+            <version>${mutiny-vertx5.version}</version>
+          </dependency>
+          <dependency>
+            <groupId>io.smallrye.reactive</groupId>
+            <artifactId>vertx-mutiny-generator</artifactId>
+            <version>${mutiny-vertx5.version}</version>
+          </dependency>
+          <dependency>
+            <groupId>io.smallrye.reactive</groupId>
+            <artifactId>mutiny</artifactId>
+            <version>${mutiny-vertx5.mutiny.version}</version>
+          </dependency>
+          <dependency>
+            <groupId>io.netty</groupId>
+            <artifactId>netty-buffer</artifactId>
+            <version>${vertx5.netty.version}</version>
+          </dependency>
+          <dependency>
+            <groupId>io.netty</groupId>
+            <artifactId>netty-codec-base</artifactId>
+            <version>${vertx5.netty.version}</version>
+          </dependency>
+          <dependency>
+            <groupId>io.netty</groupId>
+            <artifactId>netty-codec-compression</artifactId>
+            <version>${vertx5.netty.version}</version>
+          </dependency>
+          <dependency>
+            <groupId>io.netty</groupId>
+            <artifactId>netty-codec-dns</artifactId>
+            <version>${vertx5.netty.version}</version>
+          </dependency>
+          <dependency>
+            <groupId>io.netty</groupId>
+            <artifactId>netty-codec-http</artifactId>
+            <version>${vertx5.netty.version}</version>
+          </dependency>
+          <dependency>
+            <groupId>io.netty</groupId>
+            <artifactId>netty-codec-http2</artifactId>
+            <version>${vertx5.netty.version}</version>
+          </dependency>
+          <dependency>
+            <groupId>io.netty</groupId>
+            <artifactId>netty-codec-socks</artifactId>
+            <version>${vertx5.netty.version}</version>
+          </dependency>
+          <dependency>
+            <groupId>io.netty</groupId>
+            <artifactId>netty-common</artifactId>
+            <version>${vertx5.netty.version}</version>
+          </dependency>
+          <dependency>
+            <groupId>io.netty</groupId>
+            <artifactId>netty-handler</artifactId>
+            <version>${vertx5.netty.version}</version>
+          </dependency>
+          <dependency>
+            <groupId>io.netty</groupId>
+            <artifactId>netty-handler-proxy</artifactId>
+            <version>${vertx5.netty.version}</version>
+          </dependency>
+          <dependency>
+            <groupId>io.netty</groupId>
+            <artifactId>netty-resolver</artifactId>
+            <version>${vertx5.netty.version}</version>
+          </dependency>
+          <dependency>
+            <groupId>io.netty</groupId>
+            <artifactId>netty-resolver-dns</artifactId>
+            <version>${vertx5.netty.version}</version>
+          </dependency>
+          <dependency>
+            <groupId>io.netty</groupId>
+            <artifactId>netty-transport</artifactId>
+            <version>${vertx5.netty.version}</version>
+          </dependency>
+          <dependency>
+            <groupId>io.netty</groupId>
+            <artifactId>netty-transport-native-unix-common</artifactId>
+            <version>${vertx5.netty.version}</version>
+          </dependency>
+        </dependencies>
+      </dependencyManagement>
+    </profile>
     <profile>
       <id>snapshot-nexus</id>
       <distributionManagement>
