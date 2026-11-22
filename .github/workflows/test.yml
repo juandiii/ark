@@ -3,6 +3,12 @@ name: Test
 on:
   workflow_call:
 
+env:
+  # Maven Central rate-limits GitHub runners (HTTP 429), worst when parallel jobs start
+  # with a cold cache after a pom change. Retry 429/503 more and back off longer than
+  # Maven's default (3 retries, 5 s).
+  MAVEN_ARGS: -Daether.connector.http.retryHandler.count=10 -Daether.connector.http.retryHandler.interval=10000
+
 jobs:
   test:
     runs-on: ubuntu-latest
