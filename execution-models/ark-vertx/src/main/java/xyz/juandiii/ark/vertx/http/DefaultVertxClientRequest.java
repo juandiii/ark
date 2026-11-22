@@ -4,6 +4,7 @@ import io.vertx.core.Future;
 import xyz.juandiii.ark.core.JsonSerializer;
 import xyz.juandiii.ark.core.http.AbstractClientRequest;
 import xyz.juandiii.ark.core.http.RawResponse;
+import xyz.juandiii.ark.core.http.Transport;
 import xyz.juandiii.ark.core.interceptor.RequestInterceptor;
 import xyz.juandiii.ark.core.interceptor.ResponseInterceptor;
 
@@ -17,10 +18,10 @@ import java.util.List;
 public final class DefaultVertxClientRequest extends AbstractClientRequest<DefaultVertxClientRequest>
         implements VertxClientRequest {
 
-    private final VertxHttpTransport transport;
+    private final Transport<Future<RawResponse>> transport;
 
     public DefaultVertxClientRequest(String method, String baseUrl, String path,
-                              VertxHttpTransport transport, JsonSerializer serializer,
+                              Transport<Future<RawResponse>> transport, JsonSerializer serializer,
                               List<RequestInterceptor> requestInterceptors,
                               List<ResponseInterceptor> responseInterceptors) {
         super(method, baseUrl, path, serializer, requestInterceptors, responseInterceptors);

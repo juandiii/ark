@@ -8,10 +8,15 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import xyz.juandiii.ark.core.JsonSerializer;
 import xyz.juandiii.ark.core.http.RawResponse;
+import xyz.juandiii.ark.core.http.RetryPolicy;
+import xyz.juandiii.ark.core.http.decorator.Retry;
 import xyz.juandiii.ark.vertx.http.VertxClientRequest;
 import xyz.juandiii.ark.vertx.http.VertxHttpTransport;
+import xyz.juandiii.ark.vertx.http.decorator.VertxRetryOps;
 
+import java.time.Duration;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
@@ -54,6 +59,25 @@ class VertxArkClientTest {
         void givenValidConfig_whenBuild_thenReturnsVertxArk() {
             assertNotNull(client());
             assertInstanceOf(VertxArk.class, client());
+        }
+
+        @Test
+        void givenRetryWrappedTransport_whenRetrieve_thenRetriesThroughBuilder() throws Exception {
+            when(transport.send(anyString(), any(), any(), any(), any()))
+                    .thenReturn(Future.succeededFuture(new RawResponse(503, Map.of(), "down")))
+                    .thenReturn(Future.succeededFuture(new RawResponse(200, Map.of(), "ok")));
+            RetryPolicy policy = RetryPolicy.builder().maxAttempts(3).delay(Duration.ofMillis(1)).build();
+
+            VertxArk retrying = VertxArkClient.builder()
+                    .serializer(serializer)
+                    .transport(Retry.of(policy, new VertxRetryOps()).apply(transport))
+                    .baseUrl("https://api.example.com")
+                    .build();
+
+            RawResponse raw = retrying.get("/status").retrieve().raw()
+                    .toCompletionStage().toCompletableFuture().get(5, TimeUnit.SECONDS);
+            assertEquals(200, raw.statusCode());
+            verify(transport, times(2)).send(anyString(), any(), any(), any(), any());
         }
     }
 

@@ -4,7 +4,9 @@ import xyz.juandiii.ark.core.AbstractArkClient;
 import xyz.juandiii.ark.core.AbstractArkBuilder;
 import xyz.juandiii.ark.core.JsonSerializer;
 import xyz.juandiii.ark.vertx.http.DefaultVertxClientRequest;
-import xyz.juandiii.ark.vertx.http.VertxHttpTransport;
+import io.vertx.core.Future;
+import xyz.juandiii.ark.core.http.RawResponse;
+import xyz.juandiii.ark.core.http.Transport;
 import xyz.juandiii.ark.core.interceptor.RequestInterceptor;
 import xyz.juandiii.ark.core.interceptor.ResponseInterceptor;
 
@@ -18,9 +20,9 @@ import java.util.Objects;
  */
 public class VertxArkClient extends AbstractArkClient<DefaultVertxClientRequest> implements VertxArk {
 
-    private final VertxHttpTransport transport;
+    private final Transport<Future<RawResponse>> transport;
 
-    private VertxArkClient(VertxHttpTransport transport, JsonSerializer serializer,
+    private VertxArkClient(Transport<Future<RawResponse>> transport, JsonSerializer serializer,
                            String userAgent, String baseUrl,
                            List<RequestInterceptor> requestInterceptors,
                            List<ResponseInterceptor> responseInterceptors,
@@ -46,11 +48,21 @@ public class VertxArkClient extends AbstractArkClient<DefaultVertxClientRequest>
 
     public static final class Builder extends AbstractArkBuilder<Builder> {
 
-        private VertxHttpTransport transport;
+        private Transport<Future<RawResponse>> transport;
 
         private Builder() {}
 
-        public Builder transport(VertxHttpTransport transport) {
+        /**
+         * Set the HTTP transport. Required.
+         *
+         * <p>Accepts any {@code Transport<Future<RawResponse>>} — a bare
+         * {@link xyz.juandiii.ark.vertx.http.VertxHttpTransport} or a decorator-chain result such as
+         * {@code transport.with(Retry.of(policy, new VertxRetryOps()))}.
+         *
+         * @param transport configured transport instance
+         * @return this builder for chaining
+         */
+        public Builder transport(Transport<Future<RawResponse>> transport) {
             this.transport = transport;
             return this;
         }
