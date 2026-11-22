@@ -149,7 +149,7 @@ class ArkVertxFutureTransportTest {
         void givenWebClientWithOptions_whenConstructing_thenSucceeds() {
             WebClient client = WebClient.create(vertx, new WebClientOptions()
                     .setConnectTimeout(5000)
-                    .setMaxPoolSize(50));
+                    .setIdleTimeout(30));
             assertDoesNotThrow(() -> new ArkVertxFutureTransport(client));
         }
     }
